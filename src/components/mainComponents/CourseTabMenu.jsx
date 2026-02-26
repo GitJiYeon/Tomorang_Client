@@ -26,9 +26,12 @@ const MenuContainer = styled.div`
   align-items: center;
   border-radius: 140px;
   background: #222;
-  padding: 7px 6px;
+  padding: 7px 8px;
   width: 350px;
   height: 56px;
+  
+  /* 이 부분을 추가하면 부모 요소 안에서 가로 중앙 정렬이 됩니다! */
+  margin: 0 auto;
 `;
 
 const TabButton = styled.button`

@@ -60,19 +60,29 @@ export default function CourseDescriptionPage() {
             <CollapsibleContainer $isExpanded={isExpanded}>
               <DetailSection>
                 <DetailTitle>{post.title}</DetailTitle>
+                <TitleDivider />
                 <ContentBlocks blocks={post.contentBlocks} />
               </DetailSection>
 
               {!isExpanded && (
                 <FadeOverlay>
                   <OpenButtonWrapper>
-                    <OpenButton onClick={() => setIsExpanded(true)}>
+                    <OpenButton $isExpanded={false} onClick={() => setIsExpanded(true)}>
                       상품정보 펼쳐보기
                     </OpenButton>
                   </OpenButtonWrapper>
                 </FadeOverlay>
               )}
             </CollapsibleContainer>
+
+            {/* 펼쳐진 상태일 때 접기 버튼 표시 */}
+            {isExpanded && (
+              <OpenButtonWrapper>
+                <OpenButton $isExpanded={true} onClick={() => setIsExpanded(false)}>
+                  상품정보 접기
+                </OpenButton>
+              </OpenButtonWrapper>
+            )}
           </>
         )}
 
@@ -102,33 +112,43 @@ export default function CourseDescriptionPage() {
               {!isReviewExpanded && (
                 <ReviewFadeOverlay>
                   <OpenButtonWrapper>
-                    <OpenButton onClick={() => setIsReviewExpanded(true)}>
+                    <OpenButton $isExpanded={false} onClick={() => setIsReviewExpanded(true)}>
                       리뷰 더보기
                     </OpenButton>
                   </OpenButtonWrapper>
                 </ReviewFadeOverlay>
               )}
             </ReviewCollapsible>
+
+            {/* 펼쳐진 상태일 때 접기 버튼 표시 */}
+            {isReviewExpanded && (
+              <OpenButtonWrapper>
+                <OpenButton $isExpanded={true} onClick={() => setIsReviewExpanded(false)}>
+                  리뷰 접기
+                </OpenButton>
+              </OpenButtonWrapper>
+            )}
           </>
         )}
 
-          {activeTab === "가이드" && (() => {
-            const guide = guideData.find((g) => g.postIds.includes(post.postId));
-            return guide ? (
-              <GuideBg>
-                <GuideTab guide={guide} />
-                <GuideDescriptionCard guide={guide} />
-              </GuideBg>
-            ) : (
-              <PlaceholderText>가이드 정보를 찾을 수 없습니다. 💡</PlaceholderText>
-            );
-          })()}
-        </ContentArea>
-        {activeTab !== "가이드" && (
+        {activeTab === "가이드" && (() => {
+          const guide = guideData.find((g) => g.postIds.includes(post.postId));
+          return guide ? (
+            <GuideBg>
+              <GuideTab guide={guide} />
+              <GuideDescriptionCard guide={guide} />
+            </GuideBg>
+          ) : (
+            <PlaceholderText>가이드 정보를 찾을 수 없습니다. 💡</PlaceholderText>
+          );
+        })()}
+      </ContentArea>
+
+      {activeTab !== "가이드" && trendingPosts.length > 0 && (
         <Section title="이 가이드의 다른코스">
           <div style={SCROLL_ROW}>
-            {trendingPosts.map((post) => (
-              <PostCard key={post.postId} post={post} />
+            {trendingPosts.map((p) => (
+              <PostCard key={p.postId} post={p} />
             ))}
           </div>
         </Section>
@@ -152,6 +172,7 @@ const PageWrapper = styled.div`
   display: flex;
   flex-direction: column;
 `;
+
 const GuideBg = styled.div`
   background-color: #F3F4F3;
   padding: 12px 0 20px;
@@ -159,6 +180,7 @@ const GuideBg = styled.div`
   flex-direction: column;
   gap: 8px;
 `;
+
 const CollapsibleContainer = styled.div`
   position: relative;
   max-height: ${({ $isExpanded }) => ($isExpanded ? "none" : "450px")};
@@ -201,9 +223,14 @@ const DetailTitle = styled.h3`
   margin-bottom: 16px;
 `;
 
-const TabSection = styled.div`
-  padding: 0 16px;
+const TitleDivider = styled.div`
+  width: 1px;
+  height: 60px;
+  background: #000;
+  margin: 16px auto;
 `;
+
+const TabSection = styled.div``;
 
 const ContentArea = styled.div`
   flex: 1;
@@ -234,10 +261,12 @@ const ReviewSection = styled.div`
   gap: 8px;
   padding: 8px 0;
 `;
+
 const SummarySection = styled.div`
   background-color: #fff;
   padding: 16px;
 `;
+
 const ReviewCollapsible = styled.div`
   position: relative;
   max-height: ${({ $isExpanded }) => ($isExpanded ? "none" : "700px")};

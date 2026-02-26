@@ -9,7 +9,6 @@ import ReportSystem from "../components/ReportModal";
 
 export default function CourseDescription({ post }) {
   const [liked, setLiked] = useState(false);
-  const [flagged, setFlagged] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
 
   if (!post) return null;
@@ -26,19 +25,18 @@ export default function CourseDescription({ post }) {
     ));
   };
 
-  const subImages = post.images.slice(1);
-  const hasMoreThanThree = subImages.length >= 4;
-  
-
-  const visibleSubImages = subImages.slice(0, 4); 
-  const displayExtraCount = subImages.length - 3; 
+  // 사진 로직 수정
+  const subImages = post.images.slice(1); // 메인 제외한 나머지 사진들
+  const visibleSubImages = subImages.slice(0, 4); // 최대 4개까지만 렌더링
+  const isMoreThanFour = subImages.length > 4; // 서브 사진이 4개보다 많은지 확인
+  const extraCount = subImages.length - 3; // 4번째 칸에 표시될 숫자 (3개는 선명, 4번째부터 묶음)
 
   return (
     <Card>
       <MainImageWrapper>
         <MainImage src={post.images[0]} alt={post.title} />
         <FlagButton onClick={() => setIsReportOpen(true)}>
-          <FlagIcon src={flagged ? Greenstar : Flag} alt="flag" />
+          <FlagIcon src={Flag} alt="report" />
         </FlagButton>
       </MainImageWrapper>
 
@@ -72,19 +70,20 @@ export default function CourseDescription({ post }) {
         </PriceRatingRow>
       </Body>
 
-
       <SubImageRow>
         {visibleSubImages.map((img, idx) => (
           <SubImageWrapper key={idx}>
             <SubImage src={img} alt={`sub-${idx}`} />
-            {idx === 3 && hasMoreThanThree && (
+            {/* 4번째 사진(idx 3)이면서 전체 개수가 4개보다 많을 때만 어두운 효과 적용 */}
+            {idx === 3 && isMoreThanFour && (
               <ExtraOverlay>
-                {displayExtraCount}+
+                {extraCount}+
               </ExtraOverlay>
             )}
           </SubImageWrapper>
         ))}
       </SubImageRow>
+
       <ReportSystem 
         isOpen={isReportOpen} 
         onClose={() => setIsReportOpen(false)} 
@@ -120,10 +119,10 @@ const MainImage = styled.img`
 
 const FlagButton = styled.button`
   position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 28px;
-  height: 28px;
+  top: 15px;
+  right: 15px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   background: #fff;
   border: none;
@@ -131,10 +130,11 @@ const FlagButton = styled.button`
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
 `;
 
 const FlagIcon = styled.img`
-  width: 11.667px;
+  width: 14px;
   height: 14px;
 `;
 
@@ -146,34 +146,27 @@ const TitleRow = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 `;
 
 const TitleGroup = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 `;
 
 const Title = styled.h2`
-    color: #111;
-    font-feature-settings: 'liga' off, 'clig' off;
-    font-family: Pretendard;
-    font-size: 18px;
-    font-style: normal;
-    font-weight: 600;
-    line-height: 22px; /* 122.222% */
+  color: #111;
+  font-size: 19px;
+  font-weight: 700;
+  margin: 0;
 `;
 
 const Subtitle = styled.p`
-    color: #4E4E4E;
-    text-align: center;
-    font-feature-settings: 'liga' off, 'clig' off;
-    font-family: Pretendard;
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: 22px; /* 183.333% */
+  color: #4E4E4E;
+  font-size: 13px;
+  font-weight: 400;
+  margin: 0;
 `;
 
 const SaveButton = styled.button`
@@ -183,32 +176,26 @@ const SaveButton = styled.button`
   background: #fff;
   border: 1px solid #eee;
   border-radius: 20px;
-  justify-content: center;
   padding: 6px 14px;
   cursor: pointer;
 `;
 
 const HeartIcon = styled.img`
-  width: 12px;
-  height: 11px;
+  width: 14px;
+  height: 14px;
 `;
 
 const SaveText = styled.span`
-    color: #4E4E4E;
-    text-align: center;
-    font-feature-settings: 'liga' off, 'clig' off;
-    font-family: Pretendard;
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 500;
-    line-height: 22px; /* 183.333% */
-    letter-spacing: -0.7px;
+  color: #4E4E4E;
+  font-size: 12px;
+  font-weight: 500;
 `;
 
 const PriceRatingRow = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
+  margin-top: 10px;
 `;
 
 const PriceGroup = styled.div`
@@ -218,14 +205,8 @@ const PriceGroup = styled.div`
 
 const OriginalPrice = styled.span`
   color: #DADADA;
-  font-feature-settings: 'liga' off, 'clig' off;
-  font-family: Pretendard;
-  font-size: 10px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: normal;
-  letter-spacing: -0.01px;
-  text-decoration-line: line-through;
+  font-size: 11px;
+  text-decoration: line-through;
 `;
 
 const CurrentPriceArea = styled.div`
@@ -236,13 +217,8 @@ const CurrentPriceArea = styled.div`
 
 const SaleLabel = styled.span`
   color: #B1DD89;
-  font-feature-settings: 'liga' off, 'clig' off;
-  font-family: Pretendard;
   font-size: 18px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: normal;
-  letter-spacing: -0.018px;
+  font-weight: 800;
 `;
 
 const CurrentPrice = styled.span`
@@ -255,7 +231,6 @@ const RatingGroup = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
-  padding-bottom: 4px;
 `;
 
 const Stars = styled.div`
@@ -264,47 +239,43 @@ const Stars = styled.div`
 `;
 
 const StarImg = styled.img`
-  width: 14px;
-  height: 14px;
+  width: 15px;
+  height: 15px;
 `;
 
 const RatingNumber = styled.span`
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: #333;
 `;
 
 const SubImageRow = styled.div`
   display: flex;
-  gap: 16px;
+  gap: 12px; /* 사진 사이 간격 */
 `;
 
 const SubImageWrapper = styled.div`
   position: relative;
-  flex: 1;
-  aspect-ratio: 1 / 1;
+  width: 76px; /* 고정 크기 또는 flex: 1 */
+  height: 76px;
   border-radius: 12px;
   overflow: hidden;
 `;
 
 const SubImage = styled.img`
-  width: 76px;
-  height: 76px;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 `;
 
 const ExtraOverlay = styled.div`
   position: absolute;
   inset: 0;
-  background: rgba(59, 53, 53, 0.70);
-  /* backdrop-filter: blur(2px);  */
-  color: #FFF;  
-  font-feature-settings: 'liga' off, 'clig' off;
-  font-family: Pretendard;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 600;
-  line-height: 22px; /* 137.5% */
+  background: rgba(30, 30, 30, 0.65); /* 어두운 효과 */
+  backdrop-filter: blur(1px); /* 살짝 흐릿하게 */
+  color: #FFF;
+  font-size: 17px;
+  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
