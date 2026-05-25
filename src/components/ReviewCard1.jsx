@@ -67,7 +67,10 @@ const Card = styled.div`
   gap: 21px;
   box-sizing: border-box;
   overflow: hidden;
-  margin: 0 auto;  /* 가운데 정렬 추가 */
+  margin-bottom: 12px;
+  border-radius: 12px;
+  border: 1px solid #DADADA;
+  
 `;
 
 const TopRow = styled.div`

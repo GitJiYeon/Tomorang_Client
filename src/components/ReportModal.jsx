@@ -140,7 +140,8 @@ const Toast = styled.div`
 
 // --- Main Component ---
 
-const ReportSystem = ({ isOpen, onClose }) => {
+// ✅ guideId prop 추가
+const ReportSystem = ({ isOpen, onClose, guideId }) => {
   const [isClosing, setIsClosing] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
@@ -155,23 +156,28 @@ const ReportSystem = ({ isOpen, onClose }) => {
     "기타"
   ];
 
-  // 그냥 닫기 (신고 없이)
   const handleClose = () => {
     setIsClosing(true);
     setTimeout(() => {
       setIsClosing(false);
-      onClose(); // ✅ props의 onClose 호출 (setIsOpen 없음)
+      onClose();
     }, 400);
   };
 
-  // 신고 사유 선택 → 모달 닫고 토스트 띄우기
   const handleReportAction = () => {
     setIsClosing(true);
     setTimeout(() => {
       setIsClosing(false);
-      onClose(); // ✅ 모달 닫기
+      onClose();
+
+      // ✅ 신고된 가이드 id를 localStorage에 저장
+      const hidden = JSON.parse(localStorage.getItem("hiddenGuides") ?? "[]");
+      if (!hidden.includes(guideId)) {
+        localStorage.setItem("hiddenGuides", JSON.stringify([...hidden, guideId]));
+      }
+
       setShowToast(true);
-      setTimeout(() => setShowToast(false), 3000); // 3초 후 토스트 제거
+      setTimeout(() => setShowToast(false), 3000);
     }, 400);
   };
 
@@ -197,10 +203,7 @@ const ReportSystem = ({ isOpen, onClose }) => {
             </div>
 
             {reasons.map((text, index) => (
-              <ReasonItem
-                key={index}
-                onClick={handleReportAction}
-              >
+              <ReasonItem key={index} onClick={handleReportAction}>
                 <span>{text}</span>
                 <div className="arrow">
                   <img src={ArrowIcon} alt="arrow" />

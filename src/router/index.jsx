@@ -25,6 +25,14 @@ import Chat from "../pages/Chat";
 import GuideProfilePage from "../pages/GuideProfilePage";
 import ReservationListPage from "../pages/ReservationListPage";
 import SearchResultPage from "../pages/SearchResultPage";
+import ProfilePage from "../pages/ProfilePage";
+import PickCourse from "../pages/PickCourse";
+import MyreviewPage from "../pages/MyreviewPage";
+import HiddenUserPage from "../pages/HiddenUserPage";
+import ProfileEditPage from "../components/ProfileEditPage";
+import InterestEditPage from "../pages/InterestEditPage";
+import LanguageEditPage from "../pages/LanguageEditPage";
+
 
 
 
@@ -55,6 +63,15 @@ function Router() {
             <Route path="/guide/:id" element={<GuideProfilePage />} />
             <Route path="/book" element={<ReservationListPage />} />
             <Route path="/search-result" element={<SearchResultPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/my-course" element={<PickCourse />} />
+            <Route path="/my-reviews" element={<MyreviewPage />} />
+            <Route path="/hidden" element={<HiddenUserPage />} />
+            <Route path="/edit-profile" element={<ProfileEditPage />} />
+            <Route path="/edit-interest" element={<InterestEditPage />} />
+            <Route path="/edit-language" element={<LanguageEditPage />} />
+            
+
           </Routes>
         </ReservationProvider>
     </BrowserRouter>
