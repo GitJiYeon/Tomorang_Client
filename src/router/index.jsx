@@ -32,6 +32,7 @@ import HiddenUserPage from "../pages/HiddenUserPage";
 import ProfileEditPage from "../components/ProfileEditPage";
 import InterestEditPage from "../pages/InterestEditPage";
 import LanguageEditPage from "../pages/LanguageEditPage";
+import GuideChatPage from "../pages/GuideChatPage";
 
 
 
@@ -70,6 +71,7 @@ function Router() {
             <Route path="/edit-profile" element={<ProfileEditPage />} />
             <Route path="/edit-interest" element={<InterestEditPage />} />
             <Route path="/edit-language" element={<LanguageEditPage />} />
+            <Route path="/guide-chat" element={<GuideChatPage />} />
             
 
           </Routes>

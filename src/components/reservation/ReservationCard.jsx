@@ -24,7 +24,6 @@ export default function ReservationCard({ post, date, time, dateIcon, clockIcon,
             <Title>{title}</Title>
             <Subtitle>{subtitle}</Subtitle>
           </TextGroup>
-          <img src={nextIcon} alt="next" width={6} />
         </TopRow>
         <BottomRow>
           <MetaItem>
@@ -37,6 +36,7 @@ export default function ReservationCard({ post, date, time, dateIcon, clockIcon,
           </MetaItem>
         </BottomRow>
       </Info>
+      <NextIcon src={nextIcon} alt="next" />  {/* ← Info 밖으로 이동 */}
     </Card>
   );
 }
@@ -52,6 +52,15 @@ const Card = styled.div`
   cursor: pointer;
   width: 348px;
   box-sizing: border-box;
+`;
+const NextIcon = styled.img`
+  display: flex;
+  width: 12px;
+  height: 12px;
+  padding: 5px;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
 `;
 
 const Thumbnail = styled.img`
@@ -73,7 +82,7 @@ const Info = styled.div`
 
 const TopRow = styled.div`
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
 `;
