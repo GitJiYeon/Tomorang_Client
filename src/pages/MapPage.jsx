@@ -243,9 +243,10 @@ const LeafletZFix = createGlobalStyle`
 `;
 
 const Wrapper = styled.div`
-  max-width: 390px;
+  width: min(390px, 100vw);
   margin: 0 auto;
-  min-height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
   background: #fff;
   font-family: "Pretendard", sans-serif;
   position: relative;
@@ -254,7 +255,7 @@ const Wrapper = styled.div`
 
 const MapWrap = styled.div`
   width: 100%;
-  height: 93.5vh;
+  height: 100%;
   position: relative;
   z-index: 0;
   .leaflet-container { z-index: 0; }

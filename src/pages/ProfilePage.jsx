@@ -47,10 +47,14 @@ export default function ProfilePage() {
 }
 
 const PageWrapper = styled.div`
+  width: min(390px, 100vw);
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
   background: #fff;
+  overflow: hidden;
 `;
 
 const Divider = styled.div`
@@ -64,4 +68,12 @@ const SectionsArea = styled.div`
   flex-direction: column;
   gap: 24px;
   padding: 20px 20px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 `;

@@ -8,8 +8,8 @@ import { useNavigate } from "react-router-dom";
 const NAV_ITEMS = [
   { path: "/guide", iconSrc: HomeIcon, label: "홈" },
   { path: "/guide-reservations", iconSrc: BookIcon, label: "예약" },
-  { path: null, iconSrc: MessageIcon, label: "메시지" },
-  { path: null, iconSrc: MyPageIcon, label: "마이" },
+  { path: "/guide-chat", iconSrc: MessageIcon, label: "메시지" },
+  { path: "/guide-mypage", iconSrc: MyPageIcon, label: "마이" },
 ];
 
 export default function GuideBottomNav({ activeIndex = 0 }) {
@@ -26,7 +26,10 @@ export default function GuideBottomNav({ activeIndex = 0 }) {
               key={item.label}
               type="button"
               $active={isActive}
-              onClick={() => item.path && navigate(item.path)}
+              onClick={() => {
+                window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+                item.path && navigate(item.path);
+              }}
             >
               <NavIcon src={item.iconSrc} alt={item.label} $active={isActive} />
               {isActive && <NavLabel>{item.label}</NavLabel>}
@@ -43,12 +46,12 @@ const NavPosition = styled.div`
   right: 0;
   bottom: 16px;
   left: 0;
-  width: 390px;
+  width: min(390px, 100vw);
   max-width: 100vw;
   margin: 0 auto;
   display: flex;
   justify-content: center;
-  z-index: 200;
+  z-index: 1000;
   pointer-events: none;
 `;
 
@@ -78,6 +81,7 @@ const NavButton = styled.button`
   gap: 6px;
   flex-shrink: 0;
   padding: 0;
+  outline: none;
   cursor: pointer;
 `;
 

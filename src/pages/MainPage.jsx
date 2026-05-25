@@ -38,13 +38,15 @@ export default function MainPage() {
   return (
     <div style={{
       fontFamily: "'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif",
-      maxWidth: 390,
+      width: "min(390px, 100vw)",
+      height: "100dvh",
       margin: "0 auto",
       backgroundColor: "#fff",
-      minHeight: "100vh",
       overflowX: "hidden",
-      paddingBottom: 90,
+      overflowY: "auto",
+      paddingBottom: "calc(90px + env(safe-area-inset-bottom))",
       position: "relative",
+      scrollbarWidth: "none",
     }}>
 
       <MainHeader />

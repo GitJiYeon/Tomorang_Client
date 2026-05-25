@@ -77,5 +77,38 @@ button:focus-visible {
 *{
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
   font-family: 'Pretendard', sans-serif;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-width: 320px;
+  height: 100%;
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: #fff;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+button {
+  font: inherit;
+}
+
+#root {
+  overflow: hidden;
+}
+
+.app-viewport {
+  width: min(390px, 100vw);
+  height: 100dvh;
+  margin: 0 auto;
+  overflow: hidden;
+  background: #fff;
 }

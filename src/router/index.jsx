@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { ReservationProvider } from "../components/context/ReservationContext"; // 추가
 
 import MainLayout from "../layouts/MainLayout";
@@ -48,9 +49,15 @@ import GuideMyPage from "../pages/GuideMyPage";
 
 
 
-function Router() {
+function RouteViewport() {
+  const location = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [location.pathname]);
+
   return (
-    <BrowserRouter>
+    <div className="app-viewport">
       <ReservationProvider>
         <Routes>
             <Route path="/" element={<StartPage />} />
@@ -97,6 +104,14 @@ function Router() {
 
           </Routes>
         </ReservationProvider>
+    </div>
+  );
+}
+
+function Router() {
+  return (
+    <BrowserRouter>
+      <RouteViewport />
     </BrowserRouter>
   );
 }

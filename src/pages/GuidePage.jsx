@@ -58,11 +58,12 @@ export default function GuidePage() {
 
 const PageWrapper = styled.div`
   font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
-  max-width: 390px;
+  width: min(390px, 100vw);
+  height: 100dvh;
+  max-height: 100dvh;
   margin: 0 auto;
-  min-height: 100vh;
   background-color: #fff;
-  overflow-x: hidden;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -70,12 +71,18 @@ const PageWrapper = styled.div`
 
 const ContentArea = styled.div`
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 12px 12px;
-  padding-bottom: 100px;
+  padding-bottom: calc(100px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   gap: 12px;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 `;
 
 const GuideCardList = styled.div`
@@ -97,7 +104,7 @@ const EmptyArea = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 30px 20px;
+  padding: 30px 20px calc(100px + env(safe-area-inset-bottom));
   background-color: #fff;
 `;
 

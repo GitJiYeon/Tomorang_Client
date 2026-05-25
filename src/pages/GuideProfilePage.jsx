@@ -26,8 +26,8 @@ export default function GuideProfilePage() {
   }
 
   const guidePosts = postData.filter((p) => guide.postIds.includes(p.postId));
-  const guideReviews = reviewData.filter((review) =>
-    guide.postIds.includes(review.postId)
+  const guideReviews = reviewData.filter(
+    (review) => String(review.guideId) === String(guide.id)
   );
 
   return (
