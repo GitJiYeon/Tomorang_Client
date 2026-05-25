@@ -1,15 +1,11 @@
-// const handleOpen = () => {
-//   console.log("상품정보 펼쳐보기 클릭");
-// };
-// <OpenButton onClick={handleOpen}>상품정보 펼쳐보기</OpenButton>
 import styled from "styled-components";
 import OpenArrow from "../assets/openarrow.svg";
 
-function OpenButton({ children, onClick }) {
+function OpenButton({ children, onClick, $isExpanded }) {
   return (
     <Button onClick={onClick}>
       {children}
-      <OpenArrowImg src={OpenArrow} alt="open" />
+      <OpenArrowImg src={OpenArrow} alt="open" $isExpanded={$isExpanded} />
     </Button>
   );
 }
@@ -27,7 +23,7 @@ const Button = styled.button`
   gap: 8px;
 
   background-color: #FFF;
-  color: #C5F598; 
+  color: #C5F598;
   text-align: center;
   font-size: 14px;
   font-weight: 400;
@@ -38,9 +34,12 @@ const Button = styled.button`
     border: 1px solid #000;
   }
 `;
-const OpenArrowImg  = styled.img`
+
+const OpenArrowImg = styled.img`
   width: 24px;
   height: 24px;
+  transform: ${({ $isExpanded }) => ($isExpanded ? "rotate(180deg)" : "rotate(0deg)")};
+  transition: transform 0.3s ease;
 `;
 
 export default OpenButton;

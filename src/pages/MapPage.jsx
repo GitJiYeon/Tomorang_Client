@@ -6,13 +6,13 @@ import "leaflet/dist/leaflet.css";
 import postData from "../data/postData.json";
 import MainHeader from "../components/mainComponents/MainHeader";
 import BottomNav from "../components/mainComponents/BottomNav";
+import FilterBar from "../components/FilterBar";
 import HeartIcon from "../assets/heart.svg";
 import StarIcon from "../assets/mapStar.svg";
 import LikeIcon from "../assets/likeIcon.svg";
 import MarkerIconSrc from "../assets/mapMarker.svg";
-import BubbleIconSrc from "../assets/mapBubble.svg"; // 선택된 마커 말풍선 아이콘
+import BubbleIconSrc from "../assets/mapBubble.svg";
 
-// 기본 마커
 const markerIcon = L.icon({
   iconUrl: MarkerIconSrc,
   iconSize: [32, 32],
@@ -20,7 +20,6 @@ const markerIcon = L.icon({
   shadowUrl: "",
 });
 
-// 선택된 마커 — 말풍선 아이콘
 const bubbleIcon = L.icon({
   iconUrl: BubbleIconSrc,
   iconSize: [125, 57],
@@ -36,19 +35,6 @@ function FlyTo({ center }) {
   return null;
 }
 
-function getDistance(lat1, lng1, lat2, lng2) {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-// 선택된 마커 위에 제목 텍스트 오버레이
 function MarkerLabel({ post }) {
   const map = useMap();
   const [pos, setPos] = useState(null);
@@ -76,14 +62,13 @@ export default function MapPage() {
   const [activeNav, setActiveNav] = useState(1);
   const [selectedPost, setSelectedPost] = useState(null);
   const [likedPosts, setLikedPosts] = useState({});
-  const [userLocation, setUserLocation] = useState(null);
   const [mapCenter, setMapCenter] = useState([35.5, 139.5]);
+  const [filter, setFilter] = useState({ sort: "추천순", category: "애니메이션" });
 
   useEffect(() => {
     navigator.geolocation?.getCurrentPosition(
       (pos) => {
         const loc = [pos.coords.latitude, pos.coords.longitude];
-        setUserLocation(loc);
         setMapCenter(loc);
       },
       () => {}
@@ -95,11 +80,24 @@ export default function MapPage() {
     setLikedPosts((prev) => ({ ...prev, [postId]: !prev[postId] }));
   };
 
-  const rawPrice = (post) => parseInt(post.price.replace(/,/g, ""), 10);
-  const finalPrice = (post) =>
-    post.discountRate
-      ? Math.round(rawPrice(post) * (1 - post.discountRate / 100))
-      : rawPrice(post);
+  const finalPrice = (post) => {
+    const raw = parseInt(post.price.replace(/,/g, ""), 10);
+    return post.discountRate ? Math.round(raw * (1 - post.discountRate / 100)) : raw;
+  };
+
+  // FilterBar 필터+정렬 적용
+  const filteredPosts = postData
+    .filter((p) =>
+      filter.category
+        ? p.tag?.ko?.includes(filter.category) || p.title.includes(filter.category)
+        : true
+    )
+    .sort((a, b) => {
+      if (filter.sort === "인기순") return b.likeCount - a.likeCount;
+      if (filter.sort === "가격순")
+        return parseInt(a.price.replace(/,/g, ""), 10) - parseInt(b.price.replace(/,/g, ""), 10);
+      return b.rating - a.rating;
+    });
 
   return (
     <Wrapper>
@@ -117,10 +115,7 @@ export default function MapPage() {
           doubleClickZoom={!selectedPost}
           touchZoom={!selectedPost}
         >
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution=""
-          />
+          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="" />
           <FlyTo center={mapCenter} />
 
           {postData.map((post) => {
@@ -132,9 +127,8 @@ export default function MapPage() {
                 icon={isSelected ? bubbleIcon : markerIcon}
                 eventHandlers={{
                   click: () => {
-                    if (isSelected) {
-                      setSelectedPost(null);
-                    } else {
+                    if (isSelected) setSelectedPost(null);
+                    else {
                       setSelectedPost(post);
                       setMapCenter([post.city.lat, post.city.lng]);
                     }
@@ -144,7 +138,6 @@ export default function MapPage() {
             );
           })}
 
-          {/* 선택된 마커 위 제목 텍스트 */}
           {selectedPost && <MarkerLabel post={selectedPost} />}
         </MapContainer>
       </MapWrap>
@@ -152,14 +145,47 @@ export default function MapPage() {
       {/* 마커 미선택: 바텀시트 */}
       {!selectedPost && (
         <BottomSheet>
-          <HandleBar />
-          <SheetTitle>주위에 있는 코스</SheetTitle>
-          {/* 필터/태그 — 컴포넌트 받으면 교체 */}
-          <FilterPlaceholder />
+          <SheetFixed>
+            <HandleBar />
+            <SheetTitle>주위에 있는 코스</SheetTitle>
+            <FilterBar onFilterChange={setFilter} />
+          </SheetFixed>
+          <CardList>
+            {filteredPosts.length === 0 ? (
+              <Empty>주위에 코스가 없습니다</Empty>
+            ) : (
+              filteredPosts.map((post) => {
+                const raw = parseInt(post.price.replace(/,/g, ""), 10);
+                const price = post.discountRate
+                  ? Math.round(raw * (1 - post.discountRate / 100))
+                  : raw;
+                return (
+                  <HCard key={post.postId}>
+                    <HCardImage
+                      src={post.images?.[0]}
+                      alt={post.title}
+                      onError={(e) => { e.target.style.background = "#eee"; e.target.removeAttribute("src"); }}
+                    />
+                    <HCardInfo>
+                      <HCardTitle>{post.title}</HCardTitle>
+                      <HCardSubtitle>{post.subtitle}</HCardSubtitle>
+                      {post.discountRate > 0 && (
+                        <HCardOriginalPrice>{raw.toLocaleString()}원</HCardOriginalPrice>
+                      )}
+                      <HCardPriceRow>
+                        {post.discountRate > 0 && <HCardSale>SALE</HCardSale>}
+                        <HCardPrice>{price.toLocaleString()}원</HCardPrice>
+                      </HCardPriceRow>
+                    </HCardInfo>
+                  </HCard>
+                );
+              })
+            )}
+          </CardList>
         </BottomSheet>
       )}
 
-      {/* 마커 선택: 카드만 네브 위에 */}
+      {/* 마커 선택: 플로팅 카드 */}
       {selectedPost && (() => {
         const post = selectedPost;
         const isLiked = likedPosts[post.postId];
@@ -203,7 +229,6 @@ export default function MapPage() {
   );
 }
 
-/* ─── Leaflet z-index 전역 리셋 ─── */
 const LeafletZFix = createGlobalStyle`
   .leaflet-pane,
   .leaflet-tile-pane,
@@ -214,10 +239,7 @@ const LeafletZFix = createGlobalStyle`
   .leaflet-map-pane {
     z-index: 0 !important;
   }
-  .leaflet-top,
-  .leaflet-bottom {
-    z-index: 1 !important;
-  }
+  .leaflet-top, .leaflet-bottom { z-index: 1 !important; }
 `;
 
 const Wrapper = styled.div`
@@ -238,7 +260,6 @@ const MapWrap = styled.div`
   .leaflet-container { z-index: 0; }
 `;
 
-/* 마커 위 텍스트 레이블 */
 const LabelOverlay = styled.div`
   position: absolute;
   transform: translate(-50%, -100%);
@@ -258,20 +279,26 @@ const LabelOverlay = styled.div`
   z-index: 400;
 `;
 
-/* 마커 미선택 바텀시트 */
 const BottomSheet = styled.div`
   position: absolute;
-  bottom: 70px;
+  bottom: 0;
   left: 0;
   right: 0;
   width: 390px;
+  height: 330px;
   background: #fff;
   border-top-left-radius: 24px;
   border-top-right-radius: 24px;
   box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
-  padding: 12px 21px 20px;
   box-sizing: border-box;
   z-index: 200;
+  display: flex;
+  flex-direction: column;
+`;
+
+const SheetFixed = styled.div`
+  flex-shrink: 0;
+  padding: 12px 0 0;
 `;
 
 const HandleBar = styled.div`
@@ -285,17 +312,100 @@ const HandleBar = styled.div`
 const SheetTitle = styled.div`
   font-weight: 700;
   font-size: 18px;
-  line-height: 100%;
-  letter-spacing: -0.1%;
   color: #111;
-  padding: 4px 8px 12px;
+  padding: 4px 21px 4px;
 `;
 
-const FilterPlaceholder = styled.div`
-  height: 40px;
+const CardList = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 21px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
 `;
 
-/* 마커 선택 시 네브 위 플로팅 카드 */
+const Empty = styled.div`
+  text-align: center;
+  color: #ACACAC;
+  font-size: 14px;
+  padding: 32px 0;
+`;
+
+/* 바텀시트 가로형 카드 */
+const HCard = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+`;
+
+const HCardImage = styled.img`
+  width: 120px;
+  height: 120px;
+  border-radius: 12px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #eee;
+`;
+
+const HCardInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+`;
+
+const HCardTitle = styled.div`
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 22px;
+  color: #111;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const HCardSubtitle = styled.div`
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 22px;
+  color: #ACACAC;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const HCardOriginalPrice = styled.div`
+  font-size: 10px;
+  color: #DADADA;
+  text-decoration: line-through;
+  letter-spacing: -0.01px;
+`;
+
+const HCardPriceRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+`;
+
+const HCardSale = styled.span`
+  font-weight: 700;
+  font-size: 14px;
+  color: #B1DD89;
+`;
+
+
+
+const HCardPrice = styled.span`
+  font-weight: 700;
+  font-size: 14px;
+  color: #111;
+  letter-spacing: -0.018px;
+`;
+
 const FloatingCard = styled.div`
   position: absolute;
   bottom: 106px;
@@ -306,6 +416,7 @@ const FloatingCard = styled.div`
   overflow: hidden;
   background: #fff;
   z-index: 200;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
 `;
 
 const CardImageWrap = styled.div`
@@ -397,7 +508,6 @@ const RatingBadge = styled.div`
 const RatingText = styled.span`
   font-weight: 590;
   font-size: 10px;
-  line-height: 100%;
   color: #111;
 `;
 
@@ -413,15 +523,12 @@ const LikeBadge = styled.div`
 const LikeText = styled.span`
   font-weight: 500;
   font-size: 10px;
-  line-height: 100%;
   color: #111;
 `;
 
 const PriceText = styled.div`
   font-weight: 700;
   font-size: 16px;
-  line-height: 100%;
-  letter-spacing: -0.1%;
   color: #111;
   text-align: right;
 `;

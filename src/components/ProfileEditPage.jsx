@@ -1,33 +1,19 @@
 import { useState, useRef } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import ProgressBar from "../components/ProgressBar";
-import StartComent from "../components/StartComent";
-import NextButton from "../components/NextButton1";
+import Header from "../components/Header";
 import DefaultProfileIcon from "../assets/defaultProfile.svg";
 import ImageIcon from "../assets/imageIcon.svg";
-import RemoveIcon from "../assets/removeIcon.svg";
 
-/**
- * 호출 방법:
- * <CreateProfile interests={["맛집", "애니메이션", "풍경"]} />
- * interests: 이전 페이지(SelectInterest)에서 선택한 관심사 배열
- * 
- * react-router 사용 시
- * navigate("/create-profile", { state: { interests: selected } });
- *
- * CreateProfile에서 받기
- * import { useLocation } from "react-router-dom";
- * const { state } = useLocation();
- * <CreateProfile interests={state?.interests ?? []} />
- */
-function MakeTravelerProfile({ interests = [] }) {
+export default function ProfileEditPage() {
   const navigate = useNavigate();
-  const { state } = useLocation();
-  const [profileImage, setProfileImage] = useState(null);
-  const [nickname, setNickname] = useState("");
-  const [bio, setBio] = useState("");
-  const [tags, setTags] = useState(state?.interests ?? []);
+
+  // localStorage에서 기존 프로필 불러오기
+  const saved = JSON.parse(localStorage.getItem("profile") ?? "{}");
+
+  const [profileImage, setProfileImage] = useState(saved.profileImage ?? null);
+  const [nickname, setNickname] = useState(saved.nickname ?? "");
+  const [bio, setBio] = useState(saved.bio ?? "");
 
   const fileInputRef = useRef(null);
 
@@ -39,40 +25,21 @@ function MakeTravelerProfile({ interests = [] }) {
     setProfileImage(URL.createObjectURL(file));
   };
 
-  const handleRemoveTag = (tag) => {
-    if (tags.length <= 1) return;
-    setTags((prev) => prev.filter((t) => t !== tag));
-  };
-
-  const isValid = nickname.trim().length > 0;
-
-  const handleNext = () => {
-    const payload = { profileImage, nickname, bio, interests: tags };
-    console.log("백엔드 전송 payload:", payload);
-  
-    // ✅ state 대신 localStorage에서 languages 읽기
+  const handleComplete = () => {
     const languages = JSON.parse(localStorage.getItem("languages") ?? "[]");
-  
     localStorage.setItem("profile", JSON.stringify({
+      ...saved,
       profileImage,
       nickname,
       bio,
-      interests: tags,
       languages,
     }));
-  
-    navigate("/welcome");
+    navigate(-1);
   };
 
   return (
     <Wrapper>
-      <Top>
-        <ProgressBar step={4} onBack={() => navigate(-1)} />
-      </Top>
-
-      <Middle>
-        <StartComent coment={"프로필을 만들어 볼까요?"} />
-      </Middle>
+      <Header coment={"프로필 수정"} />
 
       <Content>
         {/* 프로필 이미지 */}
@@ -81,7 +48,6 @@ function MakeTravelerProfile({ interests = [] }) {
             <ProfileImg
               src={profileImage || DefaultProfileIcon}
               alt="프로필"
-              $isDefault={!profileImage}
             />
           </ProfileCircle>
           <CameraBtn onClick={handleImageClick}>
@@ -116,24 +82,21 @@ function MakeTravelerProfile({ interests = [] }) {
           maxLength={50}
         />
 
-        {/* 관심사 태그 */}
-        {tags.length > 0 && (
-          <>
-            <FieldLabel>관심사</FieldLabel>
-            <TagRow>
-              {tags.map((tag) => (
-                <Tag key={tag}>
-                  {tag}
-                  <TagRemove src={RemoveIcon} alt="제거" onClick={() => handleRemoveTag(tag)} />
-                </Tag>
-              ))}
-            </TagRow>
-          </>
-        )}
+        {/* 관심사 */}
+        <FieldLabel>관심사</FieldLabel>
+        <ResetButton onClick={() => navigate("/edit-interest")}>
+          <ResetText>관심사 재설정 하기</ResetText>
+        </ResetButton>
+
+        {/* 언어 */}
+        <FieldLabel>언어</FieldLabel>
+        <ResetButton onClick={() => navigate("/edit-language")}>
+          <ResetText>언어 재설정하기</ResetText>
+        </ResetButton>
       </Content>
 
       <Bottom>
-        <NextButton isValid={true} onClick={handleNext} />
+        <CompleteButton onClick={handleComplete}>수정 완료</CompleteButton>
       </Bottom>
     </Wrapper>
   );
@@ -146,18 +109,8 @@ const Wrapper = styled.div`
   width: 100%;
   display: flex;
   flex-direction: column;
-  padding: 24px 0;
   box-sizing: border-box;
   font-family: "Pretendard", sans-serif;
-`;
-
-const Top = styled.div`
-  display: flex;
-  justify-content: center;
-`;
-
-const Middle = styled.div`
-  padding: 2.9375rem 0 2.25rem;
 `;
 
 const Content = styled.div`
@@ -172,7 +125,7 @@ const ProfileArea = styled.div`
   width: 110px;
   height: 110px;
   align-self: center;
-  margin-bottom: 1.5rem;
+  margin: 1.5rem 0;
 `;
 
 const ProfileCircle = styled.div`
@@ -206,7 +159,6 @@ const CameraBtn = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  object-fit: cover;
   cursor: pointer;
 `;
 
@@ -238,41 +190,42 @@ const Input = styled.input`
   }
 `;
 
-const TagRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 0.25rem;
-`;
-
-const Tag = styled.div`
+const ResetButton = styled.button`
+  width: 100%;
+  height: 52px;
+  border-radius: 10px;
+  border: 1px solid #DADADA;
+  background: #fff;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 12px 10px 24px;
-  border-radius: 999px;
-  border: 1px solid #4E4E4E;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #111;
-  background: #fff;
+  justify-content: center;
+  cursor: pointer;
+  box-sizing: border-box;
 `;
 
-const TagRemove = styled.img`
-  width: 6.6px;
-  height: 6.6px;
-  padding: 9.2px;
-  cursor: pointer;
-
-  &:active {
-    opacity: 0.7;
-  }
+const ResetText = styled.span`
+  color: #ACACAC;
+  text-align: center;
+  font-family: Inter;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
 `;
 
 const Bottom = styled.div`
-  display: flex;
-  justify-content: center;
-  padding: 1.5rem 1.3125rem 0;
+  padding: 1.5rem 1.3125rem 2rem;
 `;
 
-export default MakeTravelerProfile;
+const CompleteButton = styled.button`
+  width: 100%;
+  height: 52px;
+  border-radius: 10px;
+  background: #C5F598;
+  border: none;
+  color: #111;
+  font-family: Pretendard;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+`;

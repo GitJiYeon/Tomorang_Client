@@ -9,7 +9,7 @@ const NAV_ITEMS = [
   { path: "/main", iconSrc: HomeIcon, label: "홈" },
   { path: "/map", iconSrc: MapIcon, label: "탐색" },
   { path: "/book", iconSrc: BookIcon, label: "예약" },
-  { path: "/message", iconSrc: MessageIcon, label: "메시지" },
+  { path: "/chat/1", iconSrc: MessageIcon, label: "메시지" },
   { path: "/profile", iconSrc: MyPageIcon, label: "마이페이지" },
 ];
 

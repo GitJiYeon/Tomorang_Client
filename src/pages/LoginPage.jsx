@@ -24,6 +24,11 @@ function LoginPage(){
     }, 10);
   }, []);
 
+  const handleLogin = () => {
+    if (!isVisible) return; // 애니메이션 전엔 클릭 무시
+    navigate("/main");
+  };
+
   return (
     <PageContainer>
       {/* 상단 연두색 영역 & 뒤로가기 */}
@@ -69,7 +74,7 @@ function LoginPage(){
           </CheckboxContainer>
         </FormContainer>
 
-        <LoginButton>로그인</LoginButton>
+        <LoginButton onClick={handleLogin}>로그인</LoginButton>
       </WhiteCard>
     </PageContainer>
   );

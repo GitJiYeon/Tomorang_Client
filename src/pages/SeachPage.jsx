@@ -38,14 +38,17 @@ export default function SearchPage() {
   const navigate = useNavigate();
   const [history, setHistory] = useState(getHistory);
   const [expanded, setExpanded] = useState(false);
+  const [inputVal, setInputVal] = useState("");
   const previewRegions = regionData.slice(0, 4);
 
   const visibleTrending = expanded ? TRENDING : TRENDING.slice(0, 3);
 
-  const handleHistoryClick = (keyword) => {
-    addHistory(keyword);
+  const handleSearch = (keyword) => {
+    const kw = keyword ?? inputVal;
+    if (!kw.trim()) return;
+    addHistory(kw.trim());
     setHistory(getHistory());
-    // TODO: navigate to search result
+    navigate("/search-result", { state: { keyword: kw.trim() } });
   };
 
   const handleClear = () => {
@@ -61,8 +64,16 @@ export default function SearchPage() {
           <img src={BackArrow} alt="뒤로가기" width={24} height={24} />
         </BackBtn>
         <SearchBar>
-          <img src={SearchIcon} alt="search" width={32} height={32} />
-          <SearchInput placeholder="미식의 구마모토로..." />
+          <SearchIconBtn onClick={() => handleSearch()}>
+            <img src={SearchIcon} alt="search" width={28} height={28} />
+          </SearchIconBtn>
+          <SearchInput
+            placeholder="미식의 구마모토로..."
+            value={inputVal}
+            onChange={(e) => setInputVal(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+            autoFocus
+          />
         </SearchBar>
       </SearchBarRow>
 
@@ -75,7 +86,7 @@ export default function SearchPage() {
           </SectionHeader>
           <HistoryRow>
             {history.map((keyword) => (
-              <HistoryChip key={keyword} onClick={() => handleHistoryClick(keyword)}>
+              <HistoryChip key={keyword} onClick={() => handleSearch(keyword)}>
                 {keyword}
               </HistoryChip>
             ))}
@@ -89,31 +100,30 @@ export default function SearchPage() {
         <TrendingWrapper>
           <TrendingList>
             {visibleTrending.map(({ rank, keyword }, idx) => (
-            <TrendingItem
+              <TrendingItem
                 key={rank}
-                onClick={() => handleHistoryClick(keyword)}
+                onClick={() => handleSearch(keyword)}
                 $faded={!expanded && idx === 2}
-            >
+              >
                 <Rank>{rank}</Rank>
                 <TrendingKeyword>{keyword}</TrendingKeyword>
-                {/* 1번 검색어 오른쪽에만 토글 버튼 */}
-                {idx === 0 && (
-                <ToggleBtn
-                    onClick={(e) => { e.stopPropagation(); setExpanded(p => !p); }}
-                    style={{ marginLeft: "auto" }}
-                >
-                    <img
-                    src={ChevronIcon}
-                    alt="더보기"
-                    width={14}
-                    height={14}
-                    style={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
-                    />
-                </ToggleBtn>
-                )}
-            </TrendingItem>
+              </TrendingItem>
             ))}
           </TrendingList>
+
+          {/* 3번째 항목 아래 페이드 + 토글 버튼 */}
+          {!expanded && (
+            <FadeOverlay onClick={() => setExpanded(true)}>
+              <ToggleBtn>
+                <img src={ChevronIcon} alt="펼치기" width={14} height={14} />
+              </ToggleBtn>
+            </FadeOverlay>
+          )}
+          {expanded && (
+            <CollapseBtn onClick={() => setExpanded(false)}>
+              <img src={ChevronIcon} alt="접기" width={14} height={14} style={{ transform: "rotate(180deg)" }} />
+            </CollapseBtn>
+          )}
         </TrendingWrapper>
       </Section>
 
@@ -169,6 +179,16 @@ const SearchBar = styled.div`
   align-items: center;
   gap: 1px;
   padding: 0 5px;
+`;
+
+const SearchIconBtn = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
 `;
 
 const SearchInput = styled.input`

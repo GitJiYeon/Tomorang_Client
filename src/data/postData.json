@@ -2,17 +2,7 @@
   {
     "postId": 1,
     "userId": "guide_yuki",
-    "images": [
-      "/assets/postImages/cose1.svg",
-      "/assets/postImages/cose1.svg",
-      "/assets/postImages/cose1.svg",
-      "/assets/postImages/cose1.svg",
-      "/assets/postImages/cose1.svg",
-      "/assets/postImages/cose1.svg",
-      "/assets/postImages/cose1.svg",
-      "/assets/postImages/fuji_2.jpg",
-      "/assets/postImages/fuji_3.jpg"
-    ],
+    "images": ["/assets/postImages/cose1.svg", "/assets/postImages/temp1.jpeg", "/assets/postImages/temp2.jpeg","/assets/postImages/temp1.jpeg","/assets/postImages/temp1.jpeg","/assets/postImages/temp1.jpeg"],
     "title": "후지산 주위 투어",
     "subtitle": "관광객이 붐비지 않는 포토스팟",
     "price": "32,000",
@@ -22,17 +12,8 @@
     "rating": 4.8,
     "reviewCount": 34,
     "likeCount": 128,
-    "tag": {
-      "ko": ["탐방"],
-      "ja": ["探訪"],
-      "en": ["visit"]
-    },
-    "city": {
-      "name": "후지산",
-      "country": "Japan",
-      "lat": 35.3606,
-      "lng": 138.7274
-    },
+    "tag": { "ko": ["탐방"], "ja": ["探訪"], "en": ["visit"] },
+    "city": { "name": "후지산", "country": "Japan", "lat": 35.3606, "lng": 138.7274 },
     "availableSchedules": [
       {
         "date": "2026-04-03",
@@ -41,21 +22,49 @@
           { "id": "slot_20260403_1400", "time": "14:00", "status": "CLOSED" },
           { "id": "slot_20260403_1800", "time": "18:00", "status": "OPEN" }
         ]
-      },
-      {
-        "date": "2026-04-05",
-        "timeSlots": [
-          { "id": "slot_20260405_1000", "time": "10:00", "status": "OPEN" },
-          { "id": "slot_20260405_1500", "time": "15:00", "status": "CLOSED" }
-        ]
       }
     ],
     "contentBlocks": [
-      { "type": "text", "value": "후지산 주변을 천천히 둘러볼 예정입니다." },
-      { "type": "image", "value": "/assets/postImages/cose1.svg" },
-      { "type": "text", "value": "이곳에서 일출을 감상합니다." },
-      { "type": "image", "value": "/assets/postImages/cose1.svg" },
-      { "type": "text", "value": "이후 마을을 돌아다닐 예정입니다." }
+      {
+        "type": "text",
+        "value": "후지산을 가장 아름답게 볼 수 있는 숨은 포토스팟을 천천히 둘러보는 프라이빗 감성 투어입니다. 관광객이 몰리는 대표 전망대가 아닌, 현지인들만 알고 있는 조용한 장소 위주로 안내합니다."
+      },
+      {
+        "type": "text",
+        "value": "계절에 따라 달라지는 후지산의 표정을 경험해보세요. 봄에는 벚꽃과 함께, 여름에는 푸른 초원과 함께, 가을에는 단풍과 함께, 겨울에는 설경 속 장엄한 풍경을 감상할 수 있습니다."
+      },
+      {
+        "type": "image",
+        "value": "/assets/postImages/temp1.jpeg"
+      },
+      {
+        "type": "text",
+        "value": "투어는 오전 9시 또는 오후 2시, 6시 중 선택 가능합니다. 특히 일몰 시간대에는 붉게 물드는 후지산을 배경으로 인생샷을 남길 수 있어 많은 분들이 선호합니다."
+      },
+      {
+        "type": "text",
+        "value": "사진 촬영이 처음이신 분들도 걱정하지 마세요. 구도 잡는 방법과 자연스러운 포즈를 가이드가 직접 도와드립니다. 스마트폰 촬영도 충분히 멋진 결과를 얻을 수 있습니다."
+      },
+      {
+        "type": "image",
+        "value": "/assets/postImages/temp2.jpeg"
+      },
+      {
+        "type": "text",
+        "value": "이 투어는 최대 6명 소규모로 진행되어 여유롭고 편안한 분위기 속에서 여행을 즐길 수 있습니다. 친구, 연인, 가족 단위 여행객 모두 환영합니다."
+      },
+      {
+        "type": "text",
+        "value": "투어 중간에는 현지 카페에 들러 간단한 휴식 시간을 가집니다. 후지산이 보이는 카페에서 따뜻한 커피 한 잔과 함께 여유를 느껴보세요."
+      },
+      {
+        "type": "text",
+        "value": "복장은 편한 운동화를 추천드립니다. 계절에 따라 기온 차가 있으니 겉옷을 준비해주세요."
+      },
+      {
+        "type": "text",
+        "value": "후지산의 진짜 매력을 알고 싶은 분들, 사람 붐비는 여행이 아닌 감성 여행을 원하시는 분들께 추천드립니다."
+      }
     ],
     "createdAt": "2026-02-21T10:23:00Z",
     "updatedAt": "2026-02-21T12:10:00Z"
@@ -63,10 +72,7 @@
   {
     "postId": 2,
     "userId": "guide_yuki",
-    "images": [
-      "/assets/postImages/cose2.svg",
-      "/assets/postImages/akiba_2.jpg"
-    ],
+    "images": ["/assets/postImages/cose2.svg", "/assets/postImages/temp3.jpeg"],
     "title": "아키하바라 서브컬처 탐방",
     "subtitle": "애니메이션 성지를 현지 가이드와 함께",
     "price": "25,000",
@@ -76,30 +82,17 @@
     "rating": 4.6,
     "reviewCount": 58,
     "likeCount": 204,
-    "tag": {
-      "ko": ["탐방","맛집"],
-      "ja": ["探訪"],
-      "en": ["visit"]
-    },
-    "city": {
-      "name": "도쿄",
-      "country": "Japan",
-      "lat": 35.6984,
-      "lng": 139.7731
-    },
+    "tag": { "ko": ["탐방", "맛집"], "ja": ["探訪"], "en": ["visit"] },
+    "city": { "name": "도쿄", "country": "Japan", "lat": 35.6984, "lng": 139.7731 },
     "availableSchedules": [
       {
         "date": "2026-04-10",
-        "timeSlots": [
-          { "id": "slot_20260410_1100", "time": "11:00", "status": "OPEN" },
-          { "id": "slot_20260410_1600", "time": "16:00", "status": "CLOSED" }
-        ]
+        "timeSlots": [{ "id": "slot_20260410_1100", "time": "11:00", "status": "OPEN" }]
       }
     ],
     "contentBlocks": [
       { "type": "text", "value": "아키하바라의 주요 피규어샵을 함께 둘러봅니다." },
-      { "type": "image", "value": "/assets/postContents/akiba1.jpg" },
-      { "type": "text", "value": "레트로 게임센터에서 자유 시간이 주어집니다." }
+      { "type": "image", "value": "/assets/postImages/temp4.jpeg" }
     ],
     "createdAt": "2026-02-18T09:00:00Z",
     "updatedAt": "2026-02-19T11:00:00Z"
@@ -107,11 +100,7 @@
   {
     "postId": 3,
     "userId": "guide_yuki",
-    "images": [
-      "/assets/postImages/cose1.svg",
-      "/assets/postImages/kyoto_2.jpg",
-      "/assets/postImages/kyoto_3.jpg"
-    ],
+    "images": ["/assets/postImages/cose1.svg", "/assets/postImages/temp5.jpeg", "/assets/postImages/temp6.jpeg"],
     "title": "교토 전통 거리 힐링 산책",
     "subtitle": "기온 골목과 다도 체험",
     "price": "40,000",
@@ -121,32 +110,15 @@
     "rating": 4.9,
     "reviewCount": 91,
     "likeCount": 317,
-    "city": {
-      "name": "교토",
-      "country": "Japan",
-      "lat": 35.0116,
-      "lng": 135.7681
-    },
+    "city": { "name": "교토", "country": "Japan", "lat": 35.0116, "lng": 135.7681 },
     "availableSchedules": [
       {
         "date": "2026-04-07",
-        "timeSlots": [
-          { "id": "slot_20260407_0900", "time": "09:00", "status": "OPEN" },
-          { "id": "slot_20260407_1400", "time": "14:00", "status": "CLOSED" }
-        ]
-      },
-      {
-        "date": "2026-04-12",
-        "timeSlots": [
-          { "id": "slot_20260412_1000", "time": "10:00", "status": "OPEN" }
-        ]
+        "timeSlots": [{ "id": "slot_20260407_0900", "time": "09:00", "status": "OPEN" }]
       }
     ],
     "contentBlocks": [
-      { "type": "text", "value": "기온 골목의 전통 가옥을 배경으로 사진을 찍습니다." },
-      { "type": "image", "value": "/assets/postContents/kyoto1.jpg" },
-      { "type": "text", "value": "다도 체험은 약 1시간 진행됩니다." },
-      { "type": "image", "value": "/assets/postContents/kyoto2.jpg" }
+      { "type": "text", "value": "기온 골목의 전통 가옥을 배경으로 사진을 찍습니다." }
     ],
     "createdAt": "2026-02-10T08:30:00Z",
     "updatedAt": "2026-02-20T10:00:00Z"
@@ -154,10 +126,7 @@
   {
     "postId": 4,
     "userId": "guide_taro",
-    "images": [
-      "/assets/postImages/cose2.svg",
-      "/assets/postImages/osaka_2.jpg"
-    ],
+    "images": ["/assets/postImages/cose2.svg", "/assets/postImages/temp7.jpeg"],
     "title": "오사카 맛집 투어",
     "subtitle": "현지인만 아는 타코야키·라멘 골목",
     "price": "28,000",
@@ -167,26 +136,15 @@
     "rating": 4.7,
     "reviewCount": 72,
     "likeCount": 253,
-    "city": {
-      "name": "오사카",
-      "country": "Japan",
-      "lat": 34.6937,
-      "lng": 135.5023
-    },
+    "city": { "name": "오사카", "country": "Japan", "lat": 34.6937, "lng": 135.5023 },
     "availableSchedules": [
       {
         "date": "2026-04-08",
-        "timeSlots": [
-          { "id": "slot_20260408_1200", "time": "12:00", "status": "OPEN" },
-          { "id": "slot_20260408_1800", "time": "18:00", "status": "CLOSED" }
-        ]
+        "timeSlots": [{ "id": "slot_20260408_1200", "time": "12:00", "status": "OPEN" }]
       }
     ],
     "contentBlocks": [
-      { "type": "text", "value": "타코야키 원조 가게부터 시작합니다." },
-      { "type": "image", "value": "/assets/postContents/osaka1.jpg" },
-      { "type": "text", "value": "현지인 단골 라멘 골목으로 이동합니다." },
-      { "type": "image", "value": "/assets/postContents/osaka2.jpg" }
+      { "type": "text", "value": "타코야키 원조 가게부터 시작합니다." }
     ],
     "createdAt": "2026-02-15T14:00:00Z",
     "updatedAt": "2026-02-21T09:00:00Z"
@@ -194,11 +152,7 @@
   {
     "postId": 5,
     "userId": "guide_kenta",
-    "images": [
-      "/assets/postImages/hokkaido_1.jpg",
-      "/assets/postImages/hokkaido_2.jpg",
-      "/assets/postImages/hokkaido_3.jpg"
-    ],
+    "images": ["/assets/postImages/temp1.jpeg", "/assets/postImages/temp2.jpeg"],
     "title": "홋카이도 자연 액티비티",
     "subtitle": "설원 스노우트레킹 & 온천",
     "price": "65,000",
@@ -208,35 +162,354 @@
     "rating": 5.0,
     "reviewCount": 18,
     "likeCount": 89,
-    "city": {
-      "name": "삿포로",
-      "country": "Japan",
-      "lat": 43.0618,
-      "lng": 141.3545
-    },
+    "city": { "name": "삿포로", "country": "Japan", "lat": 43.0618, "lng": 141.3545 },
     "availableSchedules": [
       {
         "date": "2026-04-15",
-        "timeSlots": [
-          { "id": "slot_20260415_0800", "time": "08:00", "status": "OPEN" }
-        ]
-      },
-      {
-        "date": "2026-04-20",
-        "timeSlots": [
-          { "id": "slot_20260420_0800", "time": "08:00", "status": "OPEN" },
-          { "id": "slot_20260420_1300", "time": "13:00", "status": "CLOSED" }
-        ]
+        "timeSlots": [{ "id": "slot_20260415_0800", "time": "08:00", "status": "OPEN" }]
       }
     ],
     "contentBlocks": [
-      { "type": "text", "value": "첫날 오전 설원 스노우트레킹을 진행합니다." },
-      { "type": "image", "value": "/assets/postContents/hokkaido1.jpg" },
-      { "type": "text", "value": "오후에는 천연 온천에서 휴식합니다." },
-      { "type": "image", "value": "/assets/postContents/hokkaido2.jpg" },
-      { "type": "text", "value": "이튿날 아침 홋카이도 로컬 아침 식사 후 해산합니다." }
+      { "type": "text", "value": "첫날 오전 설원 스노우트레킹을 진행합니다." }
     ],
     "createdAt": "2026-02-20T07:00:00Z",
     "updatedAt": "2026-02-21T08:00:00Z"
+  },
+  {
+    "postId": 6,
+    "userId": "guide_hana",
+    "images": ["/assets/postImages/temp3.jpeg", "/assets/postImages/cose1.svg"],
+    "title": "시부야 쇼핑 & 패션 투어",
+    "subtitle": "도쿄의 최신 트렌드를 읽는 쇼핑 여행",
+    "price": "18,000",
+    "discountRate": 5,
+    "duration": "2시간",
+    "maxParticipants": 8,
+    "rating": 4.5,
+    "reviewCount": 12,
+    "likeCount": 45,
+    "tag": { "ko": ["쇼핑", "탐방"], "ja": ["ショッピング"], "en": ["shopping"] },
+    "city": { "name": "도쿄", "country": "Japan", "lat": 35.6580, "lng": 139.7016 },
+    "availableSchedules": [
+      {
+        "date": "2026-05-01",
+        "timeSlots": [{ "id": "slot_20260501_1300", "time": "13:00", "status": "OPEN" }]
+      }
+    ],
+    "contentBlocks": [
+      { "type": "text", "value": "시부야 스크램블 스퀘어에서 투어를 시작합니다." }
+    ],
+    "createdAt": "2026-02-22T10:00:00Z",
+    "updatedAt": "2026-02-22T10:00:00Z"
+  },
+  {
+    "postId": 7,
+    "userId": "guide_ken",
+    "images": ["/assets/postImages/temp4.jpeg", "/assets/postImages/temp5.jpeg", "/assets/postImages/temp8.png", "/assets/postImages/temp9.png", "/assets/postImages/temp10.png"],
+    "title": "가마쿠라 해변 사진 출사",
+    "subtitle": "슬램덩크 배경지에서 인생샷 남기기",
+    "price": "35,000",
+    "discountRate": 20,
+    "duration": "4시간",  
+    "maxParticipants": 4,
+    "rating": 4.9,
+    "reviewCount": 27,
+    "likeCount": 156,
+    "tag": { "ko": ["사진", "풍경", "애니메이션"], "ja": ["写真"], "en": ["photo"] },
+    "city": { "name": "가마쿠라", "country": "Japan", "lat": 35.3191, "lng": 139.5467 },
+    "availableSchedules": [
+      {
+        "date": "2026-04-22",
+        "timeSlots": [{ "id": "slot_20260422_1000", "time": "10:00", "status": "OPEN" }]
+      }
+    ],
+    "contentBlocks": [
+    {
+      "type": "text",
+      "value": "가마쿠라의 푸른 바다와 감성적인 해안선을 배경으로 진행되는 프리미엄 사진 출사 투어입니다. 도쿄 근교에서 가장 분위기 있는 해변 도시로 손꼽히는 가마쿠라에서, 여행의 순간을 영화처럼 남겨드립니다."
+    },
+    {
+      "type": "text",
+      "value": "특히 에노덴 열차가 지나가는 가마쿠라고코마에 건널목은 애니메이션 슬램덩크의 배경지로 유명한 장소입니다. 실제 작품 속 장면과 비슷한 구도로 촬영하여 애니 감성과 현실 여행 감성을 동시에 담아드립니다."
+    },
+    {
+      "type": "image",
+      "value": "/assets/postImages/temp4.jpeg"
+    },
+    {
+      "type": "text",
+      "value": "촬영은 자연광을 활용한 감성 스냅 위주로 진행됩니다. 바다를 배경으로 한 워킹샷, 건널목을 활용한 상징적인 장면 연출, 해변 난간과 도로를 활용한 분위기 컷 등 다양한 구도로 촬영합니다."
+    },
+    {
+      "type": "text",
+      "value": "소규모 최대 4인으로 진행되어 충분한 촬영 시간을 보장합니다. 혼자 여행 오신 분들도 어색하지 않도록 자연스러운 포즈와 표정 연출을 도와드립니다."
+    },
+    {
+      "type": "image",
+      "value": "/assets/postImages/temp5.jpeg"
+    },
+    {
+      "type": "text",
+      "value": "날씨가 맑은 날에는 에메랄드빛 쇼난 해안과 푸른 하늘을 함께 담을 수 있으며, 운이 좋으면 노을이 지는 시간대에 붉게 물든 바다를 배경으로 실루엣 컷 촬영도 가능합니다."
+    },
+    {
+      "type": "text",
+      "value": "촬영 후에는 색감 보정을 거쳐 감성적인 톤으로 편집된 사진을 전달드립니다. 필름 느낌, 청량한 여름 무드, 따뜻한 노을 무드 등 원하는 스타일을 사전에 선택할 수 있습니다."
+    },
+    {
+      "type": "text",
+      "value": "편안한 운동화와 바람을 고려한 복장을 추천드립니다. 바닷바람이 강한 날에는 헤어 스타일이 흐트러질 수 있으니 참고해주세요."
+    },
+    {
+      "type": "text",
+      "value": "애니메이션 속 장면을 현실에서 직접 재현하고 싶은 분들, 가마쿠라의 감성을 오래도록 간직하고 싶은 분들께 추천드리는 특별한 사진 여행입니다."
+    }
+  ],
+    "createdAt": "2026-02-23T09:00:00Z",
+    "updatedAt": "2026-02-23T11:00:00Z"
+  },
+  {
+    "postId": 8,
+    "userId": "guide_ken",
+    "images": ["/assets/postImages/temp6.jpeg"],
+    "title": "나라 사슴 공원 힐링 산책",
+    "subtitle": "동물과 교감하는 평화로운 오후",
+    "price": "15,000",
+    "discountRate": 0,
+    "duration": "2시간",
+    "maxParticipants": 10,
+    "rating": 4.7,
+    "reviewCount": 42,
+    "likeCount": 98,
+    "tag": { "ko": ["힐링", "풍경"], "ja": ["ヒーリング"], "en": ["healing"] },
+    "city": { "name": "나라", "country": "Japan", "lat": 34.6851, "lng": 135.8048 },
+    "availableSchedules": [
+      {
+        "date": "2026-04-18",
+        "timeSlots": [{ "id": "slot_20260418_1400", "time": "14:00", "status": "OPEN" }]
+      }
+    ],
+    "contentBlocks": [
+      { "type": "text", "value": "사슴들에게 간식을 주며 여유로운 시간을 보냅니다." }
+    ],
+    "createdAt": "2026-02-24T15:00:00Z",
+    "updatedAt": "2026-02-24T15:00:00Z"
+  },
+  {
+    "postId": 9,
+    "userId": "guide_haru",
+    "images": ["/assets/postImages/cose2.svg", "/assets/postImages/temp7.jpeg"],
+    "title": "오다이바 야경 사진 투어",
+    "subtitle": "자유의 여신상과 건담 앞 야경 촬영",
+    "price": "22,000",
+    "discountRate": 10,
+    "duration": "3시간",
+    "maxParticipants": 5,
+    "rating": 4.8,
+    "reviewCount": 15,
+    "likeCount": 67,
+    "tag": { "ko": ["사진", "애니메이션"], "ja": ["夜景"], "en": ["night view"] },
+    "city": { "name": "도쿄", "country": "Japan", "lat": 35.6284, "lng": 139.7725 },
+    "availableSchedules": [
+      {
+        "date": "2026-05-05",
+        "timeSlots": [{ "id": "slot_20260505_1900", "time": "19:00", "status": "OPEN" }]
+      }
+    ],
+    "contentBlocks": [
+      { "type": "text", "value": "레인보우 브릿지가 가장 잘 보이는 지점으로 안내합니다." }
+    ],
+    "createdAt": "2026-02-25T11:00:00Z",
+    "updatedAt": "2026-02-25T11:00:00Z"
+  },
+  {
+    "postId": 10,
+    "userId": "guide_ken",
+    "images": ["/assets/postImages/temp1.jpeg", "/assets/postImages/temp2.jpeg"],
+    "title": "니세코 서프 서핑 체험",
+    "subtitle": "초보자도 환영하는 바다 액티비티",
+    "price": "70,000",
+    "discountRate": 15,
+    "duration": "6시간",
+    "maxParticipants": 3,
+    "rating": 5.0,
+    "reviewCount": 8,
+    "likeCount": 32,
+    "tag": { "ko": ["액티비티", "체험"], "ja": ["アクティビティ"], "en": ["activity"] },
+    "city": { "name": "홋카이도", "country": "Japan", "lat": 42.8048, "lng": 140.6874 },
+    "availableSchedules": [
+      {
+        "date": "2026-06-12",
+        "timeSlots": [{ "id": "slot_20260612_0900", "time": "09:00", "status": "OPEN" }]
+      }
+    ],
+    "contentBlocks": [
+      { "type": "text", "value": "전문 강사와 함께 안전하게 서핑을 배웁니다." }
+    ],
+    "createdAt": "2026-02-26T08:00:00Z",
+    "updatedAt": "2026-02-26T08:00:00Z"
+  },
+  {
+    "postId": 11,
+    "userId": "guide_ken",
+    "images": ["/assets/postImages/cose1.svg", "/assets/postImages/temp3.jpeg"],
+    "title": "물과 IT의 도시, 오가키 산책",
+    "subtitle": "소프토피아 재팬부터 미노지까지",
+    "price": "15,000",
+    "discountRate": 0,
+    "duration": "3시간",
+    "maxParticipants": 4,
+    "rating": 4.9,
+    "reviewCount": 12,
+    "likeCount": 56,
+    "tag": { "ko": ["탐방", "풍경"], "ja": ["探訪"], "en": ["visit"] },
+    "city": { "name": "오가키", "country": "Japan", "lat": 35.3678, "lng": 136.6161 },
+    "availableSchedules": [
+      {
+        "date": "2026-05-10",
+        "timeSlots": [{ "id": "slot_20260510_1000", "time": "10:00", "status": "OPEN" }]
+      }
+    ],
+    "contentBlocks": [
+      { "type": "text", "value": "오가키의 랜드마크 소프토피아 재팬의 건축미를 감상합니다." },
+      { "type": "image", "value": "/assets/postImages/cose1.svg" }
+    ],
+    "createdAt": "2026-02-26T10:00:00Z",
+    "updatedAt": "2026-02-26T10:00:00Z"
+  },
+  {
+    "postId": 12,
+    "userId": "guide_kenta",
+    "images": ["/assets/postImages/temp4.jpeg", "/assets/postImages/cose2.svg"],
+    "title": "기후성 금빛 일몰 투어",
+    "subtitle": "킨카산 로프웨이와 기후 시내 전경",
+    "price": "20,000",
+    "discountRate": 10,
+    "duration": "2시간 30분",
+    "maxParticipants": 6,
+    "rating": 4.7,
+    "reviewCount": 21,
+    "likeCount": 84,
+    "tag": { "ko": ["사진", "풍경", "체험"], "ja": ["風景"], "en": ["scenery"] },
+    "city": { "name": "기후", "country": "Japan", "lat": 35.4297, "lng": 136.7663 },
+    "availableSchedules": [
+      {
+        "date": "2026-05-15",
+        "timeSlots": [{ "id": "slot_20260515_1700", "time": "17:00", "status": "OPEN" }]
+      }
+    ],
+    "contentBlocks": [
+      { "type": "text", "value": "킨카산 산 정상에서 바라보는 나가라강의 야경은 일품입니다." }
+    ],
+    "createdAt": "2026-02-26T11:30:00Z",
+    "updatedAt": "2026-02-26T11:30:00Z"
+  },
+  {
+    "postId": 13,
+    "userId": "guide_mina",
+    "images": ["/assets/postImages/temp5.jpeg", "/assets/postImages/temp6.jpeg"],
+    "title": "오가키 수문강 타라이부네 체험",
+    "subtitle": "목선 위에서 즐기는 벚꽃 힐링",
+    "price": "30,000",
+    "discountRate": 0,
+    "duration": "1시간 30분",
+    "maxParticipants": 2,
+    "rating": 5.0,
+    "reviewCount": 15,
+    "likeCount": 112,
+    "tag": { "ko": ["힐링", "체험", "사진"], "ja": ["体験"], "en": ["experience"] },
+    "city": { "name": "오가키", "country": "Japan", "lat": 35.3598, "lng": 136.6124 },
+    "availableSchedules": [
+      {
+        "date": "2026-04-10",
+        "timeSlots": [{ "id": "slot_20260410_1100", "time": "11:00", "status": "OPEN" }]
+      }
+    ],
+    "contentBlocks": [
+      { "type": "text", "value": "애니메이션 '목소리의 형태' 배경지로도 유명한 수문강 산책로입니다." }
+    ],
+    "createdAt": "2026-02-26T09:00:00Z",
+    "updatedAt": "2026-02-26T09:00:00Z"
+  },
+  {
+    "postId": 14,
+    "userId": "guide_yuki",
+    "images": ["/assets/postImages/temp7.jpeg", "/assets/postImages/cose2.svg"],
+    "title": "오가키 애니메이션 성지 순례",
+    "subtitle": "'목소리의 형태' 배경지 함께 걷기",
+    "price": "12,000",
+    "discountRate": 20,
+    "duration": "4시간",
+    "maxParticipants": 5,
+    "rating": 4.8,
+    "reviewCount": 33,
+    "likeCount": 145,
+    "tag": { "ko": ["애니메이션", "탐방", "사진"], "ja": ["アニメ"], "en": ["anime"] },
+    "city": { "name": "오가키", "country": "Japan", "lat": 35.3622, "lng": 136.6128 },
+    "availableSchedules": [
+      {
+        "date": "2026-05-20",
+        "timeSlots": [{ "id": "slot_20260520_1300", "time": "13:00", "status": "OPEN" }]
+      }
+    ],
+    "contentBlocks": [
+      { "type": "text", "value": "주인공들이 만났던 다리와 공원을 직접 방문합니다." }
+    ],
+    "createdAt": "2026-02-25T14:00:00Z",
+    "updatedAt": "2026-02-26T08:00:00Z"
+  },
+  {
+    "postId": 15,
+    "userId": "guide_taro",
+    "images": ["/assets/postImages/temp1.jpeg", "/assets/postImages/temp2.jpeg"],
+    "title": "기후 소도시 맛집 탐방",
+    "subtitle": "히다규 카레와 미노 지역 전통 음식",
+    "price": "45,000",
+    "discountRate": 5,
+    "duration": "5시간",
+    "maxParticipants": 4,
+    "rating": 4.6,
+    "reviewCount": 9,
+    "likeCount": 38,
+    "tag": { "ko": ["맛집", "쇼핑"], "ja": ["グルメ"], "en": ["gourmet"] },
+    "city": { "name": "기후", "country": "Japan", "lat": 35.4233, "lng": 136.7606 },
+    "availableSchedules": [
+      {
+        "date": "2026-05-12",
+        "timeSlots": [{ "id": "slot_20260512_1200", "time": "12:00", "status": "OPEN" }]
+      }
+    ],
+    "contentBlocks": [
+      { "type": "text", "value": "기후역 근처 로컬들이 사랑하는 숨은 맛집을 공개합니다." }
+    ],
+    "createdAt": "2026-02-26T12:00:00Z",
+    "updatedAt": "2026-02-26T12:00:00Z"
+  },
+  {
+    "postId": 16,
+    "userId": "guide_local_ogaki",
+    "images": ["/assets/postImages/temp3.jpeg", "/assets/postImages/temp4.jpeg"],
+    "title": "소프토피아 근처 액티비티 투어",
+    "subtitle": "오가키 야외 스포츠와 공원 산책",
+    "price": "10,000",
+    "discountRate": 0,
+    "duration": "3시간",
+    "maxParticipants": 10,
+    "rating": 4.5,
+    "reviewCount": 6,
+    "likeCount": 22,
+    "tag": { "ko": ["액티비티", "힐링"], "ja": ["アクティ비티"], "en": ["activity"] },
+    "city": { "name": "오가키", "country": "Japan", "lat": 35.3695, "lng": 136.6386 },
+    "availableSchedules": [
+      {
+        "date": "2026-06-05",
+        "timeSlots": [{ "id": "slot_20260605_1500", "time": "15:00", "status": "OPEN" }]
+      }
+    ],
+    "contentBlocks": [
+      { "type": "text", "value": "소프토피아 재팬 인근의 넓은 공원에서 즐기는 가벼운 트레킹 코스입니다." }
+    ],
+    "createdAt": "2026-02-26T15:00:00Z",
+    "updatedAt": "2026-02-26T15:00:00Z"
   }
 ]
