@@ -11,8 +11,8 @@ export default function LogoutButton() {
 }
 
 const ButtonWrapper = styled.div`
-  position: fixed;
-  bottom: 106px; /* nav(bottom 16 + height 68) + 22px */
+  position: relative;
+  bottom: 25px; /* nav(bottom 16 + height 68) + 22px */
   left: 50%;
   transform: translateX(-50%);
   width: 390px;
