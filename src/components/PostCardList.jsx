@@ -9,23 +9,36 @@ import { useNavigate } from "react-router-dom";
 
 const PostCardList = ({ post }) => {
   const { title, subtitle, price, rating, likeCount, images } = post;
-  const [isLiked, setIsLiked] = useState(false);
   const navigate = useNavigate();
+
+  // ✅ localStorage에서 초기 찜 상태 읽기
+  const getLiked = () => {
+    const liked = JSON.parse(localStorage.getItem("likedPosts") ?? "[]");
+    return liked.includes(post.postId);
+  };
+  const [isLiked, setIsLiked] = useState(getLiked);
 
   const handleClick = () => {
     navigate("/course", { state: { post } });
   };
+
   const toggleHeart = (e) => {
     e.stopPropagation();
+    const liked = JSON.parse(localStorage.getItem("likedPosts") ?? "[]");
+    let updated;
+    if (isLiked) {
+      updated = liked.filter((id) => id !== post.postId);
+    } else {
+      updated = [...liked, post.postId];
+    }
+    localStorage.setItem("likedPosts", JSON.stringify(updated));
     setIsLiked(!isLiked);
   };
-
 
   return (
     <CardContainer onClick={handleClick}>
       <ImageWrapper>
         <Thumbnail src={images[0]} alt={title} />
-
         <HeartBadge onClick={toggleHeart}>
           <HeartIcon src={isLiked ? FilledHeart : Heart} alt="heart" />
         </HeartBadge>
@@ -34,21 +47,17 @@ const PostCardList = ({ post }) => {
       <ContentSection>
         <Title>{title}</Title>
         <Subtitle>{subtitle}</Subtitle>
-
         <Footer>
           <BadgeGroup>
-
             <RatingBadge>
               <Icon src={Star} alt="star" />
               {rating}
             </RatingBadge>
-
             <LikeBadge>
               <Icon src={Thumb} alt="thumb" />
               {likeCount}
             </LikeBadge>
           </BadgeGroup>
-
           <Price>{price}원</Price>
         </Footer>
       </ContentSection>
@@ -57,7 +66,6 @@ const PostCardList = ({ post }) => {
 };
 
 export default PostCardList;
-
 
 const CardContainer = styled.div`
   width: 348px;
@@ -113,7 +121,7 @@ const Title = styled.h3`
   font-size: 14px;
   font-style: normal;
   font-weight: 600;
-  line-height: 22px; /* 157.143% */
+  line-height: 22px;
 `;
 
 const Subtitle = styled.p`

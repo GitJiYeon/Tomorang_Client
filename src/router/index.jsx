@@ -28,12 +28,23 @@ import GuidePage from "../pages/GuidePage";
 import GuideRegistrationPage from "../pages/GuideRegistrationPage";
 import GuideDescriptionEditPage from "../pages/GuideDescriptionEditPage";
 import SearchResultPage from "../pages/SearchResultPage";
+
 import GuideReservationListPage from "../pages/GuideReservationListPage";
 import GuideSignupPage from "../pages/GuideSignupPage";
 import GuideSelectLanguage from "../pages/GuideSelectLanguage";
 import GuideSelectInterest from "../pages/GuideSelectInterest";
 import MakeGuideProfile from "../pages/MakeGuideProfile";
 import GuideWelcomePage from "../pages/GuideWelcomePage";
+
+import ProfilePage from "../pages/ProfilePage";
+import PickCourse from "../pages/PickCourse";
+import MyreviewPage from "../pages/MyreviewPage";
+import HiddenUserPage from "../pages/HiddenUserPage";
+import ProfileEditPage from "../components/ProfileEditPage";
+import InterestEditPage from "../pages/InterestEditPage";
+import LanguageEditPage from "../pages/LanguageEditPage";
+import GuideChatPage from "../pages/GuideChatPage";
+import GuideMyPage from "../pages/GuideMyPage";
 
 
 
@@ -73,6 +84,17 @@ function Router() {
             <Route path="/guide/:id" element={<GuideProfilePage />} />
             <Route path="/book" element={<ReservationListPage />} />
             <Route path="/search-result" element={<SearchResultPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/my-course" element={<PickCourse />} />
+            <Route path="/my-reviews" element={<MyreviewPage />} />
+            <Route path="/hidden" element={<HiddenUserPage />} />
+            <Route path="/edit-profile" element={<ProfileEditPage />} />
+            <Route path="/edit-interest" element={<InterestEditPage />} />
+            <Route path="/edit-language" element={<LanguageEditPage />} />
+            <Route path="/guide-chat" element={<GuideChatPage />} />
+            <Route path="/guide-mypage" element={<GuideMyPage />} />
+            
+
           </Routes>
         </ReservationProvider>
     </BrowserRouter>

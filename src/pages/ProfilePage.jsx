@@ -1,0 +1,67 @@
+import { useNavigate } from "react-router-dom";
+import styled from "styled-components";
+import Header from "../components/Header";
+import BottomNav from "../components/mainComponents/BottomNav";
+import LogoutButton from "../components/LogoutButton";
+import ProfileCard from "../components/ProfileCard";
+import ActivitySection from "../components/ActivitySection";
+import ArrowIcon from "../assets/graynextarrow.svg"
+
+export default function ProfilePage() {
+  const navigate = useNavigate();
+
+  const raw = localStorage.getItem("profile");
+  const profile = raw ? JSON.parse(raw) : null;
+
+  const activityItems = [
+    { label: "찜한 코스",     onClick: () => navigate("/my-course") },
+    { label: "내가 쓴 리뷰", onClick: () => navigate("/my-reviews") },
+    { label: "숨긴 안내자",   onClick: () => navigate("/hidden") },
+  ];
+
+  const roleItems = [
+    { label: "가이드로 전환", onClick: () => navigate("/switch-role") },
+  ];
+
+  const langItems = [
+    { label: "앱 언어", value: "한국어", onClick: () => navigate("/language") },
+  ];
+
+  return (
+    <PageWrapper>
+      <Header coment={"프로필"} />
+      <ProfileCard
+        profile={profile}
+        onEditPress={() => navigate("/edit-profile")}
+      />
+      <Divider />
+      <SectionsArea>
+        <ActivitySection title="활동" items={activityItems} />
+        <ActivitySection title="역할 전환" items={roleItems} />
+        <ActivitySection title="언어 설정" items={langItems} />
+      </SectionsArea>
+      <LogoutButton />
+      <BottomNav activeIndex={4} />
+    </PageWrapper>
+  );
+}
+
+const PageWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #fff;
+`;
+
+const Divider = styled.div`
+  width: 100%;
+  height: 1px;
+  background: #F3F4F3;
+`;
+
+const SectionsArea = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 20px 20px;
+`;
