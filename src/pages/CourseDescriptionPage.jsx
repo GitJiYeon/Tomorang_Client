@@ -27,7 +27,7 @@ export default function CourseDescriptionPage() {
   const [isReviewExpanded, setIsReviewExpanded] = useState(false);
 
   const handleNext = () => {
-    navigate("/make-traveler-profile", { state: { interests: post?.interests } });
+    
   };
 
   const SCROLL_ROW = {
@@ -154,7 +154,10 @@ export default function CourseDescriptionPage() {
         </Section>
       )}
       <Bottom>
-        <ReserveButton isValid={true} onClick={handleNext} />
+        <ReserveButton 
+          isValid={true} 
+          onClick={() => navigate(`/reservation/${post.postId}`)} 
+        />
       </Bottom>
     </PageWrapper>
   );

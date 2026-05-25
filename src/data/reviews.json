@@ -6,8 +6,8 @@
     "nickname": "Suji Lee",
     "postImages": [
       "/assets/reviewImages/review2.jpeg",
-      "/assets/reviewImages/review15.jpeg",
-      "/assets/reviewImages/review19.jpeg"
+      "/assets/reviewImages/review6.jpeg",
+      "/assets/reviewImages/review4.jpeg"
     ],
     "rating": 4.8,
     "content": "개인적으로 빈티지 샵을 좋아하는데 진짜 골목 들어가셔서 가게를 찾으셔서 진짜 놀랐음. 옷 좋아하시는 분들은 진짜 추천!",
@@ -50,7 +50,7 @@
     "nickname": "데브정",
     "postImages": [
       "/assets/reviewImages/review5.jpeg",
-      "/assets/reviewImages/review13.jpeg"
+      "/assets/reviewImages/review11.jpeg"
     ],
     "rating": 5.0,
     "content": "오가키 소프토피아 재팬 건물 진짜 멋있네요. 소도시인데 IT 허브라는 게 신기했어요. 조용히 산책하기 좋습니다.",
@@ -64,7 +64,7 @@
     "nickname": "미츠하",
     "postImages": [
       "/assets/reviewImages/review6.jpeg",
-      "/assets/reviewImages/review19.jpeg",
+      "/assets/reviewImages/review8.jpeg",
       "/assets/reviewImages/review8.jpeg"
     ],
     "rating": 5.0,
@@ -79,7 +79,7 @@
     "nickname": "여행자A",
     "postImages": [
       "/assets/reviewImages/review7.jpeg",
-      "/assets/reviewImages/review20.jpeg"
+      "/assets/reviewImages/review5.jpeg"
     ],
     "rating": 4.7,
     "content": "기후성에서 본 노을은 잊지 못할 거예요. 킨카산 로프웨이 타고 올라가면서 보는 풍경이 예술입니다.",
@@ -94,7 +94,7 @@
     "postImages": [
       "/assets/reviewImages/review8.jpeg",
       "/assets/reviewImages/review11.jpeg",
-      "/assets/reviewImages/review18.jpeg"
+      "/assets/reviewImages/review7.jpeg"
     ],
     "rating": 4.9,
     "content": "오가키 애니메이션 성지 순례 투어 덕분에 주인공들이 걸었던 다리를 직접 건너봤네요. 가이드님 설명이 디테일해요.",
@@ -122,7 +122,7 @@
     "nickname": "타코러버",
     "postImages": [
       "/assets/reviewImages/review10.jpeg",
-      "/assets/reviewImages/review15.jpeg"
+      "/assets/reviewImages/review9.jpeg"
     ],
     "rating": 4.8,
     "content": "오사카 맛집 리스트 다 성공적! 가이드님이 추천해주신 라멘집 국물이 아직도 생각나네요.",
@@ -150,8 +150,8 @@
     "userId": "user_snow",
     "nickname": "눈꽃",
     "postImages": [
-      "/assets/reviewImages/review12.jpeg",
-      "/assets/reviewImages/review18.jpeg"
+      "/assets/reviewImages/review3.jpeg",
+      "/assets/reviewImages/review2.jpeg"
     ],
     "rating": 5.0,
     "content": "홋카이도 설원 트레킹은 최고였어요. 눈이 너무 깨끗하고 온천으로 마무리하니 피로가 싹 풀리네요.",
@@ -164,7 +164,7 @@
     "userId": "user_walker",
     "nickname": "산책러",
     "postImages": [
-      "/assets/reviewImages/review13.jpeg",
+      "/assets/reviewImages/review4.jpeg",
       "/assets/reviewImages/review2.jpeg"
     ],
     "rating": 4.5,
@@ -178,8 +178,8 @@
     "userId": "user_health",
     "nickname": "건강최고",
     "postImages": [
-      "/assets/reviewImages/review14.jpeg",
-      "/assets/reviewImages/review12.jpeg"
+      "/assets/reviewImages/review10.jpeg",
+      "/assets/reviewImages/review9.jpeg"
     ],
     "rating": 4.8,
     "content": "소프토피아 근처에서 가볍게 트레킹했는데 공기가 너무 맑아요. 소도시의 매력을 제대로 느꼈습니다.",
@@ -192,7 +192,7 @@
     "userId": "user_otaku",
     "nickname": "덕후지망생",
     "postImages": [
-      "/assets/reviewImages/review15.jpeg",
+      "/assets/reviewImages/review7.jpeg",
       "/assets/reviewImages/review11.jpeg"
     ],
     "rating": 4.4,
@@ -206,7 +206,7 @@
     "userId": "user_deer",
     "nickname": "사슴친구",
     "postImages": [
-      "/assets/reviewImages/review16.jpeg",
+      "/assets/reviewImages/review3.jpeg",
       "/assets/reviewImages/review4.jpeg"
     ],
     "rating": 4.7,
@@ -220,9 +220,9 @@
     "userId": "user_night",
     "nickname": "올빼미",
     "postImages": [
-      "/assets/reviewImages/review17.jpeg",
+      "/assets/reviewImages/review11.jpeg",
       "/assets/reviewImages/review10.jpeg",
-      "/assets/reviewImages/review20.jpeg"
+      "/assets/reviewImages/review2.jpeg"
     ],
     "rating": 4.9,
     "content": "오다이바 야경은 정말 사진보다 실물이 백배 낫습니다. 건담 쇼 시간 맞춰서 데려가주셔서 감사해요.",
@@ -235,8 +235,8 @@
     "userId": "user_surf",
     "nickname": "서퍼K",
     "postImages": [
-      "/assets/reviewImages/review18.jpeg",
-      "/assets/reviewImages/review12.jpeg"
+      "/assets/reviewImages/review10.jpeg",
+      "/assets/reviewImages/review3.jpeg"
     ],
     "rating": 5.0,
     "content": "홋카이도 바다에서 서핑이라니! 초보였는데 강사님이 친절하셔서 보드 위에 설 수 있었어요. 짜릿합니다.",
@@ -249,7 +249,7 @@
     "userId": "user_silence",
     "nickname": "목소리",
     "postImages": [
-      "/assets/reviewImages/review19.jpeg",
+      "/assets/reviewImages/review4.jpeg",
       "/assets/reviewImages/review6.jpeg",
       "/assets/reviewImages/review8.jpeg"
     ],
@@ -264,8 +264,8 @@
     "userId": "user_shibuya",
     "nickname": "쇼퍼홀릭",
     "postImages": [
-      "/assets/reviewImages/review20.jpeg",
-      "/assets/reviewImages/review15.jpeg"
+      "/assets/reviewImages/review3.jpeg",
+      "/assets/reviewImages/review7.jpeg"
     ],
     "rating": 4.6,
     "content": "시부야의 숨겨진 편집샵들 너무 예뻐요. 덕분에 한국에 없는 유니크한 옷들 많이 샀습니다.",

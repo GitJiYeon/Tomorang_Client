@@ -27,7 +27,7 @@ export default function ReservationPage() {
 
   const { postId } = useParams();
   const post = postData.find((p) => p.postId === Number(postId));
-
+  const navigate = useNavigate();
   if (!post) return <div>포스트를 찾을 수 없습니다.</div>;
 
   const rawPrice = parseInt(post.price.replace(/,/g, ""), 10);
@@ -173,6 +173,7 @@ export default function ReservationPage() {
         <ReserveBtn
           disabled={!selectedDate || !selectedSlot}
           onClick={() => {
+            navigate('/reservation-status/1');
             // TODO: 예약 API 연결
             console.log({ post, selectedDate, selectedSlot, adults, children, request });
           }}

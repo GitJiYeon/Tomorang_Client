@@ -2,9 +2,9 @@
   {
     "id": 1,
     "image": "/assets/bannerImages/banner2.svg",
-    "category": "맛집",
-    "title": "도쿄",
-    "description": "전국 인기 맛집을\n한 번에",
+    "category": "",
+    "title": "",
+    "description": "",
     "link": "https://example.com/food"
   },
   {

@@ -2,12 +2,15 @@
 import styled from 'styled-components';
 import BackArrow from "../assets/backarrow.svg";
 import { useNavigate } from "react-router-dom";
-function Header({coment}) {
+function Header({coment, path}) {
   const navigate = useNavigate();
   return (
     <>
       <Container>
-        <BackButton onClick={() => navigate(-1)} type="button">
+        <BackButton 
+          onClick={() => (path ? navigate(path) : navigate(-1))} 
+          type="button"
+        >
           <img src={BackArrow} alt="뒤로가기" />
         </BackButton>
 

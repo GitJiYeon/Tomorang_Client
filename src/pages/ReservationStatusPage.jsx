@@ -40,11 +40,11 @@ export default function ReservationStatusPage() {
 
   return (
     <Wrapper>
-      <Header coment="예약 현황" />
+      <Header coment="예약 현황" path={'/main'}/>
       <Content>
 
         {/* 상태 헤더 */}
-        <StatusHeader status={status} />
+        <StatusHeader status={status} path={'/main'} />
 
         {/* 만남 장소 */}
         <Section>
@@ -104,7 +104,7 @@ export default function ReservationStatusPage() {
             <ActionBtn onClick={() => navigate(`/review-write/${reservationId}`)}>
               투어 완료하기
             </ActionBtn>
-            <ChatBtn>
+            <ChatBtn onClick={()=>navigate('/chat/1')}>
               <img src={ChatIcon2} alt="chat" width={19} height={15} />
               채팅하기
             </ChatBtn>
@@ -114,7 +114,7 @@ export default function ReservationStatusPage() {
           <ActionBtn onClick={() => navigate("/main")}>다른 코스 찾아보기</ActionBtn>
         )}
         {status === "COMPLETED" && !myReview && (
-          <ActionBtn onClick={() => navigate(`/review-write/${reservationId}`)}>
+          <ActionBtn onClick={() => navigate(`/review-write/${4}`)}>
             후기 등록하기
           </ActionBtn>
         )}

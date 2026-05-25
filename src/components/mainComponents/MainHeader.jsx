@@ -1,17 +1,20 @@
+import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import LogoText from "../../assets/logoText.svg";
 import BellIcon from "../../assets/bellIcon.svg";
 import SearchIcon from "../../assets/searchIcon.svg";
 
 export default function MainHeader() {
+  const navigate = useNavigate();
   return (
     <Wrapper>
       <img src={LogoText} alt="TOMORANG" style={{ width: 104, height: 15 }} />
       <Icons>
-        <BellBtn>
+        {/* 2. onClick에 화살표 함수 사용 (즉시 실행 방지) */}
+        <BellBtn onClick={() => navigate("/notifications")}>
           <img src={BellIcon} alt="알림" style={{ width: 14.5, height: 18 }} />
         </BellBtn>
-        <SearchBtn>
+        <SearchBtn onClick={() => navigate("/search")}>
           <img src={SearchIcon} alt="검색" style={{ width: 16, height: 16.62 }} />
         </SearchBtn>
       </Icons>

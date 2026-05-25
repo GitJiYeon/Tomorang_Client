@@ -8,9 +8,10 @@ import StatusFilter from "../components/reservation/StatusFilter";
 import ReservationCard from "../components/reservation/ReservationCard";
 import BottomNav from "../components/mainComponents/BottomNav";
 import postData from "../data/postData.json";
+import { useNavigate } from "react-router-dom";
 
 const MOCK_RESERVATIONS = [
-  { id: 1, postId: 2, date: "2026-02-21", time: "12:00-13:00", status: "확정됨" },
+  { id: 1, postId: 7, date: "2026-02-21", time: "12:00-13:00", status: "확정됨" },
   { id: 2, postId: 2, date: "2026-02-21", time: "12:00-13:00", status: "확정됨" },
   { id: 3, postId: 1, date: "2026-04-03", time: "09:00-13:00", status: "대기중" },
   { id: 4, postId: 3, date: "2026-04-07", time: "09:00-14:00", status: "완료됨" },
@@ -19,7 +20,7 @@ const MOCK_RESERVATIONS = [
 
 export default function ReservationListPage() {
   const [selectedStatus, setSelectedStatus] = useState("확정됨");
-
+  const navigate = useNavigate();
   const filtered = MOCK_RESERVATIONS.filter((r) => r.status === selectedStatus);
 
   return (
@@ -29,7 +30,7 @@ export default function ReservationListPage() {
         selectedStatus={selectedStatus}
         onStatusChange={setSelectedStatus}
       />
-      <CardList>
+      <CardList onClick={()=> navigate('/reservation-status/2')}>
         {filtered.length > 0 ? (
           filtered.map((reservation) => {
             const post = postData.find((p) => p.postId === reservation.postId);

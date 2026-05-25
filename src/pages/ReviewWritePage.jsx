@@ -84,7 +84,7 @@ export default function ReviewWritePage() {
         createdAt: new Date().toISOString(),
       });
       // 제출 완료 → 예약현황 페이지로 이동 (이제 COMPLETED + myReview 있음)
-      navigate(`/reservation-status/${reservationId}`, { replace: true });
+      navigate(`/reservation-status/${7}`, { replace: true });
     } catch (err) {
       console.error("리뷰 등록 실패", err);
     } finally {

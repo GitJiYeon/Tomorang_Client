@@ -29,7 +29,6 @@ export default function Banner({ bannerData }) {
           {bannerData.map((banner, i) => (
             <Card key={i} onClick={() => banner.link && window.open(banner.link, "_blank")}>
               <SlideImg src={banner.image} alt={banner.name} />
-              <Overlay />
 
               <CategoryTag>{banner.category}</CategoryTag>
 
@@ -95,16 +94,6 @@ const SlideImg = styled.img`
   display: block;
 `;
 
-const Overlay = styled.div`
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to right,
-    rgba(199, 192, 173, 0.6) 20%,
-    transparent 55% 55%
-  );
-  pointer-events: none;
-`;
 
 const CategoryTag = styled.span`
   position: absolute;

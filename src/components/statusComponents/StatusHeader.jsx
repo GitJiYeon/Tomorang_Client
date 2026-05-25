@@ -44,7 +44,7 @@ const STATUS_CONFIG = {
 
 const STEPS = ["안내자 확인", "예약 확정", "투어 완료"];
 
-export default function StatusHeader({ status }) {
+export default function StatusHeader({ status,}) {
   const config = STATUS_CONFIG[status] || STATUS_CONFIG.PENDING;
   const isPending = status === "PENDING";
 

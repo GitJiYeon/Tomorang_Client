@@ -1,12 +1,13 @@
 import styled from "styled-components";
-
-export default function Section({ title, children, showMore = true, onMore }) {
+import { useNavigate } from "react-router-dom";
+export default function Section({ title, children, showMore = true, onMore, path }) {
+  const navigate = useNavigate();
   return (
     <Wrapper>
       <Header>
         <Title>{title}</Title>
         {showMore && (
-          <MoreBtn onClick={onMore}>더보기 ›</MoreBtn>
+          <MoreBtn onClick={()=> navigate(path)}>더보기 ›</MoreBtn>
         )}
       </Header>
       {children}

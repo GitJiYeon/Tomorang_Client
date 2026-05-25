@@ -20,7 +20,7 @@ export default function NotificationPage() {
 
   const handleClick = (noti) => {
     if (noti.reservationId) {
-      navigate(`/reservation-status/${noti.reservationId}`);
+      navigate(`/reservation-status/4`);
     }
   };
 

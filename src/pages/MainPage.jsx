@@ -67,7 +67,7 @@ export default function MainPage() {
       </Section>
 
       {/* ── 떠오르는 여행지 ── */}
-      <Section title="떠오르는 여행지">
+      <Section title="떠오르는 여행지" path="/emergingDestination">
         <div style={SCROLL_ROW}>
           {regionData.map((region) => (
             <RegionCard key={region.regionId} region={region} lang={lang} />
@@ -98,10 +98,10 @@ export default function MainPage() {
         <Section title="실시간 리뷰">
           <div style={SCROLL_ROW}>
             {reviews
-              .filter((r) => r.postImage)  // ← 이것만 추가
-              .slice(0, 5)
-              .map((review) => (
-                <ReviewCard key={review.reviewId} review={review} />
+              .filter((r) => r.postImages && r.postImages.length > 0) // postImage -> postImages
+  .slice(0, 5)
+  .map((review) => (
+    <ReviewCard key={review.reviewId} review={review} />
               ))}
           </div>
         </Section>

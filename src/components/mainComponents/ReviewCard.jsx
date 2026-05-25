@@ -24,7 +24,7 @@ export default function ReviewCard({ review }) {
     <Wrapper>
       {/* 왼쪽 이미지 */}
       <PostImg
-        src={review.postImage}
+        src={review.postImages[0]}
         alt="리뷰 이미지"
         onError={e => { e.target.style.background = "#ddd"; e.target.removeAttribute("src"); }}
       />

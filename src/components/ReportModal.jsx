@@ -179,7 +179,11 @@ const ReportSystem = ({ isOpen, onClose, guideId }) => {
       setShowToast(true);
       setTimeout(() => setShowToast(false), 3000);
     }, 400);
-  };
+    
+    setTimeout(() => {
+        navigate('/main');
+    }, 400);
+    };
 
   return (
     <>
