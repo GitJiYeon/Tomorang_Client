@@ -1,8 +1,16 @@
 import { useState } from "react";
 import styled from "styled-components";
 import HeartIcon from "../../assets/heart.svg";
+import StarIcon from "../../assets/mapStar.svg";
+import LikeIcon from "../../assets/likeIcon.svg";
 
-export default function PostCard({ post, isSale = false }) {
+export default function PostCard({
+  post,
+  isSale = false,
+  showHeart = true,
+  showStats = false,
+  fullWidth = false,
+}) {
   const [liked, setLiked] = useState(false);
 
   const rawPrice = parseInt(post.price.replace(/,/g, ""), 10);
@@ -11,7 +19,7 @@ export default function PostCard({ post, isSale = false }) {
     : rawPrice;
 
   return (
-    <Card>
+    <Card $fullWidth={fullWidth}>
       <ImageWrap>
         <Img
           src={post.images?.[0]}
@@ -19,14 +27,28 @@ export default function PostCard({ post, isSale = false }) {
           onError={e => { e.target.style.background = "#ddd"; e.target.removeAttribute("src"); }}
         />
         {isSale && <SaleBadge>SALE</SaleBadge>}
-        <HeartBtn onClick={(e) => { e.stopPropagation(); setLiked(p => !p); }}>
-          <img src={HeartIcon} alt="heart" style={{ width: 12, height: 11 }} />
-        </HeartBtn>
+        {showHeart && (
+          <HeartBtn onClick={(e) => { e.stopPropagation(); setLiked(p => !p); }}>
+            <img src={HeartIcon} alt="heart" style={{ width: 12, height: 11 }} />
+          </HeartBtn>
+        )}
       </ImageWrap>
 
       <Info>
         <Title>{post.title} ›</Title>
         <Subtitle>{post.subtitle}</Subtitle>
+        {showStats && (
+          <BadgeRow>
+            <StatBadge $filled>
+              <img src={StarIcon} alt="bookmark" width={15} height={15} />
+              <StatText>{post.reviewCount ?? post.rating}</StatText>
+            </StatBadge>
+            <StatBadge>
+              <img src={LikeIcon} alt="like" width={15} height={15} />
+              <StatText>{post.likeCount}</StatText>
+            </StatBadge>
+          </BadgeRow>
+        )}
         <PriceArea>
           {isSale && post.discountRate > 0 && (
             <OriginalPrice>{rawPrice.toLocaleString()}원</OriginalPrice>
@@ -39,7 +61,7 @@ export default function PostCard({ post, isSale = false }) {
 }
 
 const Card = styled.div`
-  width: 200px;
+  width: ${({ $fullWidth }) => ($fullWidth ? "100%" : "200px")};
   flex-shrink: 0;
   cursor: pointer;
   border-radius: 12px;
@@ -122,6 +144,34 @@ const Subtitle = styled.div`
   color: #acacac;
   letter-spacing: -0.1%;
   line-height: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const BadgeRow = styled.div`
+  display: flex;
+  gap: 4px;
+  align-items: center;
+`;
+
+const StatBadge = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  border-radius: 2px;
+  padding: ${({ $filled }) => ($filled ? "3px 4px" : "4px")};
+  background: ${({ $filled }) => ($filled ? "#C5F598" : "#fff")};
+  border: ${({ $filled }) => ($filled ? "none" : "1px solid #C5F598")};
+  box-sizing: border-box;
+`;
+
+const StatText = styled.span`
+  font-family: "Pretendard", sans-serif;
+  font-weight: 500;
+  font-size: 10px;
+  line-height: 100%;
+  color: #111;
 `;
 
 const PriceArea = styled.div`

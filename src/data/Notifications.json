@@ -2,7 +2,7 @@
   {
     "notificationId": 1,
     "type": "RESERVATION_CONFIRMED",
-    "title": "투어가 완료되었어요!",
+    "title": "예약이 확정되었어요!",
     "body": "[가마쿠라 해변 사진 출사] 2026년 02월 24일 12:00-18:00 지연님이 예약을 확정하셨어요.",
     "timeLabel": "방금 전",
     "isUnread": true,

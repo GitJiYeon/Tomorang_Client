@@ -24,7 +24,18 @@ import NotificationPage from "../pages/NotificationPage";
 import Chat from "../pages/Chat";
 import GuideProfilePage from "../pages/GuideProfilePage";
 import ReservationListPage from "../pages/ReservationListPage";
+import GuidePage from "../pages/GuidePage";
+import GuideRegistrationPage from "../pages/GuideRegistrationPage";
+import GuideDescriptionEditPage from "../pages/GuideDescriptionEditPage";
 import SearchResultPage from "../pages/SearchResultPage";
+
+import GuideReservationListPage from "../pages/GuideReservationListPage";
+import GuideSignupPage from "../pages/GuideSignupPage";
+import GuideSelectLanguage from "../pages/GuideSelectLanguage";
+import GuideSelectInterest from "../pages/GuideSelectInterest";
+import MakeGuideProfile from "../pages/MakeGuideProfile";
+import GuideWelcomePage from "../pages/GuideWelcomePage";
+
 import ProfilePage from "../pages/ProfilePage";
 import PickCourse from "../pages/PickCourse";
 import MyreviewPage from "../pages/MyreviewPage";
@@ -34,7 +45,6 @@ import InterestEditPage from "../pages/InterestEditPage";
 import LanguageEditPage from "../pages/LanguageEditPage";
 import GuideChatPage from "../pages/GuideChatPage";
 import GuideMyPage from "../pages/GuideMyPage";
-
 
 
 
@@ -53,7 +63,16 @@ function Router() {
             <Route path="/make-traveler-profile" element={<MakeTravelerProfile />} />
             <Route path="/welcome" element={<WelcomePage />} />
             <Route path="/travelersignup" element={<TravelerSignupPage />} />
+            <Route path="/guidesignup" element={<GuideSignupPage />} />
+            <Route path="/guide-language" element={<GuideSelectLanguage />} />
+            <Route path="/guide-interest" element={<GuideSelectInterest />} />
+            <Route path="/make-guide-profile" element={<MakeGuideProfile />} />
+            <Route path="/guide-welcome" element={<GuideWelcomePage />} />
             <Route path="/main" element={<MainPage />} />
+            <Route path="/guide" element={<GuidePage />} />
+            <Route path="/guide-reservations" element={<GuideReservationListPage />} />
+            <Route path="/guide-registration" element={<GuideRegistrationPage />} />
+            <Route path="/guide-description-edit" element={<GuideDescriptionEditPage />} />
             <Route path="emergingDestination" element={<EmergingDestination></EmergingDestination>}/>
             <Route path="/reservation/:postId" element={<ReservationPage />} />
             <Route path="/reservation-status/:reservationId" element={<ReservationStatusPage />} />
