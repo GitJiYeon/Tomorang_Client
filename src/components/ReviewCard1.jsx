@@ -5,6 +5,7 @@ import Graystar from "../assets/graystar.svg";
 
 export default function ReviewCard1({ review }) {
   const date = new Date(review.createdAt);
+  const postImages = review.postImages ?? (review.postImage ? [review.postImage] : []);
   const dateStr = `${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
   const yearStr = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
 
@@ -40,11 +41,11 @@ export default function ReviewCard1({ review }) {
       </TopRow>
 
       {/* 이미지 슬라이드 */}
-      {review.postImage && (
+      {postImages.length > 0 && (
         <ImageRow>
-          <ReviewImage $src={review.postImage} />
-          <ReviewImage $src={review.postImage} />
-          <ReviewImage $src={review.postImage} />
+          {postImages.map((image) => (
+            <ReviewImage key={image} $src={image} />
+          ))}
         </ImageRow>
       )}
 

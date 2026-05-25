@@ -49,11 +49,15 @@ export default function NotificationPage() {
 }
 
 const Wrapper = styled.div`
-  max-width: 390px;
+  width: min(390px, 100vw);
   margin: 0 auto;
-  min-height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
   background: #f8f8f8;
   font-family: "Pretendard", sans-serif;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 `;
 
 const Content = styled.div`
@@ -62,6 +66,14 @@ const Content = styled.div`
   flex-direction: column;
   gap: 10px;
   align-items: center;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 `;
 
 const Empty = styled.div`

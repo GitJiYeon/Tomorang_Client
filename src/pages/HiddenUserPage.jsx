@@ -16,7 +16,7 @@ export default function HiddenUserPage() {
   const hiddenGuides = guides.filter((guide) => hiddenIds.includes(guide.id));
 
   return (
-    <>
+    <PageWrapper>
       <Header coment={"숨긴 안내자"} />
       <ListWrapper>
         {hiddenGuides.length > 0 ? (
@@ -31,9 +31,20 @@ export default function HiddenUserPage() {
           <EmptyText>숨긴 안내자가 없어요</EmptyText>
         )}
       </ListWrapper>
-    </>
+    </PageWrapper>
   );
 }
+
+const PageWrapper = styled.div`
+  width: min(390px, 100vw);
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+`;
 
 const ListWrapper = styled.div`
   display: flex;
@@ -41,6 +52,14 @@ const ListWrapper = styled.div`
   align-items: center;
   gap: 12px;
   padding: 16px 0;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 `;
 
 const EmptyText = styled.p`

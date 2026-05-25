@@ -57,14 +57,15 @@ export default function ReservationListPage() {
 }
 
 const PageWrapper = styled.div`
-  width: 390px;
+  width: min(390px, 100vw);
   margin: 0 auto;
   background-color: #fff;
-  min-height: 100dvh;
+  height: 100dvh;
+  max-height: 100dvh;
   display: flex;
   flex-direction: column;
-  padding-bottom: 100px;
   box-sizing: border-box;
+  overflow: hidden;
 `;
 
 const CardList = styled.div`
@@ -73,8 +74,16 @@ const CardList = styled.div`
   align-items: center;
   gap: 12px;
   padding: 16px 20px;
+  padding-bottom: calc(100px + env(safe-area-inset-bottom));
   background-color: #fff;
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 `;
 
 const PlaceholderText = styled.div`

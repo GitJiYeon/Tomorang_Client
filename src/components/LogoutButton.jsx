@@ -11,17 +11,12 @@ export default function LogoutButton() {
 }
 
 const ButtonWrapper = styled.div`
-  position: relative;
-  bottom: 25px; /* nav(bottom 16 + height 68) + 22px */
-  left: 50%;
-  transform: translateX(-50%);
-  width: 390px;
+  width: min(390px, 100%);
   max-width: 100vw;
-
   display: flex;
   justify-content: center;
-
-  z-index: 201;
+  padding: 20px 0 calc(104px + env(safe-area-inset-bottom));
+  margin: 0 auto;
 `;
 
 const LogoutContainer = styled.button`

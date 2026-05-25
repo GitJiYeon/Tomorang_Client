@@ -76,14 +76,15 @@ export default function GuideReservationListPage() {
 }
 
 const PageWrapper = styled.div`
-  width: 390px;
-  min-height: 100dvh;
+  width: min(390px, 100vw);
+  height: 100dvh;
+  max-height: 100dvh;
   margin: 0 auto;
-  padding-bottom: 100px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   background: #fff;
+  overflow: hidden;
 `;
 
 const CardList = styled.div`
@@ -93,7 +94,15 @@ const CardList = styled.div`
   align-items: center;
   gap: 18px;
   padding: 20px;
+  padding-bottom: calc(100px + env(safe-area-inset-bottom));
   background: #fff;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 `;
 
 const PlaceholderText = styled.div`
