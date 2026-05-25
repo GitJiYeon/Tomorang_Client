@@ -1,13 +1,13 @@
 import React from "react";
 import styled from "styled-components";
 
-// 칩에 들어갈 옵션들
 const STATUS_OPTIONS = ["대기중", "확정됨", "완료됨", "취소/거절"];
 
-export default function StatusFilter({ selectedStatus, onStatusChange }) {
+export default function StatusFilter({ selectedStatus, onStatusChange, options }) {
+  const list = options ?? STATUS_OPTIONS; // ← 이 한 줄만 추가
   return (
     <FilterWrapper>
-      {STATUS_OPTIONS.map((status) => (
+      {list.map((status) => (
         <StatusChip
           key={status}
           $isSelected={status === selectedStatus}
