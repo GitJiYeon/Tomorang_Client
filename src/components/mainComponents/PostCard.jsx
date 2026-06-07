@@ -1,8 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import HeartIcon from "../../assets/heart.svg";
 import StarIcon from "../../assets/mapStar.svg";
 import LikeIcon from "../../assets/likeIcon.svg";
+import { addWishlist, removeWishlist } from "../../api/tomorang";
+import { getPostDescription, getPostImages } from "../../utils/postDisplay";
+import { isPostLiked, setPostLiked, subscribeWishlistChanges } from "../../utils/wishlist";
 
 export default function PostCard({
   post,
@@ -11,46 +15,85 @@ export default function PostCard({
   showStats = false,
   fullWidth = false,
 }) {
-  const [liked, setLiked] = useState(false);
+  const navigate = useNavigate();
+  const postId = post.postId ?? post.post_id ?? post.id;
+  const [liked, setLiked] = useState(() => isPostLiked(postId));
+  const image = getPostImages(post)[0];
+  const description = getPostDescription(post);
 
-  const rawPrice = parseInt(post.price.replace(/,/g, ""), 10);
-  const discountedPrice = isSale && post.discountRate
-    ? Math.round(rawPrice * (1 - post.discountRate / 100))
+  useEffect(() => {
+    setLiked(isPostLiked(postId));
+    return subscribeWishlistChanges(() => setLiked(isPostLiked(postId)));
+  }, [postId]);
+
+  const handleLike = async (event) => {
+    event.stopPropagation();
+    const nextLiked = !liked;
+    try {
+      if (nextLiked) {
+        await addWishlist(postId);
+      } else {
+        await removeWishlist(postId);
+      }
+      setPostLiked(postId, nextLiked);
+      setLiked(nextLiked);
+    } catch (error) {
+      console.error("찜 변경 실패", error);
+      alert(error.message || "찜 변경에 실패했습니다.");
+    }
+  };
+
+  const rawPrice = parseInt(String(post.price ?? 0).replace(/,/g, ""), 10) || 0;
+  const discountRate = post.discountRate ?? post.discount_rate ?? 0;
+  const discountedPrice = isSale && discountRate
+    ? Math.round(rawPrice * (1 - discountRate / 100))
     : rawPrice;
 
   return (
-    <Card $fullWidth={fullWidth}>
+    <Card
+      $fullWidth={fullWidth}
+      onClick={() => {
+        sessionStorage.setItem("currentCoursePost", JSON.stringify(post));
+        navigate("/course", { state: { post } });
+      }}
+    >
       <ImageWrap>
-        <Img
-          src={post.images?.[0]}
-          alt={post.title}
-          onError={e => { e.target.style.background = "#ddd"; e.target.removeAttribute("src"); }}
-        />
+        {image ? (
+          <Img
+            src={image}
+            alt={post.title}
+            onError={(event) => {
+              event.currentTarget.style.display = "none";
+            }}
+          />
+        ) : (
+          <ImagePlaceholder>이미지 없음</ImagePlaceholder>
+        )}
         {isSale && <SaleBadge>SALE</SaleBadge>}
         {showHeart && (
-          <HeartBtn onClick={(e) => { e.stopPropagation(); setLiked(p => !p); }}>
+          <HeartBtn onClick={handleLike}>
             <img src={HeartIcon} alt="heart" style={{ width: 12, height: 11 }} />
           </HeartBtn>
         )}
       </ImageWrap>
 
       <Info>
-        <Title>{post.title} ›</Title>
-        <Subtitle>{post.subtitle}</Subtitle>
+        <Title>{post.title}</Title>
+        <Subtitle>{description}</Subtitle>
         {showStats && (
           <BadgeRow>
             <StatBadge $filled>
               <img src={StarIcon} alt="bookmark" width={15} height={15} />
-              <StatText>{post.reviewCount ?? post.rating}</StatText>
+              <StatText>{post.reviewCount ?? post.rating ?? 0}</StatText>
             </StatBadge>
             <StatBadge>
               <img src={LikeIcon} alt="like" width={15} height={15} />
-              <StatText>{post.likeCount}</StatText>
+              <StatText>{post.likeCount ?? 0}</StatText>
             </StatBadge>
           </BadgeRow>
         )}
         <PriceArea>
-          {isSale && post.discountRate > 0 && (
+          {isSale && discountRate > 0 && (
             <OriginalPrice>{rawPrice.toLocaleString()}원</OriginalPrice>
           )}
           <Price>{discountedPrice.toLocaleString()}원</Price>
@@ -85,6 +128,16 @@ const Img = styled.img`
   display: block;
 `;
 
+const ImagePlaceholder = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #acacac;
+  font-size: 12px;
+`;
+
 const SaleBadge = styled.div`
   position: absolute;
   top: 8px;
@@ -94,10 +147,9 @@ const SaleBadge = styled.div`
   padding: 6px 10px;
   box-sizing: border-box;
   background: #C5F598;
-  font-family: "Pretendard", sans-serif;
+  font-family: Pretendard, sans-serif;
   font-weight: 700;
   font-size: 11px;
-  line-height: 100%;
   color: #111;
   display: flex;
   align-items: center;
@@ -131,7 +183,6 @@ const Title = styled.div`
   font-size: 14px;
   font-weight: 500;
   color: #111;
-  letter-spacing: -0.1%;
   line-height: 100%;
   white-space: nowrap;
   overflow: hidden;
@@ -142,7 +193,6 @@ const Subtitle = styled.div`
   font-size: 10px;
   font-weight: 400;
   color: #acacac;
-  letter-spacing: -0.1%;
   line-height: 100%;
   white-space: nowrap;
   overflow: hidden;
@@ -167,10 +217,9 @@ const StatBadge = styled.div`
 `;
 
 const StatText = styled.span`
-  font-family: "Pretendard", sans-serif;
+  font-family: Pretendard, sans-serif;
   font-weight: 500;
   font-size: 10px;
-  line-height: 100%;
   color: #111;
 `;
 
@@ -182,11 +231,9 @@ const PriceArea = styled.div`
 `;
 
 const OriginalPrice = styled.div`
-  font-family: "Pretendard", sans-serif;
+  font-family: Pretendard, sans-serif;
   font-weight: 400;
   font-size: 10px;
-  line-height: 100%;
-  letter-spacing: -0.1%;
   text-decoration: line-through;
   color: #DADADA;
 `;
@@ -195,6 +242,4 @@ const Price = styled.div`
   font-size: 14px;
   font-weight: 700;
   color: #111;
-  letter-spacing: -0.1%;
-  line-height: 100%;
 `;

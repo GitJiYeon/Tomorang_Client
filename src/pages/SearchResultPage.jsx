@@ -1,22 +1,12 @@
-/**
- * SearchResultPage - 검색 결과 페이지
- *
- * 라우터:
- * <Route path="/search-result" element={<SearchResultPage />} />
- *
- * 이동:
- * navigate("/search-result", { state: { keyword } })
- */
-
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import styled from "styled-components";
-import postData from "../data/postData.json";
 import FilterBar from "../components/FilterBar";
 import PostCardList from "../components/PostCardList";
 import SearchIcon from "../assets/searchIcon2.svg";
 import BackArrow from "../assets/backarrow.svg";
-import XCircleIcon from "../assets/bookStatusIcons/xIcon.svg"; // 검색어 지우기 아이콘
+import XCircleIcon from "../assets/bookStatusIcons/xIcon.svg";
+import { getPosts } from "../api/tomorang";
 
 export default function SearchResultPage() {
   const navigate = useNavigate();
@@ -25,54 +15,56 @@ export default function SearchResultPage() {
 
   const [inputVal, setInputVal] = useState(initialKeyword);
   const [query, setQuery] = useState(initialKeyword);
-  const [filter, setFilter] = useState({ sort: "추천순", category: "애니메이션" });
+  const [posts, setPosts] = useState([]);
+  const [filter, setFilter] = useState({ sort: "추천순", category: "" });
+
+  useEffect(() => {
+    let alive = true;
+
+    getPosts(query ? { keyword: query } : {})
+      .then((items) => {
+        if (alive) setPosts(items);
+      })
+      .catch((error) => {
+        console.error("검색 결과 조회 실패", error);
+        if (alive) setPosts([]);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [query]);
 
   const handleSearch = () => {
-    if (!inputVal.trim()) return;
     setQuery(inputVal.trim());
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") handleSearch();
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter") handleSearch();
   };
 
-  const handleFilterChange = (newFilter) => {
-    setFilter(newFilter);
-  };
+  const sorted = useMemo(() => {
+    const tagFiltered = filter.category
+      ? posts.filter((post) =>
+          post.tags?.some((tag) => String(tag?.name ?? tag?.value ?? tag).includes(filter.category)) ||
+          post.tag?.ko?.includes(filter.category) ||
+          post.title?.includes(filter.category)
+        )
+      : posts;
 
-  // 검색어 필터링
-  const filtered = postData.filter((p) => {
-    if (!query) return true;
-    return (
-      p.title.includes(query) ||
-      p.subtitle.includes(query) ||
-      p.city.name.includes(query) ||
-      p.tag?.ko?.some((t) => t.includes(query))
-    );
-  });
-
-  // 태그 필터링
-  const tagFiltered = filter.category
-    ? filtered.filter((p) =>
-        p.tag?.ko?.includes(filter.category) ||
-        p.title.includes(filter.category)
-      )
-    : filtered;
-
-  // 정렬
-  const sorted = [...tagFiltered].sort((a, b) => {
-    if (filter.sort === "인기순") return b.likeCount - a.likeCount;
-    if (filter.sort === "가격순") {
-      const priceA = parseInt(a.price.replace(/,/g, ""), 10);
-      const priceB = parseInt(b.price.replace(/,/g, ""), 10);
-      return priceA - priceB;
-    }
-    return b.rating - a.rating; // 추천순
-  });
+    return [...tagFiltered].sort((a, b) => {
+      if (filter.sort === "인기순") return Number(b.likeCount ?? 0) - Number(a.likeCount ?? 0);
+      if (filter.sort === "가격순") {
+        const priceA = Number(String(a.price ?? 0).replace(/,/g, ""));
+        const priceB = Number(String(b.price ?? 0).replace(/,/g, ""));
+        return priceA - priceB;
+      }
+      return Number(b.rating ?? 0) - Number(a.rating ?? 0);
+    });
+  }, [filter, posts]);
 
   return (
     <Wrapper>
-      {/* 검색바 */}
       <SearchBarRow>
         <BackBtn onClick={() => navigate(-1)}>
           <img src={BackArrow} alt="뒤로가기" width={24} height={24} />
@@ -83,7 +75,7 @@ export default function SearchResultPage() {
           </SearchIconBtn>
           <SearchInput
             value={inputVal}
-            onChange={(e) => setInputVal(e.target.value)}
+            onChange={(event) => setInputVal(event.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="검색어를 입력하세요"
             autoFocus
@@ -96,16 +88,14 @@ export default function SearchResultPage() {
         </SearchBar>
       </SearchBarRow>
 
-      {/* 필터바 */}
-      <FilterBar onFilterChange={handleFilterChange} />
+      <FilterBar onFilterChange={setFilter} />
 
-      {/* 결과 목록 */}
       <ResultList>
         {sorted.length === 0 ? (
           <Empty>검색 결과가 없습니다</Empty>
         ) : (
           sorted.map((post) => (
-            <PostCardList key={post.postId} post={post} />
+            <PostCardList key={post.postId ?? post.post_id ?? post.id} post={post} />
           ))
         )}
       </ResultList>

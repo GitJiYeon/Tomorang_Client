@@ -19,7 +19,7 @@ export default function EmergingDestination() {
 
   return (
     <PageWrapper>
-      <Header coment={"떠오르는 여행지"} />
+      <Header coment="떠오르는 여행지" />
       <ListContainer>
         {regionData.map((item) => (
           <EmergingCard
@@ -33,6 +33,7 @@ export default function EmergingDestination() {
     </PageWrapper>
   );
 }
+
 const PageWrapper = styled.div`
   width: 100%;
   min-height: 100vh;

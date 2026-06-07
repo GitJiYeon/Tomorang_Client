@@ -1,10 +1,10 @@
 import styled from "styled-components";
 
-export default function LogoutButton() {
+export default function LogoutButton({ onClick, disabled = false }) {
   return (
     <ButtonWrapper>
-      <LogoutContainer>
-        <LogoutText>로그아웃</LogoutText>
+      <LogoutContainer type="button" onClick={onClick} disabled={disabled}>
+        <LogoutText>{disabled ? "로그아웃 중..." : "로그아웃"}</LogoutText>
       </LogoutContainer>
     </ButtonWrapper>
   );
@@ -22,27 +22,20 @@ const ButtonWrapper = styled.div`
 const LogoutContainer = styled.button`
   width: 348px;
   height: 56px;
-
   border: none;
   border-radius: 213px;
   background: #ffa362;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
-  cursor: pointer;
+  cursor: ${({ disabled }) => (disabled ? "default" : "pointer")};
+  opacity: ${({ disabled }) => (disabled ? 0.7 : 1)};
 `;
 
 const LogoutText = styled.span`
-  width: 75px;
-  height: 19px;
-
   color: #fff;
   text-align: center;
   font-family: Pretendard;
   font-size: 14px;
-  font-style: normal;
   font-weight: 500;
-  line-height: normal;
 `;

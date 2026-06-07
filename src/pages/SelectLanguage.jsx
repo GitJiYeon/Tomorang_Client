@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import NextButton from "../components/NextButton1";
 import ProgressBar from "../components/ProgressBar";
@@ -18,6 +18,7 @@ const LANGUAGES = [
 
 function SelectLanguage() {
   const navigate = useNavigate();
+  const { state } = useLocation();
   const [selections, setSelections] = useState(
     Object.fromEntries(LANGUAGES.map((l) => [l.languageCode, null]))
   );
@@ -33,9 +34,12 @@ function SelectLanguage() {
   const payload = Object.entries(selections)
     .filter(([, level]) => level)
     .map(([languageCode, level]) => ({ languageCode, level }));
-    console.log("백엔드 전송 payload:", payload);
-    navigate("/interest");
-    // TODO: API 호출
+    navigate("/interest", {
+      state: {
+        ...state,
+        selectedLanguages: payload,
+      },
+    });
   };
 
   return (

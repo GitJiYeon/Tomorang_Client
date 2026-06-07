@@ -5,9 +5,9 @@ import StarIcon from "../../assets/star.svg"; // 별 아이콘 직접 삽입
  * 호출 방법:
  * <GuideCard guide={guide} />
  */
-export default function GuideCard({ guide }) {
+export default function GuideCard({ guide, onClick }) {
   return (
-    <Card>
+    <Card onClick={onClick}>
       <ProfileCircle>
         <ProfileImg
           src={guide.profileImage}

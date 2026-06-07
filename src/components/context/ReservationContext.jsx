@@ -1,53 +1,72 @@
-/**
- * ReservationContext.jsx
- * 
- * 예약 데이터를 전역으로 관리합니다.
- * JSON 파일을 초기값으로 쓰고, 상태 변경(투어 완료, 리뷰 저장)은
- * 메모리 내에서 처리합니다. 실제 API 연동 시 아래 TODO 부분만 교체하세요.
- * 
- * 사용법:
- * 1. App.jsx 루트에 <ReservationProvider> 감싸기
- * 2. 컴포넌트에서 useReservations() 훅으로 사용
- * 
- * App.jsx 예시:
- * import { ReservationProvider } from "./context/ReservationContext";
- * 
- * function App() {
- *   return (
- *     <ReservationProvider>
- *       <Router> ... </Router>
- *     </ReservationProvider>
- *   );
- * }
- */
-
-import { createContext, useContext, useState } from "react";
-import initialReservations from "../../data/reservations.json";
+import { createContext, useContext, useEffect, useState } from "react";
+import { getMyReservations } from "../../api/tomorang";
 
 const ReservationContext = createContext(null);
 
+const asArray = (value) => {
+  if (Array.isArray(value)) return value;
+  if (Array.isArray(value?.reservations)) return value.reservations;
+  if (Array.isArray(value?.content)) return value.content;
+  if (Array.isArray(value?.data)) return value.data;
+  if (Array.isArray(value?.items)) return value.items;
+  if (Array.isArray(value?.value)) return value.value;
+  return value ? [value] : [];
+};
+
+const normalizeReservation = (reservation) => ({
+  ...reservation,
+  reservationId: reservation.reservationId ?? reservation.reservation_id ?? reservation.id,
+  postId:
+    reservation.postId ??
+    reservation.post_id ??
+    reservation.post?.postId ??
+    reservation.post?.post_id ??
+    reservation.post?.id,
+  date: reservation.date ?? reservation.slotDate ?? reservation.slot_date ?? reservation.scheduleDate,
+  time: reservation.time ?? reservation.slotTime ?? reservation.slot_time ?? reservation.timeSlot,
+  adults: reservation.adults ?? reservation.adultCount ?? reservation.adult_count ?? 1,
+  children: reservation.children ?? reservation.childCount ?? reservation.child_count ?? 0,
+  request: reservation.request ?? reservation.memo ?? reservation.message ?? "",
+  status: reservation.status ?? "PENDING",
+});
+
 export function ReservationProvider({ children }) {
-  const [reservations, setReservations] = useState(initialReservations);
+  const [reservations, setReservations] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  /**
-   * 투어 완료 처리 + 리뷰 저장
-   * @param {number} reservationId
-   * @param {Object} review - { rating, answers, content, images, createdAt }
-   */
+  const refreshReservations = async () => {
+    if (!localStorage.getItem("accessToken")) {
+      setReservations([]);
+      return [];
+    }
+
+    setIsLoading(true);
+    setErrorMessage("");
+    try {
+      const data = await getMyReservations();
+      const nextReservations = asArray(data).map(normalizeReservation);
+      setReservations(nextReservations);
+      return nextReservations;
+    } catch (error) {
+      setErrorMessage(error.message || "예약 목록을 불러오지 못했습니다.");
+      setReservations([]);
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    refreshReservations();
+  }, []);
+
   const completeAndSaveReview = async (reservationId, review) => {
-    // TODO: 실제 API 연동
-    // await fetch(`/api/reservations/${reservationId}/complete`, {
-    //   method: "PATCH",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify({ review }),
-    // });
-
-    // 메모리 상태 업데이트
     setReservations((prev) =>
-      prev.map((r) =>
-        r.reservationId === reservationId
+      prev.map((reservation) =>
+        String(reservation.reservationId) === String(reservationId)
           ? {
-              ...r,
+              ...reservation,
               status: "COMPLETED",
               myReview: {
                 rating: review.rating,
@@ -57,13 +76,15 @@ export function ReservationProvider({ children }) {
                 createdAt: review.createdAt ?? new Date().toISOString(),
               },
             }
-          : r
+          : reservation
       )
     );
   };
 
   return (
-    <ReservationContext.Provider value={{ reservations, completeAndSaveReview }}>
+    <ReservationContext.Provider
+      value={{ reservations, isLoading, errorMessage, refreshReservations, completeAndSaveReview }}
+    >
       {children}
     </ReservationContext.Provider>
   );

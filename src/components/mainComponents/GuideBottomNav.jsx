@@ -1,9 +1,9 @@
+import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import HomeIcon from "../../assets/navIcons/home.svg";
 import BookIcon from "../../assets/navIcons/book.svg";
 import MessageIcon from "../../assets/navIcons/message.svg";
 import MyPageIcon from "../../assets/navIcons/mypage.svg";
-import { useNavigate } from "react-router-dom";
 
 const NAV_ITEMS = [
   { path: "/guide", iconSrc: HomeIcon, label: "홈" },
@@ -14,6 +14,11 @@ const NAV_ITEMS = [
 
 export default function GuideBottomNav({ activeIndex = 0 }) {
   const navigate = useNavigate();
+  const resetViewportScroll = () => {
+    document
+      .querySelector(".app-viewport")
+      ?.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  };
 
   return (
     <NavPosition>
@@ -23,12 +28,12 @@ export default function GuideBottomNav({ activeIndex = 0 }) {
 
           return (
             <NavButton
-              key={item.label}
+              key={item.path}
               type="button"
               $active={isActive}
               onClick={() => {
-                window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-                item.path && navigate(item.path);
+                resetViewportScroll();
+                navigate(item.path);
               }}
             >
               <NavIcon src={item.iconSrc} alt={item.label} $active={isActive} />
