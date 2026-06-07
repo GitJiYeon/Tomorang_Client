@@ -9,6 +9,27 @@ import KoreaIcon   from "../assets/koreaLogo.svg";
 import JapanIcon   from "../assets/japanLogo.svg";
 import AmericaIcon from "../assets/americaLogo.svg";
 
+const LANGUAGE_TO_SERVER = {
+  KR: "KOREAN",
+  JP: "JAPANESE",
+  EN: "ENGLISH",
+};
+const SERVER_TO_LANGUAGE = {
+  KOREAN: "KR",
+  JAPANESE: "JP",
+  ENGLISH: "EN",
+};
+const LEVEL_TO_SERVER = {
+  beginner: 1,
+  intermediate: 2,
+  advanced: 3,
+};
+const SERVER_TO_LEVEL = {
+  1: "beginner",
+  2: "intermediate",
+  3: "advanced",
+};
+
 const LANGUAGES = [
   { icon: KoreaIcon,   title: "한국어", subtitle: "한국어",  languageCode: "KR" },
   { icon: JapanIcon,   title: "일본어", subtitle: "日本語",  languageCode: "JP" },
@@ -18,8 +39,18 @@ const LANGUAGES = [
 export default function LanguageEditPage() {
   const navigate = useNavigate();
 
-  // localStorage에서 기존 언어 선택값 불러오기
-  const savedLanguages = JSON.parse(localStorage.getItem("languages") ?? "[]");
+  const savedProfile = JSON.parse(localStorage.getItem("profile") ?? "{}");
+  const profileLanguages = (savedProfile.languages ?? []).map((language, index) => {
+    if (typeof language === "object") return language;
+
+    return {
+      code: SERVER_TO_LANGUAGE[language] ?? language,
+      level: SERVER_TO_LEVEL[savedProfile.levels?.[index]] ?? "beginner",
+    };
+  });
+  const savedLanguages = profileLanguages.length > 0
+    ? profileLanguages
+    : JSON.parse(localStorage.getItem("languages") ?? "[]");
   const savedMap = Object.fromEntries(savedLanguages.map(({ code, level }) => [code, level]));
 
   const [selections, setSelections] = useState(
@@ -37,10 +68,17 @@ export default function LanguageEditPage() {
       .filter(([, level]) => level)
       .map(([code, level]) => ({ code, level }));
 
-    // localStorage에 언어 저장 + profile에도 반영
+    const serverLanguages = languages.map(({ code }) => LANGUAGE_TO_SERVER[code] ?? code);
+    const levels = languages.map(({ level }) => LEVEL_TO_SERVER[level] ?? level);
+
     localStorage.setItem("languages", JSON.stringify(languages));
     const saved = JSON.parse(localStorage.getItem("profile") ?? "{}");
-    localStorage.setItem("profile", JSON.stringify({ ...saved, languages }));
+    localStorage.setItem("profile", JSON.stringify({
+      ...saved,
+      languages,
+      serverLanguages,
+      levels,
+    }));
 
     navigate(-1);
   };

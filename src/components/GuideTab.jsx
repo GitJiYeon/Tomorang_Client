@@ -1,10 +1,26 @@
 import React from "react";
 import styled from "styled-components";
+import DefaultProfileIcon from "../assets/defaultProfile.svg";
 
 const LEVEL_MAP = {
   beginner: 1,
   intermediate: 2,
   advanced: 3,
+  1: 1,
+  2: 2,
+  3: 3,
+};
+
+const LANGUAGE_LABELS = {
+  KOREAN: "KR",
+  ENGLISH: "EN",
+  JAPANESE: "JP",
+};
+
+const LEVEL_LABELS = {
+  1: "beginner",
+  2: "intermediate",
+  3: "advanced",
 };
 
 function LevelDots({ level }) {
@@ -12,7 +28,7 @@ function LevelDots({ level }) {
   return (
     <DotsRow>
       {[0, 1, 2].map((i) => (
-        <svg key={i} width="5" height="5" viewBox="0 0 5 5">
+        <svg key={i} width="5" height="5" viewBox="0 0 5 5" aria-hidden="true">
           <circle cx="2.5" cy="2.5" r="2.5" fill={i < filled ? "#C5F598" : "#D9D9D9"} />
         </svg>
       ))}
@@ -20,54 +36,85 @@ function LevelDots({ level }) {
   );
 }
 
+function normalizeInterests(guide) {
+  if (Array.isArray(guide?.interests)) return guide.interests;
+  return String(guide?.interest ?? "")
+    .split(",")
+    .map((interest) => interest.trim())
+    .filter(Boolean);
+}
+
+function normalizeLanguages(guide) {
+  return (guide?.languages ?? []).map((language, index) => {
+    if (typeof language === "object" && language !== null) {
+      return {
+        code: language.code ?? LANGUAGE_LABELS[language.language] ?? language.language ?? "KR",
+        level: language.level ?? "beginner",
+      };
+    }
+
+    return {
+      code: LANGUAGE_LABELS[language] ?? language,
+      level: LEVEL_LABELS[guide?.levels?.[index]] ?? guide?.levels?.[index] ?? "beginner",
+    };
+  });
+}
+
 export default function GuideTab({ guide }) {
+  if (!guide) return null;
+
+  const nickname = guide.nickname ?? guide.nickName ?? guide.id ?? "가이드";
+  const bio = guide.bio ?? guide.oneWord ?? "소개가 아직 없습니다.";
+  const answerTime = guide.answertime ?? guide.answerTime ?? "평균 12분 내로 응답";
+  const profileImage = guide.profileImage ?? guide.image ?? DefaultProfileIcon;
+  const interests = normalizeInterests(guide);
+  const languages = normalizeLanguages(guide);
+  const likeCount = guide.likeCount ?? guide.totalLikes ?? 0;
+  const postCount = guide.postCount ?? guide.postIds?.length ?? 0;
+  const rating = Number(guide.rating ?? guide.avgRating ?? 0);
+
   return (
     <PageBg>
       <Card>
-        {/* 상단: 이름/소개/응답시간 + 프로필 이미지 */}
         <TopRow>
           <InfoGroup>
-            <Name>{guide.nickname}</Name>
-            <Bio>{guide.bio}</Bio>
-            <AnswerTime>{guide.answertime}</AnswerTime>
+            <Name>{nickname}</Name>
+            <Bio>{bio}</Bio>
+            <AnswerTime>{answerTime}</AnswerTime>
           </InfoGroup>
-          <Avatar src={guide.profileImage} alt="profile" />
+          <Avatar src={profileImage} alt="profile" />
         </TopRow>
 
-        {/* 관심사 태그 */}
         <TagRow>
-          {guide.interests.map((interest) => (
-            <InterestTag key={interest}>#{interest}</InterestTag>
+          {interests.map((interest, index) => (
+            <InterestTag key={`${interest}-${index}`}>#{interest}</InterestTag>
           ))}
         </TagRow>
 
-        {/* 언어 태그 */}
         <TagRow>
-          {guide.languages.map((lang) => (
-            <LangTag key={lang.code}>
+          {languages.map((lang, index) => (
+            <LangTag key={`${lang.code}-${index}`}>
               <LangCode>{lang.code}</LangCode>
               <LevelDots level={lang.level} />
             </LangTag>
           ))}
         </TagRow>
 
-        {/* 구분선 */}
         <Divider />
 
-        {/* 통계 */}
         <StatsRow>
           <StatItem>
-            <StatNum>{guide.likeCount}개</StatNum>
+            <StatNum>{likeCount}개</StatNum>
             <StatLabel>좋아요</StatLabel>
           </StatItem>
           <VerticalLine />
           <StatItem>
-            <StatNum>{guide.postIds.length}개</StatNum>
+            <StatNum>{postCount}개</StatNum>
             <StatLabel>코스</StatLabel>
           </StatItem>
           <VerticalLine />
           <StatItem>
-            <StatNum>{guide.rating.toFixed(1)}점</StatNum>
+            <StatNum>{rating.toFixed(1)}점</StatNum>
             <StatLabel>리뷰</StatLabel>
           </StatItem>
         </StatsRow>
@@ -76,12 +123,9 @@ export default function GuideTab({ guide }) {
   );
 }
 
-/* ── Styled Components ── */
-
 const PageBg = styled.div`
   background-color: #F3F4F3;
   padding: 12px 0 20px;
-  min-height: 100%;
 `;
 
 const Card = styled.div`
@@ -110,35 +154,26 @@ const InfoGroup = styled.div`
 
 const Name = styled.span`
   color: #111;
-  font-feature-settings: 'liga' off, 'clig' off;
   font-family: Pretendard;
   font-size: 16px;
-  font-style: normal;
   font-weight: 600;
-  line-height: 22px; /* 137.5% */
-  letter-spacing: 0.3px;
+  line-height: 22px;
 `;
 
 const Bio = styled.span`
   color: #ACACAC;
-  font-feature-settings: 'liga' off, 'clig' off;
   font-family: Pretendard;
   font-size: 14px;
-  font-style: normal;
   font-weight: 500;
-  line-height: 22px; /* 157.143% */
-  letter-spacing: 0.3px;
+  line-height: 22px;
 `;
 
 const AnswerTime = styled.span`
   color: #B1DD89;
-  font-feature-settings: 'liga' off, 'clig' off;
   font-family: Pretendard;
   font-size: 12px;
-  font-style: normal;
   font-weight: 500;
-  line-height: 22px; /* 183.333% */
-  letter-spacing: 0.3px;
+  line-height: 22px;
 `;
 
 const Avatar = styled.img`
@@ -158,7 +193,7 @@ const TagRow = styled.div`
 
 const InterestTag = styled.span`
   background: #C5F598;
-  color: #111111;
+  color: #111;
   font-size: 12px;
   font-weight: 500;
   padding: 4px 10px;
@@ -179,7 +214,6 @@ const LangCode = styled.span`
   color: #fff;
   font-size: 12px;
   font-weight: 500;
-  letter-spacing: 1px;
 `;
 
 const DotsRow = styled.div`

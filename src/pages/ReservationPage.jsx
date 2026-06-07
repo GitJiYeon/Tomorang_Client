@@ -8,13 +8,14 @@
  * navigate(`/reservation/${post.postId}`, { state: { post } })
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import postData from "../data/postData.json";
 import styled from "styled-components";
 import CounterInput from "../components/bookComponents/CounterInput";
 import WarningBanner from "../components/WarningBanner";
 import Header from "../components/Header";
+import { bookReservation, getPostDetail } from "../api/tomorang";
+import { getPostImages } from "../utils/postDisplay";
 
 const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -24,13 +25,30 @@ export default function ReservationPage() {
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(1);
   const [request, setRequest] = useState("");
+  const [serverPost, setServerPost] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { postId } = useParams();
-  const post = postData.find((p) => p.postId === Number(postId));
+  const post = serverPost;
   const navigate = useNavigate();
-  if (!post) return <div>포스트를 찾을 수 없습니다.</div>;
 
-  const rawPrice = parseInt(post.price.replace(/,/g, ""), 10);
+  useEffect(() => {
+    let alive = true;
+    getPostDetail(postId)
+      .then((post) => {
+        if (alive) setServerPost(post);
+      })
+      .catch((error) => console.error("게시물 상세 조회 실패", error));
+
+    return () => {
+      alive = false;
+    };
+  }, [postId]);
+
+  if (!post) return <div style={{ padding: 40, color: "#ACACAC" }}>코스 정보를 불러오는 중입니다.</div>;
+
+  const rawPrice = parseInt(String(post.price).replace(/,/g, ""), 10) || 0;
   const discountedPrice = post.discountRate
     ? Math.round(rawPrice * (1 - post.discountRate / 100))
     : null;
@@ -40,6 +58,30 @@ export default function ReservationPage() {
     ? post.availableSchedules.find((s) => s.date === selectedDate)?.timeSlots || []
     : [];
 
+  const handleReservation = async () => {
+    if (!selectedDate || !selectedSlot || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setErrorMessage("");
+
+    try {
+      const result = await bookReservation({
+        postId: post.postId,
+        slotId: selectedSlot.id,
+        slotDate: selectedDate,
+        slotTime: selectedSlot.time,
+        adultCount: adults,
+        childCount: children,
+      });
+      const reservationId = result.id || result.reservationId || 1;
+      navigate(`/reservation-status/${reservationId}`);
+    } catch (error) {
+      setErrorMessage(error.message || "예약에 실패했습니다.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <Wrapper>
       <Header coment="예약하기" />
@@ -48,7 +90,7 @@ export default function ReservationPage() {
         {/* ── 상단 게시물 카드 ── */}
         <PostCard>
           <PostImage
-            src={post.images?.[0]}
+            src={getPostImages(post)[0]}
             alt={post.title}
             onError={(e) => { e.target.style.background = "#ddd"; e.target.removeAttribute("src"); }}
           />
@@ -168,17 +210,14 @@ export default function ReservationPage() {
 
         {/* ── 경고 배너 ── */}
         <WarningBanner message="결제는 만남 후 현장에서 가이드와 직접 진행됩니다." />
+        {errorMessage && <ErrorText>{errorMessage}</ErrorText>}
 
         {/* ── 예약하기 버튼 ── */}
         <ReserveBtn
-          disabled={!selectedDate || !selectedSlot}
-          onClick={() => {
-            navigate('/reservation-status/1');
-            // TODO: 예약 API 연결
-            console.log({ post, selectedDate, selectedSlot, adults, children, request });
-          }}
+          disabled={!selectedDate || !selectedSlot || isSubmitting}
+          onClick={handleReservation}
         >
-          예약하기
+          {isSubmitting ? "예약 중..." : "예약하기"}
         </ReserveBtn>
       </Content>
     </Wrapper>
@@ -453,4 +492,11 @@ const ReserveBtn = styled.button`
   color: ${({ disabled }) => (disabled ? "#fff" : "#111")};
   margin-top: 18px;
   transition: background 0.2s;
+`;
+
+const ErrorText = styled.p`
+  margin: 8px 0 0;
+  color: #d93025;
+  font-size: 13px;
+  font-weight: 500;
 `;

@@ -9,12 +9,17 @@ const NAV_ITEMS = [
   { path: "/main", iconSrc: HomeIcon, label: "홈" },
   { path: "/map", iconSrc: MapIcon, label: "탐색" },
   { path: "/book", iconSrc: BookIcon, label: "예약" },
-  { path: "/chat/1", iconSrc: MessageIcon, label: "메시지" },
+  { path: "/chats", iconSrc: MessageIcon, label: "메시지" },
   { path: "/profile", iconSrc: MyPageIcon, label: "마이페이지" },
 ];
 
 export default function BottomNav({ activeIndex = 0, onNavChange }) {
   const navigate = useNavigate();
+  const resetViewportScroll = () => {
+    document
+      .querySelector(".app-viewport")
+      ?.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  };
 
   return (
     <div
@@ -55,7 +60,7 @@ export default function BottomNav({ activeIndex = 0, onNavChange }) {
               type="button"
               onClick={() => {
                 onNavChange?.(index);
-                window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+                resetViewportScroll();
                 navigate(item.path);
               }}
               style={{

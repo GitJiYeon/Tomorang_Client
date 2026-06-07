@@ -3,33 +3,32 @@ import styled from "styled-components";
 import Greenstar from "../assets/greenstar.svg";
 import Graystar from "../assets/graystar.svg";
 
-export default function ReviewCard1({ review }) {
+export default function ReviewCard1({ review, variant = "default" }) {
+  const isReceived = variant === "received";
   const date = new Date(review.createdAt);
   const postImages = review.postImages ?? (review.postImage ? [review.postImage] : []);
+  const rating = Number(review.rating ?? 0);
   const dateStr = `${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
   const yearStr = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
 
-  const renderStars = (rating) => {
-    const filledCount = Math.floor(rating);
+  const renderStars = (value) => {
+    const filledCount = Math.floor(value);
     return Array.from({ length: 5 }, (_, i) => (
       <StarImg key={i} src={i < filledCount ? Greenstar : Graystar} alt="star" />
     ));
   };
 
   return (
-    <Card>
-      {/* 상단 영역 */}
+    <Card $isReceived={isReceived}>
       <TopRow>
         <TopLeft>
           <Avatar src={review.profile} alt="profile" />
           <NameDateGroup>
-            {/* 이름 + 별점 */}
             <NicknameRow>
               <Nickname>{review.nickname}</Nickname>
-              <Stars>{renderStars(review.rating)}</Stars>
-              <RatingNum>{review.rating.toFixed(1)}</RatingNum>
+              <Stars>{renderStars(rating)}</Stars>
+              <RatingNum>{rating.toFixed(1)}</RatingNum>
             </NicknameRow>
-            {/* 날짜 + 시간 */}
             <DateRow>
               <DateText>{dateStr}</DateText>
               <Separator>|</Separator>
@@ -40,26 +39,22 @@ export default function ReviewCard1({ review }) {
         <YearText>{yearStr}</YearText>
       </TopRow>
 
-      {/* 이미지 슬라이드 */}
       {postImages.length > 0 && (
         <ImageRow>
           {postImages.map((image) => (
-            <ReviewImage key={image} $src={image} />
+            <ReviewImage key={image} src={image} alt="review" $isReceived={isReceived} />
           ))}
         </ImageRow>
       )}
 
-      {/* 본문 */}
       <ContentText>{review.content}</ContentText>
     </Card>
   );
 }
 
-/* ── Styled Components ── */
-
 const Card = styled.div`
-  width: 348px;
-  height: 346px;
+  width: min(348px, calc(100vw - 42px));
+  height: ${({ $isReceived }) => ($isReceived ? "378px" : "346px")};
   border-radius: 12px;
   background: #fff;
   padding: 20px 16px;
@@ -68,23 +63,23 @@ const Card = styled.div`
   gap: 21px;
   box-sizing: border-box;
   overflow: hidden;
-  margin-bottom: 12px;
-  border-radius: 12px;
+  margin: 0 auto 12px;
   border: 1px solid #DADADA;
-  
 `;
 
 const TopRow = styled.div`
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;  /* center → flex-start */
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
 `;
 
 const TopLeft = styled.div`
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;  /* center로 아바타와 텍스트 수직 중앙 정렬 */
+  display: flex;
+  align-items: center;
   gap: 11px;
+  min-width: 0;
 `;
 
 const Avatar = styled.img`
@@ -100,30 +95,36 @@ const NameDateGroup = styled.div`
   display: flex;
   align-items: flex-start;
   flex-direction: column;
-  gap: 4px;  /* 51px → 4px */
+  gap: 4px;
+  min-width: 0;
 `;
 
 const NicknameRow = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+  max-width: 210px;
 `;
 
 const Nickname = styled.span`
   color: #111;
-  text-align: center;
   font-feature-settings: 'liga' off, 'clig' off;
   font-family: Pretendard;
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
-  line-height: 22px; /* 137.5% */
+  line-height: 22px;
   letter-spacing: 0.3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 const Stars = styled.div`
   display: flex;
   gap: 2px;
+  flex-shrink: 0;
 `;
 
 const StarImg = styled.img`
@@ -135,6 +136,7 @@ const RatingNum = styled.span`
   font-size: 13px;
   font-weight: 600;
   color: #333;
+  flex-shrink: 0;
 `;
 
 const DateRow = styled.div`
@@ -156,27 +158,31 @@ const Separator = styled.span`
 const YearText = styled.span`
   font-size: 11px;
   color: #bdbdbd;
-  padding-top: 6px;  /* 닉네임 텍스트 높이에 맞게 조정 */
+  padding-top: 6px;
   white-space: nowrap;
+  flex-shrink: 0;
 `;
 
 const ImageRow = styled.div`
-  display: inline-flex;
+  width: 100%;
+  display: flex;
   align-items: center;
   gap: 12px;
   overflow-x: auto;
   scrollbar-width: none;
+
   &::-webkit-scrollbar {
     display: none;
   }
 `;
 
-const ReviewImage = styled.div`
+const ReviewImage = styled.img`
   width: 110px;
-  height: 102px;
+  height: ${({ $isReceived }) => ($isReceived ? "132px" : "102px")};
   border-radius: 12px;
-  background: url(${({ $src }) => $src}) lightgray 50% / cover no-repeat;
+  object-fit: cover;
   flex-shrink: 0;
+  background: #e0e0e0;
 `;
 
 const ContentText = styled.p`

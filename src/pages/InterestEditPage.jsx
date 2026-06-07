@@ -10,7 +10,13 @@ export default function InterestEditPage() {
 
   // localStorage에서 기존 관심사 불러오기
   const saved = JSON.parse(localStorage.getItem("profile") ?? "{}");
-  const [selected, setSelected] = useState(saved.interests ?? []);
+  const initialInterests = Array.isArray(saved.interests)
+    ? saved.interests
+    : String(saved.interest ?? "")
+        .split(",")
+        .map((interest) => interest.trim())
+        .filter(Boolean);
+  const [selected, setSelected] = useState(initialInterests);
 
   const isValid = selected.length > 0;
 
@@ -25,6 +31,7 @@ export default function InterestEditPage() {
     localStorage.setItem("profile", JSON.stringify({
       ...saved,
       interests: selected,
+      interest: selected.join(", "),
     }));
     navigate(-1);
   };

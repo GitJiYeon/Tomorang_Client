@@ -107,8 +107,14 @@ button {
 
 .app-viewport {
   width: min(390px, 100vw);
-  height: 100dvh;
+  height: 100vh;
+  height: 100svh;
+  height: var(--app-viewport-height, 100dvh);
+  max-height: var(--app-viewport-height, 100dvh);
   margin: 0 auto;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   background: #fff;
 }

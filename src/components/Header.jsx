@@ -54,6 +54,7 @@ const BackButton = styled.button`
   justify-content: center;
   width: 40px; 
   height: 40px;
+  transition: none;
 
   img {
     width: 24px;
@@ -61,7 +62,8 @@ const BackButton = styled.button`
   }
 
   &:active {
-    opacity: 0.6;
+    opacity: 1;
+    transform: none;
   }
 `;
 

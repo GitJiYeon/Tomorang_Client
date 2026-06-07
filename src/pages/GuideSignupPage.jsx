@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import ProgressBar from "../components/ProgressBar";
 import NextButton from "../components/NextButton1";
@@ -7,8 +7,12 @@ import LogoIcon from "../assets/logoIcon.svg";
 
 export default function GuideSignupPage() {
   const navigate = useNavigate();
+  const { state } = useLocation();
+  const isSwitchMode = state?.mode === "switch";
+  const savedProfile = JSON.parse(localStorage.getItem("profile") ?? "{}");
+  const currentUserId = localStorage.getItem("userId") || savedProfile.id || "";
   const [formData, setFormData] = useState({
-    userId: "",
+    userId: isSwitchMode ? currentUserId : "",
     password: "",
     passwordConfirm: "",
     phone: "",
@@ -25,8 +29,7 @@ export default function GuideSignupPage() {
 
   const isValid =
     formData.userId.trim() &&
-    formData.password.trim() &&
-    formData.password === formData.passwordConfirm &&
+    (isSwitchMode || (formData.password.trim() && formData.password === formData.passwordConfirm)) &&
     formData.phone.trim() &&
     formData.email.trim() &&
     formData.nationality.trim() &&
@@ -37,20 +40,24 @@ export default function GuideSignupPage() {
       <ProgressBar step={1} onBack={() => navigate(-1)} />
       <Content>
         <Logo src={LogoIcon} alt="" />
-        <Title>가입을 위한 정보를<br />입력해주세요</Title>
+        <Title>{isSwitchMode ? "안내자 인증 정보를" : "가입을 위한 정보를"}<br />입력해주세요</Title>
 
-        <Field>
-          <Label>아이디</Label>
-          <Input placeholder="아이디를 입력하세요" value={formData.userId} onChange={handleChange("userId")} />
-        </Field>
-        <Field>
-          <Label>비밀번호</Label>
-          <Input type="password" placeholder="비밀번호를 입력하세요" value={formData.password} onChange={handleChange("password")} />
-        </Field>
-        <Field>
-          <Label>비밀번호 확인</Label>
-          <Input type="password" placeholder="비밀번호를 다시 입력하세요" value={formData.passwordConfirm} onChange={handleChange("passwordConfirm")} />
-        </Field>
+        {!isSwitchMode && (
+          <>
+            <Field>
+              <Label>아이디</Label>
+              <Input placeholder="아이디를 입력하세요" value={formData.userId} onChange={handleChange("userId")} />
+            </Field>
+            <Field>
+              <Label>비밀번호</Label>
+              <Input type="password" placeholder="비밀번호를 입력하세요" value={formData.password} onChange={handleChange("password")} />
+            </Field>
+            <Field>
+              <Label>비밀번호 확인</Label>
+              <Input type="password" placeholder="비밀번호를 다시 입력하세요" value={formData.passwordConfirm} onChange={handleChange("passwordConfirm")} />
+            </Field>
+          </>
+        )}
         <Field>
           <Label>전화번호</Label>
           <Input placeholder="010-0000-0000" value={formData.phone} onChange={handleChange("phone")} />
@@ -80,7 +87,7 @@ export default function GuideSignupPage() {
         <VerifyButton type="button">본인인증 하기</VerifyButton>
       </Content>
       <Bottom>
-        <NextButton isValid={!!isValid} onClick={() => navigate("/guide-language", { state: { formData } })} />
+        <NextButton isValid={!!isValid} onClick={() => navigate("/guide-language", { state: { formData, mode: state?.mode } })} />
       </Bottom>
     </Page>
   );

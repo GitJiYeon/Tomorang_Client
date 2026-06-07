@@ -1,44 +1,57 @@
-// 호출방법: <PostCardList key={post.postId} post={post} />
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import Star from "../assets/star.svg";
 import Thumb from "../assets/thumb.svg";
 import Heart from "../assets/heart.svg";
 import FilledHeart from "../assets/fillheart.svg";
 import { useNavigate } from "react-router-dom";
+import { addWishlist, removeWishlist } from "../api/tomorang";
+import { getPostDescription, getPostImages } from "../utils/postDisplay";
+import { isPostLiked, setPostLiked, subscribeWishlistChanges } from "../utils/wishlist";
 
 const PostCardList = ({ post }) => {
-  const { title, subtitle, price, rating, likeCount, images } = post;
+  const { title, price, rating, likeCount } = post;
   const navigate = useNavigate();
+  const postId = post.postId ?? post.post_id ?? post.id;
+  const images = getPostImages(post);
+  const description = getPostDescription(post);
+  const [isLiked, setIsLiked] = useState(() => isPostLiked(postId));
 
-  // ✅ localStorage에서 초기 찜 상태 읽기
-  const getLiked = () => {
-    const liked = JSON.parse(localStorage.getItem("likedPosts") ?? "[]");
-    return liked.includes(post.postId);
-  };
-  const [isLiked, setIsLiked] = useState(getLiked);
+  useEffect(() => {
+    setIsLiked(isPostLiked(postId));
+    return subscribeWishlistChanges(() => setIsLiked(isPostLiked(postId)));
+  }, [postId]);
 
   const handleClick = () => {
     navigate("/course", { state: { post } });
   };
 
-  const toggleHeart = (e) => {
-    e.stopPropagation();
-    const liked = JSON.parse(localStorage.getItem("likedPosts") ?? "[]");
-    let updated;
-    if (isLiked) {
-      updated = liked.filter((id) => id !== post.postId);
-    } else {
-      updated = [...liked, post.postId];
+  const toggleHeart = async (event) => {
+    event.stopPropagation();
+    if (!postId) return;
+
+    try {
+      if (isLiked) {
+        await removeWishlist(postId);
+      } else {
+        await addWishlist(postId);
+      }
+      setPostLiked(postId, !isLiked);
+      setIsLiked(!isLiked);
+    } catch (error) {
+      console.error("찜 변경 실패", error);
+      alert(error.message || "찜 변경에 실패했습니다.");
     }
-    localStorage.setItem("likedPosts", JSON.stringify(updated));
-    setIsLiked(!isLiked);
   };
 
   return (
     <CardContainer onClick={handleClick}>
       <ImageWrapper>
-        <Thumbnail src={images[0]} alt={title} />
+        {images[0] ? (
+          <Thumbnail src={images[0]} alt={title} />
+        ) : (
+          <ThumbnailPlaceholder>이미지 없음</ThumbnailPlaceholder>
+        )}
         <HeartBadge onClick={toggleHeart}>
           <HeartIcon src={isLiked ? FilledHeart : Heart} alt="heart" />
         </HeartBadge>
@@ -46,7 +59,7 @@ const PostCardList = ({ post }) => {
 
       <ContentSection>
         <Title>{title}</Title>
-        <Subtitle>{subtitle}</Subtitle>
+        <Subtitle>{description}</Subtitle>
         <Footer>
           <BadgeGroup>
             <RatingBadge>
@@ -58,7 +71,7 @@ const PostCardList = ({ post }) => {
               {likeCount}
             </LikeBadge>
           </BadgeGroup>
-          <Price>{price}원</Price>
+          <Price>{Number(String(price ?? 0).replace(/,/g, "")).toLocaleString()}원</Price>
         </Footer>
       </ContentSection>
     </CardContainer>
@@ -87,6 +100,17 @@ const Thumbnail = styled.img`
   width: 100%;
   height: 130px;
   object-fit: cover;
+`;
+
+const ThumbnailPlaceholder = styled.div`
+  width: 100%;
+  height: 130px;
+  background: #f3f4f3;
+  color: #acacac;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 const HeartBadge = styled.div`
@@ -122,6 +146,7 @@ const Title = styled.h3`
   font-style: normal;
   font-weight: 600;
   line-height: 22px;
+  margin: 0;
 `;
 
 const Subtitle = styled.p`
@@ -134,6 +159,9 @@ const Subtitle = styled.p`
   font-style: normal;
   font-weight: 400;
   line-height: 22px;
+  margin: 0;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 `;
 
 const Footer = styled.div`

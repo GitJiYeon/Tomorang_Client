@@ -6,6 +6,21 @@ const LEVEL_MAP = {
   beginner: 1,
   intermediate: 2,
   advanced: 3,
+  1: 1,
+  2: 2,
+  3: 3,
+};
+
+const LANGUAGE_LABELS = {
+  KOREAN: "KR",
+  ENGLISH: "EN",
+  JAPANESE: "JP",
+};
+
+const LEVEL_LABELS = {
+  1: "beginner",
+  2: "intermediate",
+  3: "advanced",
 };
 
 function LevelDots({ level }) {
@@ -13,7 +28,7 @@ function LevelDots({ level }) {
   return (
     <DotsRow>
       {[0, 1, 2].map((i) => (
-        <svg key={i} width="5" height="5" viewBox="0 0 5 5">
+        <svg key={i} width="5" height="5" viewBox="0 0 5 5" aria-hidden="true">
           <circle cx="2.5" cy="2.5" r="2.5" fill={i < filled ? "#C5F598" : "#D9D9D9"} />
         </svg>
       ))}
@@ -21,33 +36,66 @@ function LevelDots({ level }) {
   );
 }
 
+function normalizeInterests(profile) {
+  if (Array.isArray(profile?.interests)) return profile.interests;
+  return String(profile?.interest ?? "")
+    .split(",")
+    .map((interest) => interest.trim())
+    .filter(Boolean);
+}
+
+function normalizeLanguages(profile) {
+  return (profile?.languages ?? []).map((language, index) => {
+    if (typeof language === "object" && language !== null) {
+      return {
+        code: language.code ?? LANGUAGE_LABELS[language.language] ?? language.language ?? "KR",
+        level: language.level ?? "beginner",
+      };
+    }
+
+    return {
+      code: LANGUAGE_LABELS[language] ?? language,
+      level: LEVEL_LABELS[profile?.levels?.[index]] ?? profile?.levels?.[index] ?? "beginner",
+    };
+  });
+}
+
 export default function GuideProfileCard({ profile, onEditPress }) {
   if (!profile) return null;
+
+  const nickname = profile.nickname ?? profile.nickName ?? profile.id ?? "가이드";
+  const bio = profile.bio ?? profile.oneWord ?? "소개가 아직 없습니다.";
+  const profileImage = profile.profileImage ?? profile.image ?? DefaultProfileIcon;
+  const interests = normalizeInterests(profile);
+  const languages = normalizeLanguages(profile);
+  const likeCount = profile.likeCount ?? profile.totalLikes ?? 0;
+  const postCount = profile.postCount ?? profile.postIds?.length ?? 0;
+  const rating = Number(profile.rating ?? profile.avgRating ?? 0);
 
   return (
     <PageBg>
       <Card>
         <TopRow>
           <InfoGroup>
-            <Name>{profile.nickname}</Name>
-            <Bio>{profile.bio}</Bio>
+            <Name>{nickname}</Name>
+            <Bio>{bio}</Bio>
             <AnswerTime>평균 12분 내로 응답</AnswerTime>
-            <EditButton onClick={onEditPress}>
+            <EditButton type="button" onClick={onEditPress}>
               <EditButtonText>정보 수정하기</EditButtonText>
             </EditButton>
           </InfoGroup>
-          <Avatar src={profile.profileImage || DefaultProfileIcon} alt="profile" />
+          <Avatar src={profileImage} alt="profile" />
         </TopRow>
 
         <TagRow>
-          {(profile.interests ?? []).map((interest) => (
-            <InterestTag key={interest}>#{interest}</InterestTag>
+          {interests.map((interest, index) => (
+            <InterestTag key={`${interest}-${index}`}>#{interest}</InterestTag>
           ))}
         </TagRow>
 
         <LangTagRow>
-          {(profile.languages ?? []).map((lang) => (
-            <LangTag key={lang.code}>
+          {languages.map((lang, index) => (
+            <LangTag key={`${lang.code}-${index}`}>
               <LangCode>{lang.code}</LangCode>
               <LevelDots level={lang.level} />
             </LangTag>
@@ -58,17 +106,17 @@ export default function GuideProfileCard({ profile, onEditPress }) {
 
         <StatsRow>
           <StatItem>
-            <StatNum>{profile.likeCount ?? 0}개</StatNum>
+            <StatNum>{likeCount}개</StatNum>
             <StatLabel>좋아요</StatLabel>
           </StatItem>
           <VerticalLine />
           <StatItem>
-            <StatNum>{(profile.postIds ?? []).length}개</StatNum>
+            <StatNum>{postCount}개</StatNum>
             <StatLabel>코스</StatLabel>
           </StatItem>
           <VerticalLine />
           <StatItem>
-            <StatNum>{(profile.rating ?? 0).toFixed(1)}점</StatNum>
+            <StatNum>{rating.toFixed(1)}점</StatNum>
             <StatLabel>리뷰</StatLabel>
           </StatItem>
         </StatsRow>
@@ -77,11 +125,8 @@ export default function GuideProfileCard({ profile, onEditPress }) {
   );
 }
 
-/* ── Styled Components ── */
-
 const PageBg = styled.div`
   background-color: #fff;
-  min-height: 100%;
 `;
 
 const Card = styled.div`
@@ -122,13 +167,10 @@ const Bio = styled.span`
 
 const AnswerTime = styled.span`
   color: #B1DD89;
-  font-feature-settings: 'liga' off, 'clig' off;
   font-family: Pretendard;
   font-size: 12px;
-  font-style: normal;
   font-weight: 500;
   line-height: 22px;
-  letter-spacing: 0.3px;
 `;
 
 const EditButton = styled.button`
@@ -138,7 +180,6 @@ const EditButton = styled.button`
   padding: 8px 12px;
   justify-content: center;
   align-items: center;
-  gap: 12px;
   background: transparent;
   cursor: pointer;
   width: fit-content;
@@ -146,13 +187,9 @@ const EditButton = styled.button`
 
 const EditButtonText = styled.span`
   color: #ACACAC;
-  font-feature-settings: 'liga' off, 'clig' off;
   font-family: Pretendard;
   font-size: 12px;
-  font-style: normal;
   font-weight: 500;
-  line-height: normal;
-  letter-spacing: -0.012px;
 `;
 
 const Avatar = styled.img`
@@ -181,7 +218,7 @@ const LangTagRow = styled.div`
 
 const InterestTag = styled.span`
   background: #C5F598;
-  color: #111111;
+  color: #111;
   font-size: 13px;
   font-weight: 500;
   padding: 6px 14px;
@@ -200,13 +237,9 @@ const LangTag = styled.div`
 
 const LangCode = styled.span`
   color: #C5F598;
-  font-feature-settings: 'liga' off, 'clig' off;
   font-family: Pretendard;
   font-size: 10px;
-  font-style: normal;
   font-weight: 500;
-  line-height: normal;
-  letter-spacing: -0.01px;
 `;
 
 const DotsRow = styled.div`

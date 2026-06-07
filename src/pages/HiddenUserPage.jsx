@@ -1,19 +1,36 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import styled from "styled-components";
 import GuideSmallCard from "../components/Guidesmallcard";
-import guides from "../data/guideData.json";
+import { getPopularGuides } from "../api/tomorang";
 
 export default function HiddenUserPage() {
   const navigate = useNavigate();
+  const [guides, setGuides] = useState([]);
 
   // ✅ 신고된 guideId 목록 읽기
   const [hiddenIds] = useState(() =>
     JSON.parse(localStorage.getItem("hiddenGuides") ?? "[]")
   );
 
-  const hiddenGuides = guides.filter((guide) => hiddenIds.includes(guide.id));
+  useEffect(() => {
+    let alive = true;
+    getPopularGuides()
+      .then((serverGuides) => {
+        if (alive) setGuides(serverGuides);
+      })
+      .catch(() => {
+        if (alive) setGuides([]);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const hiddenGuides = guides.filter((guide) =>
+    hiddenIds.map(String).includes(String(guide.id ?? guide.userId ?? guide.user_id))
+  );
 
   return (
     <PageWrapper>
@@ -22,9 +39,9 @@ export default function HiddenUserPage() {
         {hiddenGuides.length > 0 ? (
           hiddenGuides.map((guide) => (
             <GuideSmallCard
-              key={guide.id}
+              key={guide.id ?? guide.userId ?? guide.user_id}
               guide={guide}
-              onClick={() => navigate("/guide", { state: { guide } })}
+              onClick={() => navigate(`/guide/${guide.id ?? guide.userId ?? guide.user_id}`, { state: { guide } })}
             />
           ))
         ) : (

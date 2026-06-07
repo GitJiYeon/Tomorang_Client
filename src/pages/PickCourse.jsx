@@ -1,27 +1,42 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Header from "../components/Header";
 import PostCardList from "../components/PostCardList";
-import postdata from "../data/postData.json";
 import styled from "styled-components";
+import { getMyWishlists } from "../api/tomorang";
+import { syncLikedPostsFromWishlists } from "../utils/wishlist";
 
 export default function PickCourse() {
-  // ✅ localStorage에서 찜한 postId 목록 읽어서 필터링
-  const [likedIds] = useState(() =>
-    JSON.parse(localStorage.getItem("likedPosts") ?? "[]")
-  );
+  const [likedPosts, setLikedPosts] = useState([]);
 
-  const likedPosts = postdata.filter((post) => likedIds.includes(post.postId));
+  useEffect(() => {
+    let alive = true;
+
+    getMyWishlists()
+      .then((wishlists) => {
+        if (!alive) return;
+        setLikedPosts(wishlists);
+        syncLikedPostsFromWishlists(wishlists);
+      })
+      .catch((error) => {
+        console.error("찜한 코스 조회 실패", error);
+        if (alive) setLikedPosts([]);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   return (
     <>
-      <Header coment={"찜한 코스"} />
+      <Header coment="찜한 코스" />
       <ListWrapper>
         {likedPosts.length > 0 ? (
           likedPosts.map((post) => (
-            <PostCardList key={post.postId} post={post} />
+            <PostCardList key={post.postId ?? post.post_id ?? post.id} post={post} />
           ))
         ) : (
-          <EmptyText>찜한 코스가 없어요</EmptyText>
+          <EmptyText>찜한 코스가 없어요.</EmptyText>
         )}
       </ListWrapper>
     </>

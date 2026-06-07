@@ -7,6 +7,7 @@ import NextButton from "../components/NextButton1";
 import DefaultProfileIcon from "../assets/defaultProfile.svg";
 import ImageIcon from "../assets/imageIcon.svg";
 import RemoveIcon from "../assets/removeIcon.svg";
+import { normalizeLanguages, signupMember } from "../api/member";
 
 /**
  * 호출 방법:
@@ -21,7 +22,7 @@ import RemoveIcon from "../assets/removeIcon.svg";
  * const { state } = useLocation();
  * <CreateProfile interests={state?.interests ?? []} />
  */
-function MakeTravelerProfile({ interests = [] }) {
+function MakeTravelerProfile() {
   const navigate = useNavigate();
   const { state } = useLocation();
   const [profileImage, setProfileImage] = useState(null);
@@ -30,12 +31,16 @@ function MakeTravelerProfile({ interests = [] }) {
   const [tags, setTags] = useState(state?.interests ?? []);
 
   const fileInputRef = useRef(null);
+  const [profileFile, setProfileFile] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleImageClick = () => fileInputRef.current?.click();
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    setProfileFile(file);
     setProfileImage(URL.createObjectURL(file));
   };
 
@@ -46,22 +51,54 @@ function MakeTravelerProfile({ interests = [] }) {
 
   const isValid = nickname.trim().length > 0;
 
-  const handleNext = () => {
-    const payload = { profileImage, nickname, bio, interests: tags };
-    console.log("백엔드 전송 payload:", payload);
-  
-    // ✅ state 대신 localStorage에서 languages 읽기
-    const languages = JSON.parse(localStorage.getItem("languages") ?? "[]");
-  
-    localStorage.setItem("profile", JSON.stringify({
-      profileImage,
-      nickname,
-      bio,
-      interests: tags,
-      languages,
-    }));
-  
-    navigate("/welcome");
+  const handleNext = async () => {
+    if (isSubmitting) return;
+
+    const formData = state?.formData;
+    if (!formData) {
+      setErrorMessage("가입 정보를 다시 입력해주세요.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage("");
+
+    try {
+      const { languages, levels } = normalizeLanguages(state?.selectedLanguages);
+      const dto = {
+        id: formData.userId.trim(),
+        pw: formData.password,
+        role: "DISCOVERER",
+        email: formData.email,
+        interest: tags.join(", "),
+        nickName: nickname.trim(),
+        oneWord: bio.trim(),
+        languages,
+        levels,
+      };
+
+      await signupMember(dto, profileFile);
+
+      localStorage.setItem(
+        "profile",
+        JSON.stringify({
+          id: dto.id,
+          email: dto.email,
+          role: dto.role,
+          interest: dto.interest,
+          nickName: dto.nickName,
+          oneWord: dto.oneWord,
+          languages,
+          levels,
+        })
+      );
+
+      navigate("/welcome");
+    } catch (error) {
+      setErrorMessage(error.message || "회원가입에 실패했습니다.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -75,7 +112,6 @@ function MakeTravelerProfile({ interests = [] }) {
       </Middle>
 
       <Content>
-        {/* 프로필 이미지 */}
         <ProfileArea>
           <ProfileCircle onClick={handleImageClick}>
             <ProfileImg
@@ -96,7 +132,6 @@ function MakeTravelerProfile({ interests = [] }) {
           />
         </ProfileArea>
 
-        {/* 닉네임 */}
         <FieldLabel>닉네임</FieldLabel>
         <Input
           type="text"
@@ -106,7 +141,6 @@ function MakeTravelerProfile({ interests = [] }) {
           maxLength={20}
         />
 
-        {/* 한마디 */}
         <FieldLabel>한마디</FieldLabel>
         <Input
           type="text"
@@ -116,7 +150,6 @@ function MakeTravelerProfile({ interests = [] }) {
           maxLength={50}
         />
 
-        {/* 관심사 태그 */}
         {tags.length > 0 && (
           <>
             <FieldLabel>관심사</FieldLabel>
@@ -132,8 +165,9 @@ function MakeTravelerProfile({ interests = [] }) {
         )}
       </Content>
 
+      {errorMessage && <ErrorText>{errorMessage}</ErrorText>}
       <Bottom>
-        <NextButton isValid={true} onClick={handleNext} />
+        <NextButton isValid={isValid && !isSubmitting} onClick={handleNext} />
       </Bottom>
     </Wrapper>
   );
@@ -273,6 +307,15 @@ const Bottom = styled.div`
   display: flex;
   justify-content: center;
   padding: 1.5rem 1.3125rem 0;
+`;
+
+const ErrorText = styled.p`
+  width: 348px;
+  margin: 8px auto 0;
+  color: #d93025;
+  font-family: Pretendard, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
 `;
 
 export default MakeTravelerProfile;

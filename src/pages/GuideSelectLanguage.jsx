@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import NextButton from "../components/NextButton1";
 import ProgressBar from "../components/ProgressBar";
@@ -17,11 +17,25 @@ const LANGUAGES = [
 
 export default function GuideSelectLanguage() {
   const navigate = useNavigate();
+  const { state } = useLocation();
   const [selections, setSelections] = useState(
     Object.fromEntries(LANGUAGES.map((language) => [language.languageCode, null]))
   );
 
   const isValid = Object.values(selections).some(Boolean);
+
+  const handleNext = () => {
+    const selectedLanguages = Object.entries(selections)
+      .filter(([, level]) => level)
+      .map(([languageCode, level]) => ({ languageCode, level }));
+
+    navigate("/guide-interest", {
+      state: {
+        ...state,
+        selectedLanguages,
+      },
+    });
+  };
 
   return (
     <Wrapper>
@@ -44,7 +58,7 @@ export default function GuideSelectLanguage() {
         ))}
       </ButtonArea>
       <Bottom>
-        <NextButton isValid={isValid} onClick={() => navigate("/guide-interest")} />
+        <NextButton isValid={isValid} onClick={handleNext} />
       </Bottom>
     </Wrapper>
   );

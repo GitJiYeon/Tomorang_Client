@@ -1,25 +1,27 @@
 import React from "react";
 import styled from "styled-components";
 
-export default function CourseTabMenu({ activeTab, onTabChange }) {
-  const tabs = ["코스설명", "리뷰", "가이드"];
+const tabs = [
+  { key: "course", label: "코스설명" },
+  { key: "review", label: "리뷰" },
+  { key: "guide", label: "가이드" },
+];
 
+export default function CourseTabMenu({ activeTab, onTabChange }) {
   return (
     <MenuContainer>
       {tabs.map((tab) => (
         <TabButton
-          key={tab}
-          $isActive={activeTab === tab}
-          onClick={() => onTabChange(tab)}
+          key={tab.key}
+          $isActive={activeTab === tab.key}
+          onClick={() => onTabChange(tab.key)}
         >
-          {tab}
+          {tab.label}
         </TabButton>
       ))}
     </MenuContainer>
   );
 }
-
-// --- Styled Components ---
 
 const MenuContainer = styled.div`
   display: flex;
@@ -29,23 +31,20 @@ const MenuContainer = styled.div`
   padding: 7px 8px;
   width: 350px;
   height: 56px;
-  
-  /* 이 부분을 추가하면 부모 요소 안에서 가로 중앙 정렬이 됩니다! */
   margin: 0 auto;
+  box-sizing: border-box;
 `;
 
 const TabButton = styled.button`
   flex: 1;
-  width: 111px;
   height: 42px;
   border: none;
   border-radius: 70px;
-  background-color: ${(props) => (props.$isActive ? "#C5F598" : "transparent")};
-  color: ${(props) => (props.$isActive ? "#111111" : "#FFFFFF")};
+  background-color: ${({ $isActive }) => ($isActive ? "#C5F598" : "transparent")};
+  color: ${({ $isActive }) => ($isActive ? "#111" : "#fff")};
   font-size: 14px;
   font-weight: 500;
-  font-family: "Pretendard", sans-serif;
+  font-family: Pretendard, sans-serif;
   cursor: pointer;
   line-height: 22px;
-  transition: all 0.3s ease-in-out;
 `;

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import styled from "styled-components";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import StartComent from "../components/StartComent";
 import NextButton from "../components/NextButton1";
 import ProgressBar from "../components/ProgressBar";
@@ -9,6 +9,7 @@ import InterestCard from "../components/InterestCard";
 export default function GuideSelectInterest() {
   const [selected, setSelected] = useState([]);
   const navigate = useNavigate();
+  const { state } = useLocation();
 
   const handleToggle = (id) => {
     setSelected((prev) =>
@@ -31,7 +32,14 @@ export default function GuideSelectInterest() {
       <Bottom>
         <NextButton
           isValid={selected.length > 0}
-          onClick={() => navigate("/make-guide-profile", { state: { interests: selected } })}
+          onClick={() =>
+            navigate("/make-guide-profile", {
+              state: {
+                ...state,
+                interests: selected,
+              },
+            })
+          }
         />
       </Bottom>
     </Wrapper>

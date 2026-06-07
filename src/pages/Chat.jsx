@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import styled from "styled-components";
 import Mybubble from "../components/chatComponents/Mybubble";
 import Otherbubble from "../components/chatComponents/Otherbubble";
@@ -7,37 +7,101 @@ import Quickreply from "../components/chatComponents/Quickreply";
 import ChatHeader from "../components/chatComponents/ChatHeader";
 import MessageInput from "../components/chatComponents/MessageInput";
 import ReportSystem from "../components/ReportModal";
-import postData from "../data/postData.json";
 import AddIcon from "../assets/chatimg/AddIcon.svg";
 import SendIcon from "../assets/chatimg/sendIcon.svg";
 import ChangeIcon from "../assets/chatimg/Change.svg";
+import {
+  createOrGetChatRoom,
+  getChatHistory,
+  getChatHistoryByRoom,
+  getPostDetail,
+  markChatRoomRead,
+} from "../api/tomorang";
 
-const AUTO_REPLY = {
-  id: "auto_reply",
-  type: "other",
-  message: "良い質問ですね！地元の人は渋谷の路地裏にあるローカルな居酒屋によく行きます。当日、私が特別にご案内しますね！",
-  translation: "좋은 질문이에요! 현지인들은 시부야 골목 안에 있는 로컬 이자카야에 자주 가요. 당일에 제가 특별히 안내해드릴게요!",
-};
-
-const INITIAL_MESSAGES = [
-  {
-    id: 1,
-    type: "other",
-    message: "こんにちは！予約ありがとう😊 待ち合わせ場所は渋谷駅ハチ公像前です！",
-    translation: "안녕하세요! 예약 감사해요😊 대합장소는 시부야역 하치코 동상 앞입니다!",
-    time: "오전 06:15",
-  },
-];
+const formatTime = (value) =>
+  new Date(value || Date.now()).toLocaleTimeString("ko-KR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
 export default function Chat() {
   const { postId } = useParams();
-  const post = postData.find((p) => p.postId === Number(postId));
+  const { state } = useLocation();
 
-  const [messages, setMessages] = useState(INITIAL_MESSAGES);
+  const [post, setPost] = useState(state?.post ?? null);
+  const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState("");
-  const [autoReplied, setAutoReplied] = useState(false);
   const [showReport, setShowReport] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const bottomRef = useRef(null);
+
+  const currentUserId = localStorage.getItem("userId");
+  const roomIdFromState = state?.roomId;
+  const otherUserId = state?.otherUserId ?? post?.userId ?? post?.user_id;
+
+  useEffect(() => {
+    if (!postId) return undefined;
+    let alive = true;
+    getPostDetail(postId)
+      .then((post) => {
+        if (alive) setPost(post);
+      })
+      .catch(() => {});
+
+    return () => {
+      alive = false;
+    };
+  }, [postId]);
+
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    let alive = true;
+    const loadMessages = roomIdFromState
+      ? getChatHistoryByRoom(roomIdFromState).then((history) => {
+          if (!alive) return;
+          setMessages(
+            history.map((message, index) => ({
+              id: `${message.timestamp || Date.now()}_${index}`,
+              type: message.sender === currentUserId ? "me" : "other",
+              message: message.content,
+              time: formatTime(message.timestamp),
+            }))
+          );
+          markChatRoomRead(roomIdFromState, currentUserId).catch(() => {});
+        })
+      : otherUserId
+        ? createOrGetChatRoom(currentUserId, otherUserId)
+      .then((room) => {
+        if (!alive) return;
+        const nextRoomId = room.roomId || room.id || "";
+        return getChatHistory(currentUserId, otherUserId).then((history) => {
+          if (!alive) return;
+          setMessages(
+            history.map((message, index) => ({
+              id: `${message.timestamp || Date.now()}_${index}`,
+              type: message.sender === currentUserId ? "me" : "other",
+              message: message.content,
+              time: formatTime(message.timestamp),
+            }))
+          );
+
+          if (nextRoomId) {
+            markChatRoomRead(nextRoomId, currentUserId).catch(() => {});
+          }
+        });
+      })
+        : Promise.resolve();
+
+    loadMessages
+      .catch((error) => {
+        if (alive) setErrorMessage(error.message || "채팅방을 불러오지 못했습니다.");
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [currentUserId, otherUserId, roomIdFromState]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -52,21 +116,11 @@ export default function Chat() {
       type: "me",
       message: text.trim(),
       time: now,
+      pending: true,
     };
 
     setMessages((prev) => [...prev, newMsg]);
     setInputValue("");
-
-    if (!autoReplied) {
-      setAutoReplied(true);
-      setTimeout(() => {
-        const replyTime = new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
-        setMessages((prev) => [
-          ...prev,
-          { ...AUTO_REPLY, id: Date.now(), time: replyTime },
-        ]);
-      }, 2000);
-    }
   };
 
   const handleKeyDown = (e) => {
@@ -80,11 +134,13 @@ export default function Chat() {
     <PageWrapper>
       <ChatHeader
         name={post?.userId ?? "가이드"}
-        subtitle={post?.title ?? ""}
+        subtitle={post?.title ?? otherUserId ?? ""}
         onFlag={() => setShowReport(true)}
       />
 
       <MessageList>
+        {errorMessage && <ErrorText>{errorMessage}</ErrorText>}
+        {!currentUserId && <ErrorText>로그인 후 채팅을 사용할 수 있습니다.</ErrorText>}
         {messages.map((msg) =>
           msg.type === "me" ? (
             <Mybubble key={msg.id} message={msg.message} time={msg.time} />
@@ -97,6 +153,9 @@ export default function Chat() {
               changeIcon={ChangeIcon}
             />
           )
+        )}
+        {messages.length === 0 && !errorMessage && (
+          <EmptyText>아직 메시지가 없습니다.</EmptyText>
         )}
         <div ref={bottomRef} />
       </MessageList>
@@ -150,4 +209,18 @@ const Divider = styled.div`
   width: 100%;
   height: 1px;
   background: #F3F4F3;
+`;
+
+const ErrorText = styled.p`
+  margin: 8px 16px;
+  color: #d93025;
+  font-size: 13px;
+  font-weight: 500;
+`;
+
+const EmptyText = styled.div`
+  padding: 40px 16px;
+  color: #acacac;
+  font-size: 13px;
+  text-align: center;
 `;

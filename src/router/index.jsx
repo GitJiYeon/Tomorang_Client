@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { ReservationProvider } from "../components/context/ReservationContext"; // 추가
 
@@ -13,6 +13,7 @@ import Login from "../pages/LoginPage";
 import RoleSelectPage from "../pages/RoleSelectPage";
 import TravelerSignupPage from "../pages/TravelerSignupPage";
 import MainPage from "../pages/MainPage";
+import MainMorePage from "../pages/MainMorePage";
 import EmergingDestination from "../pages/EmergingDestination";
 import DestinationListPage from "../pages/DestinationListPage";
 import CourseDescriptionPage from "../pages/CourseDescriptionPage";
@@ -23,6 +24,7 @@ import ReservationStatusPage from "../pages/ReservationStatusPage";
 import ReviewWritePage from "../pages/ReviewWritePage";
 import NotificationPage from "../pages/NotificationPage";
 import Chat from "../pages/Chat";
+import ChatListPage from "../pages/ChatListPage";
 import GuideProfilePage from "../pages/GuideProfilePage";
 import ReservationListPage from "../pages/ReservationListPage";
 import GuidePage from "../pages/GuidePage";
@@ -46,18 +48,51 @@ import InterestEditPage from "../pages/InterestEditPage";
 import LanguageEditPage from "../pages/LanguageEditPage";
 import GuideChatPage from "../pages/GuideChatPage";
 import GuideMyPage from "../pages/GuideMyPage";
+import { getMyWishlists } from "../api/tomorang";
+import { syncLikedPostsFromWishlists } from "../utils/wishlist";
 
 
 
 function RouteViewport() {
   const location = useLocation();
+  const viewportRef = useRef(null);
 
   useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    const viewport = viewportRef.current;
+    viewport?.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, [location.pathname]);
 
+  useEffect(() => {
+    if (localStorage.getItem("accessToken")) {
+      getMyWishlists()
+        .then(syncLikedPostsFromWishlists)
+        .catch(() => {});
+    }
+
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+
+    const setViewportHeight = () => {
+      const height = window.visualViewport?.height ?? window.innerHeight;
+      document.documentElement.style.setProperty(
+        "--app-viewport-height",
+        `${height}px`
+      );
+    };
+
+    setViewportHeight();
+    window.addEventListener("resize", setViewportHeight);
+    window.visualViewport?.addEventListener("resize", setViewportHeight);
+
+    return () => {
+      window.removeEventListener("resize", setViewportHeight);
+      window.visualViewport?.removeEventListener("resize", setViewportHeight);
+    };
+  }, []);
+
   return (
-    <div className="app-viewport">
+    <div className="app-viewport" ref={viewportRef}>
       <ReservationProvider>
         <Routes>
             <Route path="/" element={<StartPage />} />
@@ -76,6 +111,7 @@ function RouteViewport() {
             <Route path="/make-guide-profile" element={<MakeGuideProfile />} />
             <Route path="/guide-welcome" element={<GuideWelcomePage />} />
             <Route path="/main" element={<MainPage />} />
+            <Route path="/main-more/:type" element={<MainMorePage />} />
             <Route path="/guide" element={<GuidePage />} />
             <Route path="/guide-reservations" element={<GuideReservationListPage />} />
             <Route path="/guide-registration" element={<GuideRegistrationPage />} />
@@ -87,6 +123,7 @@ function RouteViewport() {
             <Route path="/course" element={<CourseDescriptionPage />} />
             <Route path="/review-write/:reservationId" element={<ReviewWritePage />} />
             <Route path="/notifications" element={<NotificationPage />} />
+            <Route path="/chats" element={<ChatListPage />} />
             <Route path="/chat/:postId" element={<Chat />} />
             <Route path="/guide/:id" element={<GuideProfilePage />} />
             <Route path="/book" element={<ReservationListPage />} />

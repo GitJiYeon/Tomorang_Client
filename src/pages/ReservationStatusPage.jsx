@@ -3,10 +3,11 @@
  * status: PENDING | CONFIRMED | REJECTED | COMPLETED
  */
 
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { useReservations } from "../components/context/ReservationContext";
-import postData from "../data/postData.json";
+import { getPostDetail } from "../api/tomorang";
 import StatusHeader from "../components/statusComponents/StatusHeader";
 import MeetingPointCard from "../components/statusComponents/MeetingPointCard";
 import MyReviewCard from "../components/statusComponents/MyReviewCard";
@@ -17,13 +18,40 @@ import ChatIcon2 from "../assets/navIcons/messageBlack.svg";
 export default function ReservationStatusPage() {
   const { reservationId } = useParams();
   const navigate = useNavigate();
-  const { reservations } = useReservations();
+  const { reservations, isLoading } = useReservations();
+  const [post, setPost] = useState(null);
 
-  const reservation = reservations.find((r) => r.reservationId === Number(reservationId));
-  const post = reservation ? postData.find((p) => p.postId === reservation.postId) : null;
+  const reservation = reservations.find((r) => String(r.reservationId) === String(reservationId));
+
+  useEffect(() => {
+    if (!reservation) return undefined;
+    if (reservation.post) {
+      setPost(reservation.post);
+      return undefined;
+    }
+
+    let alive = true;
+    getPostDetail(reservation.postId)
+      .then((post) => {
+        if (alive) setPost(post);
+      })
+      .catch(() => {
+        if (alive) setPost(null);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [reservation]);
 
   if (!reservation || !post)
-    return <Wrapper><div style={{ padding: 40, color: "#ACACAC" }}>예약 정보를 찾을 수 없습니다.</div></Wrapper>;
+    return (
+      <Wrapper>
+        <div style={{ padding: 40, color: "#ACACAC" }}>
+          {isLoading ? "예약 정보를 불러오는 중입니다." : "예약 정보를 찾을 수 없습니다."}
+        </div>
+      </Wrapper>
+    );
 
   const {
     status, date, time, adults, children, request,
@@ -32,6 +60,9 @@ export default function ReservationStatusPage() {
   } = reservation;
 
   const isConfirmedOrCompleted = status === "CONFIRMED" || status === "COMPLETED";
+  const meetingLat = Number(meetingPointLat ?? post.lat ?? post.latitude);
+  const meetingLng = Number(meetingPointLng ?? post.lng ?? post.longitude);
+  const hasMeetingPoint = Number.isFinite(meetingLat) && Number.isFinite(meetingLng);
 
   const formatDate = (d) => {
     const obj = new Date(d);
@@ -49,11 +80,11 @@ export default function ReservationStatusPage() {
         {/* 만남 장소 */}
         <Section>
           <MeetingPointCard
-            locked={!isConfirmedOrCompleted}
+            locked={!isConfirmedOrCompleted || !hasMeetingPoint}
             address={meetingPointAddress}
             meetingPoint={meetingPoint}
-            lat={meetingPointLat}
-            lng={meetingPointLng}
+            lat={meetingLat}
+            lng={meetingLng}
           />
         </Section>
 
@@ -104,7 +135,7 @@ export default function ReservationStatusPage() {
             <ActionBtn onClick={() => navigate(`/review-write/${reservationId}`)}>
               투어 완료하기
             </ActionBtn>
-            <ChatBtn onClick={()=>navigate('/chat/1')}>
+            <ChatBtn onClick={() => navigate(`/chat/${post.postId}`, { state: { post } })}>
               <img src={ChatIcon2} alt="chat" width={19} height={15} />
               채팅하기
             </ChatBtn>
@@ -114,7 +145,7 @@ export default function ReservationStatusPage() {
           <ActionBtn onClick={() => navigate("/main")}>다른 코스 찾아보기</ActionBtn>
         )}
         {status === "COMPLETED" && !myReview && (
-          <ActionBtn onClick={() => navigate(`/review-write/${4}`)}>
+          <ActionBtn onClick={() => navigate(`/review-write/${reservationId}`)}>
             후기 등록하기
           </ActionBtn>
         )}

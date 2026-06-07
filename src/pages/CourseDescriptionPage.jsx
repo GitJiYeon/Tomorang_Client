@@ -1,36 +1,109 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import Header from "../components/Header";
 import CourseDescription from "../components/CourseDescription";
 import CourseTabMenu from "../components/mainComponents/CourseTabMenu";
-import postData from "../data/postData.json";
-import PostCard from "../components/mainComponents/Postcard";
+import PostCard from "../components/mainComponents/PostCard";
 import Section from "../components/mainComponents/Section";
 import ReserveButton from "../components/ReserveButton";
 import ContentBlocks from "../components/ContentBlocks";
 import OpenButton from "../components/OpenButton";
 import ReviewSummary from "../components/ReviewSummary";
 import ReviewCard from "../components/ReviewCard1";
-import reviews from "../data/reviews.json";
 import GuideTab from "../components/GuideTab";
-import guideData from "../data/guideData.json";
 import GuideDescriptionCard from "../components/GuideDescriptionCard";
+import { getPostDetail, getPostReviews, getPosts } from "../api/tomorang";
+
+const TAB = {
+  COURSE: "course",
+  REVIEW: "review",
+  GUIDE: "guide",
+};
+
+function getPostId(post) {
+  return post?.postId ?? post?.post_id ?? post?.id;
+}
 
 export default function CourseDescriptionPage() {
   const { state } = useLocation();
   const navigate = useNavigate();
-  const post = state?.post;
-
-  const [activeTab, setActiveTab] = useState("코스설명");
+  const initialPost = useMemo(
+    () => state?.post ?? JSON.parse(sessionStorage.getItem("currentCoursePost") || "null"),
+    [state]
+  );
+  const [post, setPost] = useState(initialPost);
+  const [activeTab, setActiveTab] = useState(state?.initialTab ?? TAB.COURSE);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isReviewExpanded, setIsReviewExpanded] = useState(false);
+  const [postReviews, setPostReviews] = useState(state?.initialReviews ?? []);
+  const [relatedPosts, setRelatedPosts] = useState([]);
+  const postId = getPostId(post);
 
-  const handleNext = () => {
-    
-  };
+  useEffect(() => {
+    setPost(initialPost);
+  }, [initialPost]);
 
-  const SCROLL_ROW = {
+  useEffect(() => {
+    if (!postId) return;
+    const alreadyHasDetail = post?.images?.length || post?.contentBlocks?.length;
+    const isServerPost = post?.post_id !== undefined || post?.createdAt || post?.updatedAt;
+    if (alreadyHasDetail && !isServerPost) return;
+
+    let alive = true;
+    getPostDetail(postId)
+      .then((detail) => {
+        if (!alive) return;
+        setPost((prev) => {
+          const merged = {
+            ...prev,
+            ...detail,
+            images: detail.images?.length ? detail.images : prev?.images ?? [],
+            contentBlocks: detail.contentBlocks?.length ? detail.contentBlocks : prev?.contentBlocks ?? [],
+          };
+          sessionStorage.setItem("currentCoursePost", JSON.stringify(merged));
+          return merged;
+        });
+      })
+      .catch((error) => console.error("게시물 상세 조회 실패", error));
+
+    return () => {
+      alive = false;
+    };
+  }, [postId]);
+
+  useEffect(() => {
+    if (!postId) return;
+
+    let alive = true;
+    getPostReviews(postId)
+      .then((reviews) => {
+        if (alive) setPostReviews(reviews.length > 0 ? reviews : state?.initialReviews ?? []);
+      })
+      .catch((error) => console.error("리뷰 목록 조회 실패", error));
+
+    return () => {
+      alive = false;
+    };
+  }, [postId]);
+
+  useEffect(() => {
+    if (!post?.userId) return;
+
+    let alive = true;
+    getPosts({ userId: post.userId })
+      .then((posts) => {
+        if (!alive) return;
+        setRelatedPosts(posts.filter((item) => getPostId(item) !== postId));
+      })
+      .catch((error) => console.error("가이드 다른 코스 조회 실패", error));
+
+    return () => {
+      alive = false;
+    };
+  }, [post?.userId, postId]);
+
+  const scrollRow = {
     display: "flex",
     gap: 12,
     overflowX: "auto",
@@ -39,11 +112,7 @@ export default function CourseDescriptionPage() {
     paddingBottom: 2,
   };
 
-  const trendingPosts = postData.filter(
-    (p) => p.userId === post?.userId && p.postId !== post?.postId
-  );
-
-  if (!post) return <Error>데이터를 불러올 수 없습니다.</Error>;
+  if (!post) return <Error>게시물 정보를 불러올 수 없습니다.</Error>;
 
   return (
     <PageWrapper>
@@ -55,13 +124,17 @@ export default function CourseDescriptionPage() {
       </TabSection>
 
       <ContentArea>
-        {activeTab === "코스설명" && (
+        {activeTab === TAB.COURSE && (
           <>
             <CollapsibleContainer $isExpanded={isExpanded}>
               <DetailSection>
                 <DetailTitle>{post.title}</DetailTitle>
                 <TitleDivider />
-                <ContentBlocks blocks={post.contentBlocks} />
+                {post.contentBlocks?.length ? (
+                  <ContentBlocks blocks={post.contentBlocks} />
+                ) : (
+                  <PlaceholderText>등록된 상품정보가 없습니다.</PlaceholderText>
+                )}
               </DetailSection>
 
               {!isExpanded && (
@@ -75,10 +148,9 @@ export default function CourseDescriptionPage() {
               )}
             </CollapsibleContainer>
 
-            {/* 펼쳐진 상태일 때 접기 버튼 표시 */}
             {isExpanded && (
               <OpenButtonWrapper>
-                <OpenButton $isExpanded={true} onClick={() => setIsExpanded(false)}>
+                <OpenButton $isExpanded onClick={() => setIsExpanded(false)}>
                   상품정보 접기
                 </OpenButton>
               </OpenButtonWrapper>
@@ -86,27 +158,23 @@ export default function CourseDescriptionPage() {
           </>
         )}
 
-        {activeTab === "리뷰" && (
+        {activeTab === TAB.REVIEW && (
           <>
             <SummarySection>
               <ReviewSummary
                 rating={post.rating || 0}
-                reviewCount={post.reviewCount || 0}
+                reviewCount={postReviews.length || post.reviewCount || 0}
               />
             </SummarySection>
 
             <ReviewCollapsible $isExpanded={isReviewExpanded}>
               <ReviewSection>
-                {reviews
-                  .filter((review) => review.postId === post.postId)
-                  .map((review) => (
-                    <React.Fragment key={review.reviewId}>
-                      <ReviewCard review={review} />
-                    </React.Fragment>
-                  ))}
-                {reviews.filter((r) => r.postId === post.postId).length === 0 && (
-                  <PlaceholderText>아직 리뷰가 없습니다. 🥲</PlaceholderText>
-                )}
+                {postReviews.map((review) => (
+                  <React.Fragment key={review.reviewId}>
+                    <ReviewCard review={review} />
+                  </React.Fragment>
+                ))}
+                {postReviews.length === 0 && <PlaceholderText>아직 리뷰가 없습니다.</PlaceholderText>}
               </ReviewSection>
 
               {!isReviewExpanded && (
@@ -120,10 +188,9 @@ export default function CourseDescriptionPage() {
               )}
             </ReviewCollapsible>
 
-            {/* 펼쳐진 상태일 때 접기 버튼 표시 */}
             {isReviewExpanded && (
               <OpenButtonWrapper>
-                <OpenButton $isExpanded={true} onClick={() => setIsReviewExpanded(false)}>
+                <OpenButton $isExpanded onClick={() => setIsReviewExpanded(false)}>
                   리뷰 접기
                 </OpenButton>
               </OpenButtonWrapper>
@@ -131,42 +198,40 @@ export default function CourseDescriptionPage() {
           </>
         )}
 
-        {activeTab === "가이드" && (() => {
-          const guide = guideData.find((g) => g.postIds.includes(post.postId));
-          return guide ? (
+        {activeTab === TAB.GUIDE && (
+          post.guide ? (
             <GuideBg>
-              <GuideTab guide={guide} />
-              <GuideDescriptionCard guide={guide} />
+              <GuideTab guide={post.guide} />
+              <GuideDescriptionCard guide={post.guide} />
             </GuideBg>
           ) : (
-            <PlaceholderText>가이드 정보를 찾을 수 없습니다. 💡</PlaceholderText>
-          );
-        })()}
+            <PlaceholderText>가이드 정보를 찾을 수 없습니다.</PlaceholderText>
+          )
+        )}
       </ContentArea>
 
-      {activeTab !== "가이드" && trendingPosts.length > 0 && (
+      {activeTab !== TAB.GUIDE && relatedPosts.length > 0 && (
         <Section title="이 가이드의 다른코스">
-          <div style={SCROLL_ROW}>
-            {trendingPosts.map((p) => (
-              <PostCard key={p.postId} post={p} />
+          <div style={scrollRow}>
+            {relatedPosts.map((item, index) => (
+              <PostCard key={getPostId(item) ?? `${item.title}-${index}`} post={item} />
             ))}
           </div>
         </Section>
       )}
+
       <Bottom>
-        <ReserveButton 
-          isValid={true} 
-          onClick={() => navigate(`/reservation/${post.postId}`)} 
+        <ReserveButton
+          isValid
+          onClick={() => navigate(`/reservation/${getPostId(post)}`)}
         />
       </Bottom>
     </PageWrapper>
   );
 }
 
-// --- Styled Components ---
-
 const PageWrapper = styled.div`
-  width: 390px;
+  width: min(390px, 100vw);
   margin: 0 auto;
   background-color: #fff;
   display: flex;
@@ -185,7 +250,6 @@ const CollapsibleContainer = styled.div`
   position: relative;
   max-height: ${({ $isExpanded }) => ($isExpanded ? "none" : "450px")};
   overflow: hidden;
-  transition: max-height 0.3s ease-in-out;
 `;
 
 const FadeOverlay = styled.div`
@@ -213,21 +277,22 @@ const OpenButtonWrapper = styled.div`
 `;
 
 const DetailSection = styled.div`
-  text-align: center;
   padding: 24px 16px 20px;
 `;
 
 const DetailTitle = styled.h3`
+  color: #111;
+  text-align: center;
   font-size: 18px;
   font-weight: 700;
-  margin-bottom: 16px;
+  margin: 0;
 `;
 
 const TitleDivider = styled.div`
   width: 1px;
   height: 60px;
   background: #000;
-  margin: 16px auto;
+  margin: 20px auto 24px;
 `;
 
 const TabSection = styled.div``;
@@ -249,7 +314,7 @@ const PlaceholderText = styled.div`
 `;
 
 const Error = styled.div`
-  width: 390px;
+  width: min(390px, 100vw);
   margin: 100px auto;
   text-align: center;
 `;
@@ -257,9 +322,10 @@ const Error = styled.div`
 const ReviewSection = styled.div`
   display: flex;
   flex-direction: column;
+  align-items: center;
   background-color: #F3F4F3;
   gap: 8px;
-  padding: 8px 0;
+  padding: 8px 0 18px;
 `;
 
 const SummarySection = styled.div`
@@ -271,7 +337,6 @@ const ReviewCollapsible = styled.div`
   position: relative;
   max-height: ${({ $isExpanded }) => ($isExpanded ? "none" : "700px")};
   overflow: hidden;
-  transition: max-height 0.3s ease-in-out;
 `;
 
 const ReviewFadeOverlay = styled.div`
