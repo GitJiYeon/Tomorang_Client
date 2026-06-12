@@ -38,6 +38,52 @@ const REVIEW_QUESTIONS = [
   },
 ];
 
+const MAX_REVIEW_IMAGES = 5;
+const REVIEW_IMAGE_MAX_SIZE = 1280;
+const REVIEW_IMAGE_QUALITY = 0.75;
+
+function loadImage(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("이미지를 불러오지 못했습니다."));
+    };
+    image.src = url;
+  });
+}
+
+async function compressImageFile(file) {
+  if (!file.type.startsWith("image/")) return null;
+
+  const image = await loadImage(file);
+  const scale = Math.min(1, REVIEW_IMAGE_MAX_SIZE / Math.max(image.width, image.height));
+  const width = Math.max(1, Math.round(image.width * scale));
+  const height = Math.max(1, Math.round(image.height * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+
+  const context = canvas.getContext("2d");
+  context.drawImage(image, 0, 0, width, height);
+
+  const blob = await new Promise((resolve) =>
+    canvas.toBlob(resolve, "image/jpeg", REVIEW_IMAGE_QUALITY)
+  );
+  if (!blob) return file;
+
+  const compressedName = file.name.replace(/\.[^.]+$/, ".jpg");
+  return new File([blob], compressedName, {
+    type: "image/jpeg",
+    lastModified: Date.now(),
+  });
+}
+
 export default function ReviewWritePage() {
   const { reservationId } = useParams();
   const navigate = useNavigate();
@@ -86,15 +132,32 @@ export default function ReviewWritePage() {
     );
   }
 
-  const handleImageAdd = (e) => {
-    const files = Array.from(e.target.files);
-    const previews = files.map((f) => URL.createObjectURL(f));
-    setReviewImages((prev) => [...prev, ...previews].slice(0, 5));
-    setReviewImageFiles((prev) => [...prev, ...files].slice(0, 5));
+  const handleImageAdd = async (e) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = "";
+    const remainCount = MAX_REVIEW_IMAGES - reviewImageFiles.length;
+    if (remainCount <= 0) return;
+
+    try {
+      const compressedFiles = (
+        await Promise.all(files.slice(0, remainCount).map(compressImageFile))
+      ).filter(Boolean);
+      const previews = compressedFiles.map((file) => URL.createObjectURL(file));
+
+      setReviewImages((prev) => [...prev, ...previews].slice(0, MAX_REVIEW_IMAGES));
+      setReviewImageFiles((prev) => [...prev, ...compressedFiles].slice(0, MAX_REVIEW_IMAGES));
+    } catch (error) {
+      console.error("리뷰 이미지 압축 실패", error);
+      setErrorMessage("이미지를 처리하지 못했어요. 다른 사진으로 다시 시도해주세요.");
+    }
   };
 
   const handleImageRemove = (idx) => {
-    setReviewImages((prev) => prev.filter((_, i) => i !== idx));
+    setReviewImages((prev) => {
+      const removed = prev[idx];
+      if (removed?.startsWith("blob:")) URL.revokeObjectURL(removed);
+      return prev.filter((_, i) => i !== idx);
+    });
     setReviewImageFiles((prev) => prev.filter((_, i) => i !== idx));
   };
 
