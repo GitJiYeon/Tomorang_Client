@@ -1,19 +1,21 @@
 import styled from "styled-components";
-import StarIcon from "../../assets/star.svg"; // 별 아이콘 직접 삽입
+import DefaultProfileIcon from "../../assets/defaultProfile.svg";
+import StarIcon from "../../assets/star.svg";
 import { formatRating } from "../../utils/postStats";
+import { resolvePublicAsset } from "../../utils/publicAsset";
 
-/**
- * 호출 방법:
- * <GuideCard guide={guide} />
- */
 export default function GuideCard({ guide, onClick }) {
+  const profileImage = resolvePublicAsset(guide.profileImage ?? guide.image) || DefaultProfileIcon;
+
   return (
     <Card onClick={onClick}>
       <ProfileCircle>
         <ProfileImg
-          src={guide.profileImage}
+          src={profileImage}
           alt={guide.nickname}
-          onError={e => { e.target.style.background = "#ddd"; e.target.removeAttribute("src"); }}
+          onError={(event) => {
+            event.currentTarget.src = DefaultProfileIcon;
+          }}
         />
       </ProfileCircle>
       <Nickname>{guide.nickname}</Nickname>
