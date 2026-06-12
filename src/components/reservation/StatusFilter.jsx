@@ -29,11 +29,18 @@ const FilterWrapper = styled.div`
   gap: 8px; /* 칩 사이의 간격 */
   padding: 10px 20px;
   background-color: #fff;
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 `;
 
 const StatusChip = styled.button`
   /* 공통 스타일 */
   display: flex;
+  flex-shrink: 0;
   padding: 10px 14px;
   justify-content: center;
   align-items: center;
@@ -42,7 +49,7 @@ const StatusChip = styled.button`
   font-size: 15px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: none;
 
   /* 기본 상태 (Default) */
   border: 1px solid #DADADA;
@@ -56,15 +63,17 @@ const StatusChip = styled.button`
     `
     background: #C5F598;
     color: #111111;
-    gap: 10px;
-    border: none; /* 선택 시 배경색이 채워지므로 테두리는 제거하는 것이 깔끔합니다 */
+    gap: 6px;
+    border: 1px solid #C5F598;
   `}
 
   &:focus {
     outline: none;
   }
 
-  &:hover {
-    opacity: 0.9;
+  &:hover,
+  &:active {
+    opacity: 1;
+    transform: none;
   }
 `;

@@ -18,33 +18,42 @@ export default StartPage;
 
 const Container = styled.div`
     background-color:#C5F598;
-    width:390px;
-    height:844px;
+    width: min(390px, 100vw);
+    height: 100dvh;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    margin: 0 auto;
     display:flex;
     flex-direction:column;
     align-items:center;
+    justify-content: flex-end;
+    box-sizing: border-box;
+    overflow: hidden;
+    padding: 0 21px 34px;
 `
 const Catchphrase = styled.p`
     color:#4E4E4E;
+    margin: 12px 0 0;
 `
 const Logo = styled.img`
     width:143px;
     height:97px;
-    margin-top:335px;
-    margin-bottom:12px;
+    margin-bottom:0;
 `
 const LoginButton = styled.button`
     margin-top:225px;
-    width: 348px;
+    width: 100%;
     height: 56px;
     border-radius: 12px;
     background: #111;
-    color:#fff
+    color:#fff;
+    border: none;
 `
 const SignupButton = styled.button`
-    width: 348px;
+    width: 100%;
     height: 56px;
     border-radius: 12px;
     background: #C5F598;
     margin-top:10px;
+    border: 1px solid #111;
 `

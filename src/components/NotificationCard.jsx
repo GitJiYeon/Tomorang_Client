@@ -64,6 +64,7 @@ const TextWrap = styled.div`
   flex-direction: column;
   gap: 2px;
   overflow: hidden;
+  align-self: stretch;
 `;
 
 const TopRow = styled.div`

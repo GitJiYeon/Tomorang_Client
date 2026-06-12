@@ -1,17 +1,29 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import styled, { createGlobalStyle } from "styled-components";
-import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
+import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import postData from "../data/postData.json";
 import MainHeader from "../components/mainComponents/MainHeader";
 import BottomNav from "../components/mainComponents/BottomNav";
 import FilterBar from "../components/FilterBar";
 import HeartIcon from "../assets/heart.svg";
+import FilledHeartIcon from "../assets/fillheart.svg";
 import StarIcon from "../assets/mapStar.svg";
 import LikeIcon from "../assets/likeIcon.svg";
 import MarkerIconSrc from "../assets/mapMarker.svg";
 import BubbleIconSrc from "../assets/mapBubble.svg";
+import { addWishlist, getMyWishlists, getPosts, removeWishlist } from "../api/tomorang";
+import { getPostDescription, getPostImages } from "../utils/postDisplay";
+import { formatRating, getPostRatingAverage, getPostWishlistCount } from "../utils/postStats";
+import { isOwnPost } from "../utils/postOwner";
+import {
+  getPostId,
+  isPostLiked,
+  setPostLiked,
+  subscribeWishlistChanges,
+  syncLikedPostsFromWishlists,
+} from "../utils/wishlist";
 
 const markerIcon = L.icon({
   iconUrl: MarkerIconSrc,
@@ -27,6 +39,37 @@ const bubbleIcon = L.icon({
   shadowUrl: "",
 });
 
+const getLatLng = (post) => {
+  const lat = Number(post.lat ?? post.latitude ?? post.city?.lat);
+  const lng = Number(post.lng ?? post.longitude ?? post.city?.lng);
+  return Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] : null;
+};
+
+const getPrice = (post) => {
+  const raw = Number(String(post.price ?? 0).replace(/,/g, "")) || 0;
+  return post.discountRate ? Math.round(raw * (1 - post.discountRate / 100)) : raw;
+};
+
+const DEFAULT_CENTER = [35.5, 139.5];
+
+const toRadians = (degree) => (degree * Math.PI) / 180;
+
+const getDistanceKm = (from, to) => {
+  if (!from || !to) return Number.POSITIVE_INFINITY;
+  const [fromLat, fromLng] = from.map(Number);
+  const [toLat, toLng] = to.map(Number);
+  if (![fromLat, fromLng, toLat, toLng].every(Number.isFinite)) return Number.POSITIVE_INFINITY;
+
+  const earthRadiusKm = 6371;
+  const dLat = toRadians(toLat - fromLat);
+  const dLng = toRadians(toLng - fromLng);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRadians(fromLat)) * Math.cos(toRadians(toLat)) * Math.sin(dLng / 2) ** 2;
+
+  return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
 function FlyTo({ center }) {
   const map = useMap();
   useEffect(() => {
@@ -38,66 +81,161 @@ function FlyTo({ center }) {
 function MarkerLabel({ post }) {
   const map = useMap();
   const [pos, setPos] = useState(null);
+  const latLng = getLatLng(post);
+  const lat = latLng?.[0];
+  const lng = latLng?.[1];
 
   useEffect(() => {
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return undefined;
+    const pointLatLng = [lat, lng];
     const update = () => {
-      const p = map.latLngToContainerPoint([post.city.lat, post.city.lng]);
-      setPos(p);
+      const point = map.latLngToContainerPoint(pointLatLng);
+      setPos(point);
     };
     update();
     map.on("move zoom", update);
     return () => map.off("move zoom", update);
-  }, [map, post]);
+  }, [lat, lng, map]);
 
   if (!pos) return null;
 
-  return (
-    <LabelOverlay style={{ left: pos.x, top: pos.y }}>
-      {post.title}
-    </LabelOverlay>
-  );
+  return <LabelOverlay style={{ left: pos.x, top: pos.y }}>{post.title}</LabelOverlay>;
 }
 
 export default function MapPage() {
+  const navigate = useNavigate();
   const [activeNav, setActiveNav] = useState(1);
+  const [posts, setPosts] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
-  const [likedPosts, setLikedPosts] = useState({});
-  const [mapCenter, setMapCenter] = useState([35.5, 139.5]);
-  const [filter, setFilter] = useState({ sort: "추천순", category: "애니메이션" });
+  const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
+  const [userLocation, setUserLocation] = useState(null);
+  const [filter, setFilter] = useState({ sort: "", category: "" });
+  const [likedVersion, setLikedVersion] = useState(0);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSheetExpanded, setIsSheetExpanded] = useState(false);
+  const sheetDragRef = useRef(null);
 
   useEffect(() => {
-    navigator.geolocation?.getCurrentPosition(
+    let alive = true;
+    getPosts()
+      .then((serverPosts) => {
+        if (!alive) return;
+        const postsWithLocation = serverPosts.filter(getLatLng);
+        setPosts(postsWithLocation);
+        if (postsWithLocation[0]) setMapCenter((current) => (current === DEFAULT_CENTER ? getLatLng(postsWithLocation[0]) : current));
+      })
+      .catch((error) => {
+        if (alive) setErrorMessage(error.message || "코스 목록을 불러오지 못했습니다.");
+      });
+
+    getMyWishlists().then(syncLikedPostsFromWishlists).catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const loc = [pos.coords.latitude, pos.coords.longitude];
-        setMapCenter(loc);
+        const currentLocation = [pos.coords.latitude, pos.coords.longitude];
+        setUserLocation(currentLocation);
+        setMapCenter(currentLocation);
       },
-      () => {}
+      () => {},
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 300000 }
     );
   }, []);
 
-  const toggleLike = (postId, e) => {
-    e.stopPropagation();
-    setLikedPosts((prev) => ({ ...prev, [postId]: !prev[postId] }));
+  useEffect(
+    () => subscribeWishlistChanges(() => setLikedVersion((version) => version + 1)),
+    []
+  );
+
+  const toggleLike = async (post, event) => {
+    event.stopPropagation();
+    if (isOwnPost(post)) return;
+    const postId = getPostId(post);
+    if (!postId) return;
+    const nextLiked = !isPostLiked(postId);
+    try {
+      if (nextLiked) {
+        await addWishlist(postId);
+      } else {
+        await removeWishlist(postId);
+      }
+      setPostLiked(postId, nextLiked);
+      setLikedVersion((version) => version + 1);
+    } catch (error) {
+      alert(error.message || "찜 변경에 실패했습니다.");
+    }
   };
 
-  const finalPrice = (post) => {
-    const raw = parseInt(post.price.replace(/,/g, ""), 10);
-    return post.discountRate ? Math.round(raw * (1 - post.discountRate / 100)) : raw;
+  const openPostDetail = (post) => {
+    if (!post) return;
+    sessionStorage.setItem("currentCoursePost", JSON.stringify(post));
+    navigate("/course", { state: { post } });
   };
 
-  // FilterBar 필터+정렬 적용
-  const filteredPosts = postData
-    .filter((p) =>
-      filter.category
-        ? p.tag?.ko?.includes(filter.category) || p.title.includes(filter.category)
-        : true
-    )
-    .sort((a, b) => {
-      if (filter.sort === "인기순") return b.likeCount - a.likeCount;
-      if (filter.sort === "가격순")
-        return parseInt(a.price.replace(/,/g, ""), 10) - parseInt(b.price.replace(/,/g, ""), 10);
-      return b.rating - a.rating;
-    });
+  const handleSheetPointerDown = (event) => {
+    sheetDragRef.current = {
+      startY: event.clientY,
+      latestY: event.clientY,
+      moved: false,
+    };
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  };
+
+  const handleSheetPointerMove = (event) => {
+    const drag = sheetDragRef.current;
+    if (!drag) return;
+    drag.latestY = event.clientY;
+    if (Math.abs(drag.latestY - drag.startY) > 8) drag.moved = true;
+  };
+
+  const handleSheetPointerEnd = (event) => {
+    const drag = sheetDragRef.current;
+    if (!drag) return;
+    const deltaY = drag.latestY - drag.startY;
+    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    sheetDragRef.current = null;
+
+    if (!drag.moved) {
+      setIsSheetExpanded((expanded) => !expanded);
+      return;
+    }
+    if (deltaY < -32) setIsSheetExpanded(true);
+    if (deltaY > 32) setIsSheetExpanded(false);
+  };
+
+  const filteredPosts = useMemo(() => {
+    const category = String(filter.category ?? "").trim();
+    const sort = String(filter.sort ?? "");
+    const distanceCenter = userLocation ?? mapCenter;
+    return posts
+      .filter((post) => {
+        if (!category) return true;
+        const haystack = [
+          post.title,
+          post.subtitle,
+          post.cityName,
+          getPostDescription(post),
+          ...(post.tags ?? []).map((tag) => tag.tagName ?? tag.name ?? tag),
+        ]
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(category.toLowerCase());
+      })
+      .sort((a, b) => {
+        if (sort.includes("가격")) return getPrice(a) - getPrice(b);
+        if (sort.includes("인기")) return getPostWishlistCount(b) - getPostWishlistCount(a);
+        const distanceGap = getDistanceKm(distanceCenter, getLatLng(a)) - getDistanceKm(distanceCenter, getLatLng(b));
+        if (Number.isFinite(distanceGap) && Math.abs(distanceGap) > 0.01) return distanceGap;
+        return getPostRatingAverage(b) - getPostRatingAverage(a);
+      });
+  }, [filter, mapCenter, posts, userLocation]);
 
   return (
     <Wrapper>
@@ -118,19 +256,23 @@ export default function MapPage() {
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="" />
           <FlyTo center={mapCenter} />
 
-          {postData.map((post) => {
-            const isSelected = selectedPost?.postId === post.postId;
+          {filteredPosts.map((post) => {
+            const postId = getPostId(post);
+            const latLng = getLatLng(post);
+            const isSelected = getPostId(selectedPost) === postId;
+            if (!latLng) return null;
             return (
               <Marker
-                key={post.postId}
-                position={[post.city.lat, post.city.lng]}
+                key={postId}
+                position={latLng}
                 icon={isSelected ? bubbleIcon : markerIcon}
                 eventHandlers={{
                   click: () => {
-                    if (isSelected) setSelectedPost(null);
-                    else {
+                    if (isSelected) {
+                      setSelectedPost(null);
+                    } else {
                       setSelectedPost(post);
-                      setMapCenter([post.city.lat, post.city.lng]);
+                      setMapCenter(latLng);
                     }
                   },
                 }}
@@ -142,33 +284,51 @@ export default function MapPage() {
         </MapContainer>
       </MapWrap>
 
-      {/* 마커 미선택: 바텀시트 */}
       {!selectedPost && (
-        <BottomSheet>
+        <BottomSheet $expanded={isSheetExpanded}>
           <SheetFixed>
-            <HandleBar />
-            <SheetTitle>주위에 있는 코스</SheetTitle>
-            <FilterBar onFilterChange={setFilter} />
+            <SheetHandle
+              role="button"
+              tabIndex={0}
+              aria-label={isSheetExpanded ? "코스 목록 접기" : "코스 목록 펼치기"}
+              onPointerDown={handleSheetPointerDown}
+              onPointerMove={handleSheetPointerMove}
+              onPointerUp={handleSheetPointerEnd}
+              onPointerCancel={handleSheetPointerEnd}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  setIsSheetExpanded((expanded) => !expanded);
+                }
+              }}
+            >
+              <HandleBar />
+            </SheetHandle>
+            <SheetTitle>{userLocation ? "현재 위치 근처 코스" : "주위에 있는 코스"}</SheetTitle>
+            <FilterBar onFilterChange={setFilter} defaultCategory="" />
           </SheetFixed>
           <CardList>
-            {filteredPosts.length === 0 ? (
-              <Empty>주위에 코스가 없습니다</Empty>
+            {errorMessage && <Empty>{errorMessage}</Empty>}
+            {!errorMessage && filteredPosts.length === 0 ? (
+              <Empty>표시할 코스가 없습니다.</Empty>
             ) : (
               filteredPosts.map((post) => {
-                const raw = parseInt(post.price.replace(/,/g, ""), 10);
-                const price = post.discountRate
-                  ? Math.round(raw * (1 - post.discountRate / 100))
-                  : raw;
+                const raw = Number(String(post.price ?? 0).replace(/,/g, "")) || 0;
+                const price = getPrice(post);
+                const image = getPostImages(post)[0];
                 return (
-                  <HCard key={post.postId}>
+                  <HCard key={getPostId(post)} onClick={() => openPostDetail(post)}>
                     <HCardImage
-                      src={post.images?.[0]}
+                      src={image}
                       alt={post.title}
-                      onError={(e) => { e.target.style.background = "#eee"; e.target.removeAttribute("src"); }}
+                      onError={(event) => {
+                        event.currentTarget.style.background = "#eee";
+                        event.currentTarget.removeAttribute("src");
+                      }}
                     />
                     <HCardInfo>
                       <HCardTitle>{post.title}</HCardTitle>
-                      <HCardSubtitle>{post.subtitle}</HCardSubtitle>
+                      <HCardSubtitle>{post.subtitle || getPostDescription(post)}</HCardSubtitle>
                       {post.discountRate > 0 && (
                         <HCardOriginalPrice>{raw.toLocaleString()}원</HCardOriginalPrice>
                       )}
@@ -185,40 +345,48 @@ export default function MapPage() {
         </BottomSheet>
       )}
 
-      {/* 마커 선택: 플로팅 카드 */}
       {selectedPost && (() => {
-        const post = selectedPost;
-        const isLiked = likedPosts[post.postId];
+        const postId = getPostId(selectedPost);
+        const image = getPostImages(selectedPost)[0];
+        const liked = isPostLiked(postId);
+        const canWishlist = !isOwnPost(selectedPost);
+        const ratingAverage = getPostRatingAverage(selectedPost);
+        const wishlistCount = getPostWishlistCount(selectedPost);
         return (
-          <FloatingCard>
+          <FloatingCard onClick={() => openPostDetail(selectedPost)}>
             <CardImageWrap>
               <CardImage
-                src={post.images?.[0]}
-                alt={post.title}
-                onError={(e) => { e.target.style.background = "#ddd"; e.target.removeAttribute("src"); }}
+                src={image}
+                alt={selectedPost.title}
+                onError={(event) => {
+                  event.currentTarget.style.background = "#ddd";
+                  event.currentTarget.removeAttribute("src");
+                }}
               />
-              <HeartBtn $liked={isLiked} onClick={(e) => toggleLike(post.postId, e)}>
-                <img src={HeartIcon} alt="heart" width={13} height={12} />
-              </HeartBtn>
+              {canWishlist && (
+                <HeartBtn $liked={liked} onClick={(event) => toggleLike(selectedPost, event)}>
+                  <img src={liked ? FilledHeartIcon : HeartIcon} alt="heart" width={13} height={12} />
+                </HeartBtn>
+              )}
             </CardImageWrap>
             <CardInfo>
               <CardInfoLeft>
                 <TitleArea>
-                  <CardTitle>{post.title}</CardTitle>
-                  <CardSubtitle>{post.subtitle}</CardSubtitle>
+                  <CardTitle>{selectedPost.title}</CardTitle>
+                  <CardSubtitle>{selectedPost.subtitle || getPostDescription(selectedPost)}</CardSubtitle>
                 </TitleArea>
                 <BadgeRow>
                   <RatingBadge>
                     <img src={StarIcon} alt="star" width={15} height={15} />
-                    <RatingText>{post.rating}</RatingText>
+                    <RatingText>{formatRating(ratingAverage)}</RatingText>
                   </RatingBadge>
                   <LikeBadge>
                     <img src={LikeIcon} alt="like" width={15} height={15} />
-                    <LikeText>{post.likeCount}</LikeText>
+                    <LikeText>{wishlistCount}</LikeText>
                   </LikeBadge>
                 </BadgeRow>
               </CardInfoLeft>
-              <PriceText>{finalPrice(post).toLocaleString()}원</PriceText>
+              <PriceText>{getPrice(selectedPost).toLocaleString()}원</PriceText>
             </CardInfo>
           </FloatingCard>
         );
@@ -243,9 +411,10 @@ const LeafletZFix = createGlobalStyle`
 `;
 
 const Wrapper = styled.div`
-  max-width: 390px;
+  width: min(390px, 100vw);
   margin: 0 auto;
-  min-height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
   background: #fff;
   font-family: "Pretendard", sans-serif;
   position: relative;
@@ -254,7 +423,7 @@ const Wrapper = styled.div`
 
 const MapWrap = styled.div`
   width: 100%;
-  height: 93.5vh;
+  height: 100%;
   position: relative;
   z-index: 0;
   .leaflet-container { z-index: 0; }
@@ -268,7 +437,6 @@ const LabelOverlay = styled.div`
   font-weight: 510;
   font-size: 14px;
   line-height: 22px;
-  letter-spacing: -0.7px;
   text-align: center;
   color: #111;
   white-space: nowrap;
@@ -284,8 +452,8 @@ const BottomSheet = styled.div`
   bottom: 0;
   left: 0;
   right: 0;
-  width: 390px;
-  height: 330px;
+  width: min(390px, 100vw);
+  height: ${({ $expanded }) => ($expanded ? "calc(100dvh - 96px)" : "330px")};
   background: #fff;
   border-top-left-radius: 24px;
   border-top-right-radius: 24px;
@@ -294,32 +462,50 @@ const BottomSheet = styled.div`
   z-index: 200;
   display: flex;
   flex-direction: column;
+  transition: height 0.24s ease;
 `;
 
 const SheetFixed = styled.div`
   flex-shrink: 0;
-  padding: 12px 0 0;
+  padding: 0;
+`;
+
+const SheetHandle = styled.div`
+  width: 100%;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  touch-action: none;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &:focus {
+    outline: none;
+  }
 `;
 
 const HandleBar = styled.div`
   width: 40px;
   height: 4px;
   border-radius: 2px;
-  background: #DADADA;
-  margin: 0 auto 12px;
+  background: #dadada;
 `;
 
 const SheetTitle = styled.div`
   font-weight: 700;
   font-size: 18px;
   color: #111;
-  padding: 4px 21px 4px;
+  padding: 4px 21px;
 `;
 
 const CardList = styled.div`
   flex: 1;
   overflow-y: auto;
-  padding: 8px 21px 16px;
+  padding: 8px 21px 112px;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -329,12 +515,11 @@ const CardList = styled.div`
 
 const Empty = styled.div`
   text-align: center;
-  color: #ACACAC;
+  color: #acacac;
   font-size: 14px;
   padding: 32px 0;
 `;
 
-/* 바텀시트 가로형 카드 */
 const HCard = styled.div`
   display: flex;
   align-items: center;
@@ -356,6 +541,7 @@ const HCardInfo = styled.div`
   flex-direction: column;
   gap: 4px;
   flex: 1;
+  min-width: 0;
 `;
 
 const HCardTitle = styled.div`
@@ -372,7 +558,7 @@ const HCardSubtitle = styled.div`
   font-weight: 400;
   font-size: 12px;
   line-height: 22px;
-  color: #ACACAC;
+  color: #acacac;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -380,9 +566,8 @@ const HCardSubtitle = styled.div`
 
 const HCardOriginalPrice = styled.div`
   font-size: 10px;
-  color: #DADADA;
+  color: #dadada;
   text-decoration: line-through;
-  letter-spacing: -0.01px;
 `;
 
 const HCardPriceRow = styled.div`
@@ -394,24 +579,21 @@ const HCardPriceRow = styled.div`
 const HCardSale = styled.span`
   font-weight: 700;
   font-size: 14px;
-  color: #B1DD89;
+  color: #b1dd89;
 `;
-
-
 
 const HCardPrice = styled.span`
   font-weight: 700;
   font-size: 14px;
   color: #111;
-  letter-spacing: -0.018px;
 `;
 
 const FloatingCard = styled.div`
   position: absolute;
-  bottom: 106px;
+  bottom: 144px;
   left: 21px;
   width: 348px;
-  height: 240px;
+  height: 252px;
   border-radius: 16px;
   overflow: hidden;
   background: #fff;
@@ -440,12 +622,13 @@ const HeartBtn = styled.button`
   width: 28px;
   height: 28px;
   border-radius: 60px;
-  background-color: ${({ $liked }) => ($liked ? "#C5F598" : "#fff")};
+  background: rgba(255, 255, 255, 0.88);
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
   padding: 0;
 `;
 
@@ -460,6 +643,7 @@ const CardInfoLeft = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
 `;
 
 const TitleArea = styled.div`
@@ -483,7 +667,7 @@ const CardSubtitle = styled.div`
   font-weight: 400;
   font-size: 12px;
   line-height: 22px;
-  color: #ACACAC;
+  color: #acacac;
   width: 182px;
   white-space: nowrap;
   overflow: hidden;
@@ -500,7 +684,7 @@ const RatingBadge = styled.div`
   display: flex;
   align-items: center;
   gap: 3px;
-  background: #C5F598;
+  background: #c5f598;
   border-radius: 2px;
   padding: 3px 4px;
 `;
@@ -515,7 +699,7 @@ const LikeBadge = styled.div`
   display: flex;
   align-items: center;
   gap: 3px;
-  border: 1px solid #C5F598;
+  border: 1px solid #c5f598;
   border-radius: 2px;
   padding: 4px;
 `;

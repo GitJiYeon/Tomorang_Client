@@ -1,13 +1,23 @@
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
+
 export default function Section({ title, children, showMore = true, onMore, path }) {
   const navigate = useNavigate();
+
+  const handleMoreClick = () => {
+    if (onMore) {
+      onMore();
+      return;
+    }
+    if (path) navigate(path);
+  };
+
   return (
     <Wrapper>
       <Header>
         <Title>{title}</Title>
         {showMore && (
-          <MoreBtn onClick={()=> navigate(path)}>더보기 ›</MoreBtn>
+          <MoreBtn type="button" onClick={handleMoreClick}>더보기</MoreBtn>
         )}
       </Header>
       {children}
@@ -31,7 +41,6 @@ const Title = styled.span`
   font-size: 18px;
   font-weight: 700;
   color: #111;
-  letter-spacing: -0.1%;
   line-height: 100%;
   padding-left: 8px;
 `;
@@ -41,7 +50,6 @@ const MoreBtn = styled.button`
   font-size: 12px;
   font-weight: 500;
   color: #4e4e4e;
-  letter-spacing: -0.1%;
   line-height: 100%;
   background: none;
   border: none;

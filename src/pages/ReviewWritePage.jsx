@@ -8,16 +8,17 @@
  * navigate(`/review-write/${reservationId}`)
  */
 
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { useReservations } from "../components/context/ReservationContext";
-import postData from "../data/postData.json";
 import Header from "../components/Header";
 import StarFillIcon from "../assets/bookStatusIcons/starFill.svg";
 import StarEmptyIcon from "../assets/bookStatusIcons/starEmpty.svg";
 import PlusIcon from "../assets/bookStatusIcons/plusIcon.svg";
 import XSmallIcon from "../assets/bookStatusIcons/xSmall.svg";
+import { createReview, getPostDetail } from "../api/tomorang";
+import { getPostDescription, getPostImages } from "../utils/postDisplay";
 
 const REVIEW_QUESTIONS = [
   {
@@ -40,22 +41,47 @@ const REVIEW_QUESTIONS = [
 export default function ReviewWritePage() {
   const { reservationId } = useParams();
   const navigate = useNavigate();
-  const { reservations, completeAndSaveReview } = useReservations();
+  const { reservations, completeAndSaveReview, isLoading } = useReservations();
+  const [post, setPost] = useState(null);
 
-  const reservation = reservations.find((r) => r.reservationId === Number(reservationId));
-  const post = reservation ? postData.find((p) => p.postId === reservation.postId) : null;
+  const reservation = reservations.find((r) => String(r.reservationId) === String(reservationId));
 
   const [reviewRating, setReviewRating] = useState(0);
   const [answers, setAnswers] = useState({});
   const [reviewText, setReviewText] = useState("");
   const [reviewImages, setReviewImages] = useState([]);
+  const [reviewImageFiles, setReviewImageFiles] = useState([]);
+  const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (!reservation) return undefined;
+    if (reservation.post) {
+      setPost(reservation.post);
+      return undefined;
+    }
+
+    let alive = true;
+    getPostDetail(reservation.postId)
+      .then((post) => {
+        if (alive) setPost(post);
+      })
+      .catch(() => {
+        if (alive) setPost(null);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [reservation]);
 
   if (!reservation || !post) {
     return (
       <Wrapper>
-        <div style={{ padding: 40, color: "#ACACAC" }}>예약 정보를 찾을 수 없습니다.</div>
+        <div style={{ padding: 40, color: "#ACACAC" }}>
+          {isLoading ? "예약 정보를 불러오는 중입니다." : "예약 정보를 찾을 수 없습니다."}
+        </div>
       </Wrapper>
     );
   }
@@ -64,10 +90,12 @@ export default function ReviewWritePage() {
     const files = Array.from(e.target.files);
     const previews = files.map((f) => URL.createObjectURL(f));
     setReviewImages((prev) => [...prev, ...previews].slice(0, 5));
+    setReviewImageFiles((prev) => [...prev, ...files].slice(0, 5));
   };
 
   const handleImageRemove = (idx) => {
     setReviewImages((prev) => prev.filter((_, i) => i !== idx));
+    setReviewImageFiles((prev) => prev.filter((_, i) => i !== idx));
   };
 
   const canSubmit = reviewRating > 0;
@@ -75,18 +103,48 @@ export default function ReviewWritePage() {
   const handleSubmit = async () => {
     if (!canSubmit || isSubmitting) return;
     setIsSubmitting(true);
+    setErrorMessage("");
     try {
+      const savedProfile = JSON.parse(localStorage.getItem("profile") || "{}");
+      const myNickname =
+        savedProfile.nickname ??
+        savedProfile.nickName ??
+        savedProfile.name ??
+        localStorage.getItem("userId") ??
+        "사용자";
+      const myProfile =
+        savedProfile.profileImage ??
+        savedProfile.image ??
+        savedProfile.profile;
+      const createdReview = await createReview(
+        {
+          postId: reservation.postId,
+          rating: reviewRating,
+          content: reviewText.trim() || Object.values(answers).join(" / "),
+        },
+        reviewImageFiles
+      );
+
       await completeAndSaveReview(Number(reservationId), {
-        rating: reviewRating,
+        ...createdReview,
+        nickname: createdReview.nickname ?? createdReview.memberNickName ?? myNickname,
+        profile: createdReview.profile ?? createdReview.memberImage ?? myProfile,
+        rating: createdReview.rating ?? reviewRating,
         answers,
-        content: reviewText,
-        images: reviewImages,
-        createdAt: new Date().toISOString(),
+        content: createdReview.content ?? reviewText,
+        images:
+          createdReview.images?.length
+            ? createdReview.images
+            : createdReview.postImages?.length
+              ? createdReview.postImages
+              : reviewImages,
+        createdAt: createdReview.createdAt ?? new Date().toISOString(),
       });
       // 제출 완료 → 예약현황 페이지로 이동 (이제 COMPLETED + myReview 있음)
-      navigate(`/reservation-status/${7}`, { replace: true });
+      navigate(`/reservation-status/${reservationId}`, { replace: true });
     } catch (err) {
       console.error("리뷰 등록 실패", err);
+      setErrorMessage(err.message || "리뷰 등록에 실패했습니다.");
     } finally {
       setIsSubmitting(false);
     }
@@ -100,20 +158,20 @@ export default function ReviewWritePage() {
         {/* ── 게시물 썸네일 카드 ── */}
         <PostCard>
           <PostThumb
-            src={post.thumbnail || post.images?.[0]}
+            src={post.thumbnail || getPostImages(post)[0]}
             alt={post.title}
             onError={(e) => { e.target.style.background = "#eee"; e.target.removeAttribute("src"); }}
           />
           <PostInfo>
             <PostTitle>{post.title}</PostTitle>
-            <PostDesc>{post.description}</PostDesc>
+            <PostDesc>{post.description || getPostDescription(post)}</PostDesc>
             <PriceRow>
               {post.originalPrice && (
                 <OriginalPrice>{post.originalPrice?.toLocaleString()}원</OriginalPrice>
               )}
               <SalePrice>
                 {post.originalPrice && <SaleLabel>SALE </SaleLabel>}
-                {post.price?.toLocaleString()}원
+                {Number(String(post.price ?? 0).replace(/,/g, "")).toLocaleString()}원
               </SalePrice>
             </PriceRow>
           </PostInfo>
@@ -202,6 +260,7 @@ export default function ReviewWritePage() {
         </Section>
 
         {/* ── 등록 버튼 ── */}
+        {errorMessage && <ErrorText>{errorMessage}</ErrorText>}
         <SubmitBtn $disabled={!canSubmit || isSubmitting} onClick={handleSubmit}>
           {isSubmitting ? "등록 중..." : "후기 등록하기"}
         </SubmitBtn>
@@ -455,4 +514,11 @@ const SubmitBtn = styled.button`
   font-style: normal;
   font-weight: 500;
   line-height: normal;
+`;
+
+const ErrorText = styled.p`
+  margin: 0 0 10px;
+  color: #d93025;
+  font-size: 13px;
+  font-weight: 500;
 `;

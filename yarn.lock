@@ -810,6 +810,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@stomp/stompjs@npm:^7.3.0":
+  version: 7.3.0
+  resolution: "@stomp/stompjs@npm:7.3.0"
+  checksum: 10c0/10eef1a9ae1f3c735e719bc01eb28faddad5dc718d85d4381d8ad896dc39f14d306a764d1229f601a274cba48de5e7543985de645ec254b0a8ee82ef453826c9
+  languageName: node
+  linkType: hard
+
 "@types/babel__core@npm:^7.20.5":
   version: 7.20.5
   resolution: "@types/babel__core@npm:7.20.5"
@@ -2521,6 +2528,7 @@ __metadata:
   resolution: "tomorang_client@workspace:."
   dependencies:
     "@eslint/js": "npm:^9.39.1"
+    "@stomp/stompjs": "npm:^7.3.0"
     "@types/react": "npm:^19.2.7"
     "@types/react-dom": "npm:^19.2.3"
     "@types/styled-components": "npm:^5.1.36"

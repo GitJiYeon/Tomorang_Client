@@ -2,12 +2,20 @@ import React from "react";
 import styled from "styled-components";
 
 export default function GuideDescriptionCard({ guide }) {
-  if (!guide.description) return null;
+  const description =
+    guide.description ??
+    guide.guideDescription ??
+    guide.guide_description ??
+    guide.bio ??
+    guide.oneWord ??
+    guide.introduction;
+
+  if (!description) return null;
 
   return (
     <Card>
       <DescTitle>가이드 설명</DescTitle>
-      <DescText>{guide.description}</DescText>
+      <DescText>{description}</DescText>
     </Card>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import StartComent from "../components/StartComent";
 import NextButton from "../components/NextButton1";
 import ProgressBar from "../components/ProgressBar";
@@ -9,6 +10,7 @@ import InterestCard from "../components/InterestCard";
 export default function SelectInterest() {
   const [selected, setSelected] = useState([]);
   const navigate = useNavigate();
+  const { state } = useLocation();
 
   const isValid = selected.length > 0;
 
@@ -19,7 +21,12 @@ export default function SelectInterest() {
   };
 
   const handleNext = () => {
-    navigate("/make-traveler-profile", { state: { interests: selected } });
+    navigate("/make-traveler-profile", {
+      state: {
+        ...state,
+        interests: selected,
+      },
+    });
   };
 
   return (

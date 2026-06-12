@@ -19,9 +19,9 @@ function getTimeAgo(dateString) {
  * 호출 방법:
  * <ReviewCard review={review} />
  */
-export default function ReviewCard({ review }) {
+export default function ReviewCard({ review, onClick }) {
   return (
-    <Wrapper>
+    <Wrapper onClick={onClick}>
       {/* 왼쪽 이미지 */}
       <PostImg
         src={review.postImages[0]}
@@ -51,6 +51,7 @@ const Wrapper = styled.div`
   display: flex;
   gap: 12px;
   margin-bottom: 10px;
+  cursor: pointer;
 `;
 
 const PostImg = styled.img`

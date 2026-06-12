@@ -2,13 +2,22 @@
 import styled from 'styled-components';
 import BackArrow from "../assets/backarrow.svg";
 import { useNavigate } from "react-router-dom";
-function Header({coment, path}) {
+function Header({coment, path, onBack}) {
   const navigate = useNavigate();
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+      return;
+    }
+
+    path ? navigate(path) : navigate(-1);
+  };
+
   return (
     <>
       <Container>
         <BackButton 
-          onClick={() => (path ? navigate(path) : navigate(-1))} 
+          onClick={handleBack}
           type="button"
         >
           <img src={BackArrow} alt="뒤로가기" />
@@ -45,6 +54,7 @@ const BackButton = styled.button`
   justify-content: center;
   width: 40px; 
   height: 40px;
+  transition: none;
 
   img {
     width: 24px;
@@ -52,7 +62,8 @@ const BackButton = styled.button`
   }
 
   &:active {
-    opacity: 0.6;
+    opacity: 1;
+    transform: none;
   }
 `;
 

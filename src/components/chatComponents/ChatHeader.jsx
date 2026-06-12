@@ -47,6 +47,12 @@ const BackBtn = styled.button`
   display: flex;
   align-items: center;
   width: 32px;
+  transition: none;
+
+  &:active {
+    opacity: 1;
+    transform: none;
+  }
 `;
 
 const Center = styled.div`
@@ -86,6 +92,12 @@ const FlagBtn = styled.button`
   align-items: center;
   width: 32px;
   justify-content: flex-end;
+  transition: none;
+
+  &:active {
+    opacity: 1;
+    transform: none;
+  }
 `;
 
 const Divider = styled.div`

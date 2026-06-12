@@ -1,84 +1,102 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { useLocation } from "react-router-dom";
 import Header from "../components/Header";
 import FilterBar from "../components/FilterBar";
-import postdata from "../data/postData.json";
-import PostCardList from "../components/postCardList.jsx"
+import PostCardList from "../components/PostCardList";
+import { getPosts } from "../api/tomorang";
+import { getPostRatingAverage, getPostWishlistCount } from "../utils/postStats";
 
 export default function DestinationListPage() {
   const { state } = useLocation();
   const lang = "ko";
-
+  const [posts, setPosts] = useState([]);
   const [filter, setFilter] = useState({
     sort: "추천순",
-    category: "애니메이션",
+    category: "",
   });
 
   const cityName = state?.cityName?.[lang]?.cityName ?? "여행지";
   const tags = state?.tags?.[lang] ?? [];
   const image = state?.image ?? "";
 
-  const handleFilterChange = (data) => {
-    setFilter(data);
-  };
+  useEffect(() => {
+    let alive = true;
 
+    getPosts(cityName === "여행지" ? {} : { city: cityName })
+      .then((items) => {
+        if (alive) setPosts(items);
+      })
+      .catch((error) => {
+        console.error("여행지 코스 조회 실패", error);
+        if (alive) setPosts([]);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [cityName]);
 
   const filteredPosts = useMemo(() => {
-    const filtered = postdata.filter((post) =>
-      post.tag?.ko?.includes(filter.category)
-    );
+    const filtered = filter.category
+      ? posts.filter((post) =>
+          post.tags?.some((tag) => String(tag?.name ?? tag?.value ?? tag).includes(filter.category)) ||
+          post.tag?.ko?.includes(filter.category) ||
+          post.title?.includes(filter.category)
+        )
+      : posts;
 
     return [...filtered].sort((a, b) => {
-      if (filter.sort === "추천순") {
-        return b.rating - a.rating;
-      }
-
       if (filter.sort === "인기순") {
-        return b.reviewCount - a.reviewCount;
+        return getPostWishlistCount(b) - getPostWishlistCount(a);
       }
 
       if (filter.sort === "가격순") {
-        const priceA = Number(a.price.replace(/,/g, ""));
-        const priceB = Number(b.price.replace(/,/g, ""));
+        const priceA = Number(String(a.price ?? 0).replace(/,/g, ""));
+        const priceB = Number(String(b.price ?? 0).replace(/,/g, ""));
         return priceA - priceB;
       }
 
-      return 0;
+      return getPostRatingAverage(b) - getPostRatingAverage(a);
     });
-  }, [filter]);
+  }, [filter, posts]);
 
   return (
     <PageWrapper>
       <Header coment={cityName} />
 
-      <ImageSection>
-        <MainImage src={image} alt={cityName} />
-        <Gradient />
-        <ImageText>
-          <TagRow>
-            {tags.map((tag) => (
-              <Tag key={tag}>#{tag}</Tag>
-            ))}
-          </TagRow>
-          <Question>특색있는 음식 좋아하세요?</Question>
-        </ImageText>
-      </ImageSection>
+      {image && (
+        <ImageSection>
+          <MainImage src={image} alt={cityName} />
+          <Gradient />
+          <ImageText>
+            <TagRow>
+              {tags.map((tag) => (
+                <Tag key={tag}>#{tag}</Tag>
+              ))}
+            </TagRow>
+            <Question>탐나는 여행을 골라보세요</Question>
+          </ImageText>
+        </ImageSection>
+      )}
 
-      <FilterBar onFilterChange={handleFilterChange} />
+      <FilterBar onFilterChange={setFilter} />
 
       <ListSection>
-        {filteredPosts.map((post) => (
-          <PostCardList key={post.postId} post={post} />
-        ))}
+        {filteredPosts.length > 0 ? (
+          filteredPosts.map((post) => (
+            <PostCardList key={post.postId ?? post.post_id ?? post.id} post={post} />
+          ))
+        ) : (
+          <EmptyText>표시할 코스가 없습니다.</EmptyText>
+        )}
       </ListSection>
     </PageWrapper>
   );
 }
 
-
 const PageWrapper = styled.div`
-  width: 390px;
+  width: min(390px, 100vw);
   margin: 0 auto;
   min-height: 100vh;
   background-color: #fff;
@@ -142,4 +160,10 @@ const ListSection = styled.div`
   padding: 20px 16px;
   align-items: center;
   flex: 1;
+`;
+
+const EmptyText = styled.div`
+  padding: 60px 0;
+  color: #999;
+  font-size: 14px;
 `;

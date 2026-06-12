@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import Greenstar from "../assets/greenstar.svg";
 import Graystar from "../assets/graystar.svg";
@@ -6,38 +7,77 @@ import Flag from "../assets/flag.svg";
 import Heart from "../assets/heart.svg";
 import Filledheart from "../assets/fillheart.svg";
 import ReportSystem from "../components/ReportModal";
+import { addWishlist, removeWishlist } from "../api/tomorang";
+import { getHiddenGuideFromPost } from "../utils/hiddenGuides";
+import { formatRating, getPostRatingAverage } from "../utils/postStats";
+import { isOwnPost } from "../utils/postOwner";
+import { getPostId, isPostLiked, setPostLiked, subscribeWishlistChanges } from "../utils/wishlist";
 
 export default function CourseDescription({ post }) {
-  const [liked, setLiked] = useState(false);
+  const navigate = useNavigate();
+  const postId = getPostId(post);
+  const canWishlist = !isOwnPost(post);
+  const canReport = !isOwnPost(post);
+  const [liked, setLiked] = useState(() => isPostLiked(postId));
   const [isReportOpen, setIsReportOpen] = useState(false);
+
+  useEffect(() => {
+    setLiked(isPostLiked(postId));
+    return subscribeWishlistChanges(() => setLiked(isPostLiked(postId)));
+  }, [postId]);
+
+  const toggleLike = async () => {
+    if (!postId) return;
+    const nextLiked = !liked;
+
+    try {
+      if (nextLiked) {
+        await addWishlist(postId);
+      } else {
+        await removeWishlist(postId);
+      }
+      setPostLiked(postId, nextLiked);
+      setLiked(nextLiked);
+    } catch (error) {
+      console.error("찜 변경 실패", error);
+      alert(error.message || "찜 변경에 실패했습니다.");
+    }
+  };
 
   if (!post) return null;
 
-  const originalPriceNum = Number(post.price.replace(/,/g, ""));
-  const discountedPrice = post.discountRate > 0
-    ? Math.round(originalPriceNum * (1 - post.discountRate / 100))
+  const images = Array.isArray(post.images) ? post.images.filter(Boolean) : [];
+  const rating = getPostRatingAverage(post);
+  const discountRate = Number(post.discountRate ?? post.discount_rate ?? 0);
+  const originalPriceNum = Number(String(post.price ?? 0).replace(/,/g, ""));
+  const discountedPrice = discountRate > 0
+    ? Math.round(originalPriceNum * (1 - discountRate / 100))
     : originalPriceNum;
+  const subImages = images.slice(1);
+  const visibleSubImages = subImages.slice(0, 4);
+  const isMoreThanFour = subImages.length > 4;
+  const extraCount = subImages.length - 3;
 
-  const renderStars = (rating) => {
-    const filledCount = Math.floor(rating);
+  const renderStars = (value) => {
+    const filledCount = Math.floor(value);
     return Array.from({ length: 5 }, (_, i) => (
       <StarImg key={i} src={i < filledCount ? Greenstar : Graystar} alt="star" />
     ));
   };
 
-  // 사진 로직 수정
-  const subImages = post.images.slice(1); // 메인 제외한 나머지 사진들
-  const visibleSubImages = subImages.slice(0, 4); // 최대 4개까지만 렌더링
-  const isMoreThanFour = subImages.length > 4; // 서브 사진이 4개보다 많은지 확인
-  const extraCount = subImages.length - 3; // 4번째 칸에 표시될 숫자 (3개는 선명, 4번째부터 묶음)
-
   return (
     <Card>
       <MainImageWrapper>
-        <MainImage src={post.images[0]} alt={post.title} />
-        <FlagButton onClick={() => setIsReportOpen(true)}>
-          <FlagIcon src={Flag} alt="report" />
-        </FlagButton>
+        {images[0] ? (
+          <MainImage src={images[0]} alt={post.title} />
+        ) : (
+          <ImagePlaceholder>이미지 없음</ImagePlaceholder>
+        )}
+        {canReport && (
+          <FlagButton onClick={() => setIsReportOpen(true)}>
+            <FlagIcon src={Flag} alt="report" />
+          </FlagButton>
+        )}
       </MainImageWrapper>
 
       <Body>
@@ -46,53 +86,55 @@ export default function CourseDescription({ post }) {
             <Title>{post.title}</Title>
             <Subtitle>{post.subtitle}</Subtitle>
           </TitleGroup>
-          <SaveButton onClick={() => setLiked(!liked)}>
-            <HeartIcon src={liked ? Filledheart : Heart} alt="heart" />
-            <SaveText>저장</SaveText>
-          </SaveButton>
+          {canWishlist && (
+            <SaveButton onClick={toggleLike}>
+              <HeartIcon src={liked ? Filledheart : Heart} alt="heart" />
+              <SaveText>저장</SaveText>
+            </SaveButton>
+          )}
         </TitleRow>
 
         <PriceRatingRow>
           <PriceGroup>
-            {post.discountRate > 0 && (
+            {discountRate > 0 && (
               <OriginalPrice>{originalPriceNum.toLocaleString()}원</OriginalPrice>
             )}
             <CurrentPriceArea>
-              {post.discountRate > 0 && <SaleLabel>SALE</SaleLabel>}
+              {discountRate > 0 && <SaleLabel>SALE</SaleLabel>}
               <CurrentPrice>{discountedPrice.toLocaleString()}원</CurrentPrice>
             </CurrentPriceArea>
           </PriceGroup>
 
           <RatingGroup>
-            <Stars>{renderStars(post.rating)}</Stars>
-            <RatingNumber>{post.rating.toFixed(1)}</RatingNumber>
+            <Stars>{renderStars(rating)}</Stars>
+            <RatingNumber>{formatRating(rating)}</RatingNumber>
           </RatingGroup>
         </PriceRatingRow>
       </Body>
 
-      <SubImageRow>
-        {visibleSubImages.map((img, idx) => (
-          <SubImageWrapper key={idx}>
-            <SubImage src={img} alt={`sub-${idx}`} />
-            {/* 4번째 사진(idx 3)이면서 전체 개수가 4개보다 많을 때만 어두운 효과 적용 */}
-            {idx === 3 && isMoreThanFour && (
-              <ExtraOverlay>
-                {extraCount}+
-              </ExtraOverlay>
-            )}
-          </SubImageWrapper>
-        ))}
-      </SubImageRow>
+      {visibleSubImages.length > 0 && (
+        <SubImageRow>
+          {visibleSubImages.map((img, idx) => (
+            <SubImageWrapper key={`${img}-${idx}`}>
+              <SubImage src={img} alt={`sub-${idx}`} />
+              {idx === 3 && isMoreThanFour && (
+                <ExtraOverlay>{extraCount}+</ExtraOverlay>
+              )}
+            </SubImageWrapper>
+          ))}
+        </SubImageRow>
+      )}
 
-      <ReportSystem 
-        isOpen={isReportOpen} 
-        onClose={() => setIsReportOpen(false)} 
+      <ReportSystem
+        isOpen={isReportOpen}
+        onClose={() => setIsReportOpen(false)}
+        postId={postId}
+        hiddenGuide={getHiddenGuideFromPost(post)}
+        onReported={() => navigate("/main", { replace: true })}
       />
     </Card>
   );
 }
-
-// --- Styled Components ---
 
 const Card = styled.div`
   width: 390px;
@@ -115,6 +157,18 @@ const MainImage = styled.img`
   height: 100%;
   object-fit: cover;
   border-radius: 20px;
+`;
+
+const ImagePlaceholder = styled.div`
+  width: 100%;
+  height: 100%;
+  border-radius: 20px;
+  background: #f3f4f3;
+  color: #acacac;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 const FlagButton = styled.button`
@@ -251,12 +305,12 @@ const RatingNumber = styled.span`
 
 const SubImageRow = styled.div`
   display: flex;
-  gap: 12px; /* 사진 사이 간격 */
+  gap: 12px;
 `;
 
 const SubImageWrapper = styled.div`
   position: relative;
-  width: 76px; /* 고정 크기 또는 flex: 1 */
+  width: 76px;
   height: 76px;
   border-radius: 12px;
   overflow: hidden;
@@ -271,8 +325,8 @@ const SubImage = styled.img`
 const ExtraOverlay = styled.div`
   position: absolute;
   inset: 0;
-  background: rgba(30, 30, 30, 0.65); /* 어두운 효과 */
-  backdrop-filter: blur(1px); /* 살짝 흐릿하게 */
+  background: rgba(30, 30, 30, 0.65);
+  backdrop-filter: blur(1px);
   color: #FFF;
   font-size: 17px;
   font-weight: 700;

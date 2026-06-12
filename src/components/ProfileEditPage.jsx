@@ -11,9 +11,9 @@ export default function ProfileEditPage() {
   // localStorage에서 기존 프로필 불러오기
   const saved = JSON.parse(localStorage.getItem("profile") ?? "{}");
 
-  const [profileImage, setProfileImage] = useState(saved.profileImage ?? null);
-  const [nickname, setNickname] = useState(saved.nickname ?? "");
-  const [bio, setBio] = useState(saved.bio ?? "");
+  const [profileImage, setProfileImage] = useState(saved.profileImage ?? saved.image ?? null);
+  const [nickname, setNickname] = useState(saved.nickname ?? saved.nickName ?? "");
+  const [bio, setBio] = useState(saved.bio ?? saved.oneWord ?? "");
 
   const fileInputRef = useRef(null);
 
@@ -30,8 +30,11 @@ export default function ProfileEditPage() {
     localStorage.setItem("profile", JSON.stringify({
       ...saved,
       profileImage,
+      image: profileImage,
       nickname,
+      nickName: nickname,
       bio,
+      oneWord: bio,
       languages,
     }));
     navigate(-1);

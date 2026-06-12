@@ -7,6 +7,16 @@ const LEVEL_MAP = {
   intermediate: 2,
   advanced: 3,
 };
+const LANGUAGE_LABELS = {
+  KOREAN: "KR",
+  ENGLISH: "EN",
+  JAPANESE: "JP",
+};
+const LEVEL_LABELS = {
+  1: "beginner",
+  2: "intermediate",
+  3: "advanced",
+};
 
 function LevelDots({ level }) {
   const filled = LEVEL_MAP[level] || 1;
@@ -23,6 +33,23 @@ function LevelDots({ level }) {
 
 export default function ProfileCard({ profile, onEditPress }) {
   if (!profile) return null;
+  const nickname = profile.nickname ?? profile.nickName ?? profile.id ?? "사용자";
+  const bio = profile.oneWord ?? profile.bio ?? "소개가 아직 없습니다.";
+  const profileImage = profile.profileImage ?? profile.image;
+  const interests = Array.isArray(profile.interests)
+    ? profile.interests
+    : String(profile.interest ?? "")
+        .split(",")
+        .map((interest) => interest.trim())
+        .filter(Boolean);
+  const languages = (profile.languages ?? []).map((language, index) => {
+    if (typeof language === "object") return language;
+
+    return {
+      code: LANGUAGE_LABELS[language] ?? language,
+      level: LEVEL_LABELS[profile.levels?.[index]] ?? profile.levels?.[index] ?? "beginner",
+    };
+  });
 
   return (
     <PageBg>
@@ -30,26 +57,26 @@ export default function ProfileCard({ profile, onEditPress }) {
         {/* 상단: 이름/소개/정보 수정하기 + 프로필 이미지 */}
         <TopRow>
           <InfoGroup>
-            <Name>{profile.nickname}</Name>
-            <Bio>{profile.bio}</Bio>
+            <Name>{nickname}</Name>
+            <Bio>{bio}</Bio>
             <EditButton onClick={onEditPress}>
               <EditButtonText>정보 수정하기</EditButtonText>
             </EditButton>
           </InfoGroup>
-          <Avatar src={profile.profileImage || DefaultProfileIcon} alt="profile"/>
+          <Avatar src={profileImage || DefaultProfileIcon} alt="profile"/>
         </TopRow>
 
         {/* 관심사 태그 */}
         <TagRow>
-          {(profile.interests ?? []).map((interest) => (
+          {interests.map((interest) => (
             <InterestTag key={interest}>#{interest}</InterestTag>
           ))}
         </TagRow>
 
         {/* 언어 태그 */}
         <LangTagRow>
-          {(profile.languages ?? []).map((lang) => (
-            <LangTag key={lang.code}>
+          {languages.map((lang, index) => (
+            <LangTag key={`${lang.code}-${index}`}>
               <LangCode>{lang.code}</LangCode>
               <LevelDots level={lang.level} />
             </LangTag>
@@ -64,7 +91,6 @@ export default function ProfileCard({ profile, onEditPress }) {
 
 const PageBg = styled.div`
   background-color: #fff;
-  min-height: 100%;
 `;
 
 const Card = styled.div`

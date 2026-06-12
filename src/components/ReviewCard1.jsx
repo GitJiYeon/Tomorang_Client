@@ -1,34 +1,67 @@
 import React from "react";
+import { useState } from "react";
 import styled from "styled-components";
 import Greenstar from "../assets/greenstar.svg";
 import Graystar from "../assets/graystar.svg";
+import DefaultProfileIcon from "../assets/defaultProfile.svg";
+import LikeIcon from "../assets/likeIcon.svg";
+import { likeReview, unlikeReview } from "../api/tomorang";
 
-export default function ReviewCard1({ review }) {
-  const date = new Date(review.createdAt);
+export default function ReviewCard1({ review, variant = "default" }) {
+  const [previewImage, setPreviewImage] = useState("");
+  const [liked, setLiked] = useState(Boolean(review.liked));
+  const [likeCount, setLikeCount] = useState(Number(review.likeCount ?? 0) || 0);
+  const [isLikeBusy, setIsLikeBusy] = useState(false);
+  const isReceived = variant === "received";
+  const reviewId = review.reviewId ?? review.id;
+  const date = new Date(review.createdAt ?? Date.now());
+  const postImages = review.postImages ?? review.images ?? (review.postImage ? [review.postImage] : []);
+  const rating = Number(review.rating ?? 0);
+  const nickname = review.nickname ?? review.memberNickName ?? review.memberId ?? "사용자";
+  const profile = review.profile ?? review.memberImage ?? DefaultProfileIcon;
   const dateStr = `${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
   const yearStr = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
 
-  const renderStars = (rating) => {
-    const filledCount = Math.floor(rating);
+  const renderStars = (value) => {
+    const filledCount = Math.floor(value);
     return Array.from({ length: 5 }, (_, i) => (
       <StarImg key={i} src={i < filledCount ? Greenstar : Graystar} alt="star" />
     ));
   };
 
+  const handleLikeClick = async (event) => {
+    event.stopPropagation();
+    if (!reviewId || isLikeBusy) return;
+
+    setIsLikeBusy(true);
+    try {
+      if (liked) {
+        await unlikeReview(reviewId);
+        setLiked(false);
+        setLikeCount((prev) => Math.max(0, prev - 1));
+      } else {
+        await likeReview(reviewId);
+        setLiked(true);
+        setLikeCount((prev) => prev + 1);
+      }
+    } catch (error) {
+      alert(error.message || "리뷰 좋아요 처리에 실패했습니다.");
+    } finally {
+      setIsLikeBusy(false);
+    }
+  };
+
   return (
-    <Card>
-      {/* 상단 영역 */}
+    <Card $isReceived={isReceived}>
       <TopRow>
         <TopLeft>
-          <Avatar src={review.profile} alt="profile" />
+          <Avatar src={profile} alt="profile" />
           <NameDateGroup>
-            {/* 이름 + 별점 */}
             <NicknameRow>
-              <Nickname>{review.nickname}</Nickname>
-              <Stars>{renderStars(review.rating)}</Stars>
-              <RatingNum>{review.rating.toFixed(1)}</RatingNum>
+              <Nickname>{nickname}</Nickname>
+              <Stars>{renderStars(rating)}</Stars>
+              <RatingNum>{rating.toFixed(1)}</RatingNum>
             </NicknameRow>
-            {/* 날짜 + 시간 */}
             <DateRow>
               <DateText>{dateStr}</DateText>
               <Separator>|</Separator>
@@ -39,51 +72,84 @@ export default function ReviewCard1({ review }) {
         <YearText>{yearStr}</YearText>
       </TopRow>
 
-      {/* 이미지 슬라이드 */}
-      {review.postImage && (
+      {postImages.length > 0 && (
         <ImageRow>
-          <ReviewImage $src={review.postImage} />
-          <ReviewImage $src={review.postImage} />
-          <ReviewImage $src={review.postImage} />
+          {postImages.map((image) => (
+            <ImageButton
+              key={image}
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                setPreviewImage(image);
+              }}
+            >
+              <ReviewImage src={image} alt="review" $isReceived={isReceived} />
+            </ImageButton>
+          ))}
         </ImageRow>
       )}
 
-      {/* 본문 */}
       <ContentText>{review.content}</ContentText>
+
+      <LikeRow>
+        <LikeButton
+          type="button"
+          $active={liked}
+          disabled={isLikeBusy}
+          onClick={handleLikeClick}
+        >
+          <LikeImg src={LikeIcon} alt="like" />
+          {likeCount}
+        </LikeButton>
+      </LikeRow>
+
+      {previewImage && (
+        <ImagePreviewOverlay
+          role="button"
+          tabIndex={0}
+          onClick={(event) => {
+            event.stopPropagation();
+            setPreviewImage("");
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Escape" || event.key === "Enter") setPreviewImage("");
+          }}
+        >
+          <PreviewImage src={previewImage} alt="review preview" />
+        </ImagePreviewOverlay>
+      )}
     </Card>
   );
 }
 
-/* ── Styled Components ── */
-
 const Card = styled.div`
-  width: 348px;
-  height: 346px;
+  width: min(348px, calc(100vw - 42px));
+  max-height: 346px;
   border-radius: 12px;
   background: #fff;
   padding: 20px 16px;
   display: flex;
   flex-direction: column;
-  gap: 21px;
+  gap: 14px;
   box-sizing: border-box;
   overflow: hidden;
-  margin-bottom: 12px;
-  border-radius: 12px;
+  margin: 0 auto 12px;
   border: 1px solid #DADADA;
-  
 `;
 
 const TopRow = styled.div`
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;  /* center → flex-start */
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
 `;
 
 const TopLeft = styled.div`
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;  /* center로 아바타와 텍스트 수직 중앙 정렬 */
+  display: flex;
+  align-items: center;
   gap: 11px;
+  min-width: 0;
 `;
 
 const Avatar = styled.img`
@@ -99,30 +165,36 @@ const NameDateGroup = styled.div`
   display: flex;
   align-items: flex-start;
   flex-direction: column;
-  gap: 4px;  /* 51px → 4px */
+  gap: 4px;
+  min-width: 0;
 `;
 
 const NicknameRow = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+  max-width: 210px;
 `;
 
 const Nickname = styled.span`
   color: #111;
-  text-align: center;
   font-feature-settings: 'liga' off, 'clig' off;
   font-family: Pretendard;
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
-  line-height: 22px; /* 137.5% */
+  line-height: 22px;
   letter-spacing: 0.3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 const Stars = styled.div`
   display: flex;
   gap: 2px;
+  flex-shrink: 0;
 `;
 
 const StarImg = styled.img`
@@ -134,6 +206,7 @@ const RatingNum = styled.span`
   font-size: 13px;
   font-weight: 600;
   color: #333;
+  flex-shrink: 0;
 `;
 
 const DateRow = styled.div`
@@ -155,27 +228,61 @@ const Separator = styled.span`
 const YearText = styled.span`
   font-size: 11px;
   color: #bdbdbd;
-  padding-top: 6px;  /* 닉네임 텍스트 높이에 맞게 조정 */
+  padding-top: 6px;
   white-space: nowrap;
+  flex-shrink: 0;
 `;
 
 const ImageRow = styled.div`
-  display: inline-flex;
+  width: 100%;
+  display: flex;
   align-items: center;
   gap: 12px;
   overflow-x: auto;
   scrollbar-width: none;
+
   &::-webkit-scrollbar {
     display: none;
   }
 `;
 
-const ReviewImage = styled.div`
+const ReviewImage = styled.img`
   width: 110px;
-  height: 102px;
+  height: ${({ $isReceived }) => ($isReceived ? "132px" : "102px")};
   border-radius: 12px;
-  background: url(${({ $src }) => $src}) lightgray 50% / cover no-repeat;
+  object-fit: cover;
   flex-shrink: 0;
+  background: #e0e0e0;
+`;
+
+const ImageButton = styled.button`
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+`;
+
+const ImagePreviewOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  width: 100vw;
+  height: 100dvh;
+  background: rgba(0, 0, 0, 0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+  cursor: zoom-out;
+`;
+
+const PreviewImage = styled.img`
+  max-width: min(100%, 390px);
+  max-height: 82dvh;
+  object-fit: contain;
+  border-radius: 12px;
 `;
 
 const ContentText = styled.p`
@@ -190,6 +297,39 @@ const ContentText = styled.p`
   margin: 0;
   overflow: hidden;
   display: -webkit-box;
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: 6;
   -webkit-box-orient: vertical;
+`;
+
+const LikeRow = styled.div`
+  display: flex;
+  justify-content: flex-end;
+`;
+
+const LikeButton = styled.button`
+  height: 26px;
+  min-width: 48px;
+  border-radius: 13px;
+  border: 1px solid ${({ $active }) => ($active ? "#C5F598" : "#DADADA")};
+  background: ${({ $active }) => ($active ? "#EDFCDF" : "#fff")};
+  color: #4e4e4e;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 8px;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.65;
+  }
+`;
+
+const LikeImg = styled.img`
+  width: 14px;
+  height: 14px;
 `;

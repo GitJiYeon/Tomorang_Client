@@ -2,6 +2,7 @@
   {
     "reviewId": 1,
     "postId": 1,
+    "guideId": "1",
     "userId": "user_suji",
     "nickname": "Suji Lee",
     "postImages": [
@@ -26,7 +27,8 @@
     "rating": 5.0,
     "content": "후지산 일출 보러 갔는데 날씨도 딱 맞고 가이드분이 포토스팟 진짜 잘 알고 계셔서 사진 너무 잘 나왔어요.",
     "createdAt": "2026-02-22T06:00:00Z",
-    "profile": "/assets/guideImages/guide2.svg"
+    "profile": "/assets/guideImages/guide2.svg",
+    "guideId": "1"
   },
   {
     "reviewId": 3,
@@ -41,7 +43,8 @@
     "rating": 4.9,
     "content": "다도 체험이 생각보다 훨씬 좋았어요. 기온 골목도 너무 예쁘고 사진도 많이 찍었어요. 강추합니다!",
     "createdAt": "2026-02-21T23:30:00Z",
-    "profile": "/assets/guideImages/guide3.svg"
+    "profile": "/assets/guideImages/guide3.svg",
+    "guideId": "1"
   },
   {
     "reviewId": 4,
@@ -55,7 +58,8 @@
     "rating": 5.0,
     "content": "오가키 소프토피아 재팬 건물 진짜 멋있네요. 소도시인데 IT 허브라는 게 신기했어요. 조용히 산책하기 좋습니다.",
     "createdAt": "2026-02-26T14:20:00Z",
-    "profile": "/assets/guideImages/guide5.jpeg"
+    "profile": "/assets/guideImages/guide5.jpeg",
+    "guideId": "6"
   },
   {
     "reviewId": 5,
@@ -70,7 +74,8 @@
     "rating": 5.0,
     "content": "수문강 타라이부네 꼭 타세요! '목소리의 형태' 영화 속에 들어온 기분이었어요. 벚꽃 시즌에 오면 대박일 듯.",
     "createdAt": "2026-02-26T16:45:00Z",
-    "profile": "/assets/guideImages/guide11.jpeg"
+    "profile": "/assets/guideImages/guide11.jpeg",
+    "guideId": "11"
   },
   {
     "reviewId": 6,
@@ -84,7 +89,8 @@
     "rating": 4.7,
     "content": "기후성에서 본 노을은 잊지 못할 거예요. 킨카산 로프웨이 타고 올라가면서 보는 풍경이 예술입니다.",
     "createdAt": "2026-02-26T18:10:00Z",
-    "profile": "/assets/guideImages/guide4.svg"
+    "profile": "/assets/guideImages/guide4.svg",
+    "guideId": "5"
   },
   {
     "reviewId": 7,
@@ -99,7 +105,8 @@
     "rating": 4.9,
     "content": "오가키 애니메이션 성지 순례 투어 덕분에 주인공들이 걸었던 다리를 직접 건너봤네요. 가이드님 설명이 디테일해요.",
     "createdAt": "2026-02-25T20:00:00Z",
-    "profile": "/assets/guideImages/guide6.jpeg"
+    "profile": "/assets/guideImages/guide6.jpeg",
+    "guideId": "1"
   },
   {
     "reviewId": 8,
@@ -113,7 +120,8 @@
     "rating": 4.6,
     "content": "기후에서 먹은 히다규 카레... 진심으로 맛있었습니다. 숨은 골목 맛집이라 혼자서는 절대 못 찾았을 거예요.",
     "createdAt": "2026-02-26T13:00:00Z",
-    "profile": "/assets/guideImages/guide7.jpeg"
+    "profile": "/assets/guideImages/guide7.jpeg",
+    "guideId": "4"
   },
   {
     "reviewId": 9,
@@ -127,7 +135,8 @@
     "rating": 4.8,
     "content": "오사카 맛집 리스트 다 성공적! 가이드님이 추천해주신 라멘집 국물이 아직도 생각나네요.",
     "createdAt": "2026-02-24T11:00:00Z",
-    "profile": "/assets/guideImages/guide8.jpeg"
+    "profile": "/assets/guideImages/guide8.jpeg",
+    "guideId": "4"
   },
   {
     "reviewId": 10,
@@ -142,7 +151,8 @@
     "rating": 5.0,
     "content": "가마쿠라 슬램덩크 건널목에서 인생 사진 건졌습니다. 사람 많은데 가이드님이 타이밍을 기가 막히게 잡아주심.",
     "createdAt": "2026-02-23T15:30:00Z",
-    "profile": "/assets/guideImages/guide9.jpeg"
+    "profile": "/assets/guideImages/guide9.jpeg",
+    "guideId": "6"
   },
   {
     "reviewId": 11,
@@ -156,7 +166,8 @@
     "rating": 5.0,
     "content": "홋카이도 설원 트레킹은 최고였어요. 눈이 너무 깨끗하고 온천으로 마무리하니 피로가 싹 풀리네요.",
     "createdAt": "2026-02-21T09:30:00Z",
-    "profile": "/assets/guideImages/guide10.jpeg"
+    "profile": "/assets/guideImages/guide10.jpeg",
+    "guideId": "5"
   },
   {
     "reviewId": 12,
@@ -170,7 +181,8 @@
     "rating": 4.5,
     "content": "오가키 수로를 따라 걷는 길이 너무 평화롭습니다. 소프토피아 근처 공원도 넓어서 아이들과 오기 좋을 듯.",
     "createdAt": "2026-02-26T10:00:00Z",
-    "profile": "/assets/guideImages/guide1.svg"
+    "profile": "/assets/guideImages/guide1.svg",
+    "guideId": "6"
   },
   {
     "reviewId": 13,
@@ -184,7 +196,8 @@
     "rating": 4.8,
     "content": "소프토피아 근처에서 가볍게 트레킹했는데 공기가 너무 맑아요. 소도시의 매력을 제대로 느꼈습니다.",
     "createdAt": "2026-02-26T17:00:00Z",
-    "profile": "/assets/guideImages/guide5.jpeg"
+    "profile": "/assets/guideImages/guide5.jpeg",
+    "guideId": "10"
   },
   {
     "reviewId": 14,
@@ -198,7 +211,8 @@
     "rating": 4.4,
     "content": "아키하바라에서 레어템 득템했습니다! 가이드님이 상점마다 특징을 잘 설명해주셔서 효율적으로 돌았어요.",
     "createdAt": "2026-02-20T14:00:00Z",
-    "profile": "/assets/guideImages/guide2.svg"
+    "profile": "/assets/guideImages/guide2.svg",
+    "guideId": "1"
   },
   {
     "reviewId": 15,
@@ -212,7 +226,8 @@
     "rating": 4.7,
     "content": "나라 사슴들 너무 귀여운데 센베 보니까 무섭게 달려들더라고요ㅋㅋ 가이드님이 안전하게 도와주셔서 즐거웠습니다.",
     "createdAt": "2026-02-25T12:00:00Z",
-    "profile": "/assets/guideImages/guide3.svg"
+    "profile": "/assets/guideImages/guide3.svg",
+    "guideId": "6"
   },
   {
     "reviewId": 16,
@@ -227,7 +242,8 @@
     "rating": 4.9,
     "content": "오다이바 야경은 정말 사진보다 실물이 백배 낫습니다. 건담 쇼 시간 맞춰서 데려가주셔서 감사해요.",
     "createdAt": "2026-02-26T01:00:00Z",
-    "profile": "/assets/guideImages/guide8.jpeg"
+    "profile": "/assets/guideImages/guide8.jpeg",
+    "guideId": "8"
   },
   {
     "reviewId": 17,
@@ -241,7 +257,8 @@
     "rating": 5.0,
     "content": "홋카이도 바다에서 서핑이라니! 초보였는데 강사님이 친절하셔서 보드 위에 설 수 있었어요. 짜릿합니다.",
     "createdAt": "2026-02-26T15:00:00Z",
-    "profile": "/assets/guideImages/guide9.jpeg"
+    "profile": "/assets/guideImages/guide9.jpeg",
+    "guideId": "6"
   },
   {
     "reviewId": 18,
@@ -256,7 +273,8 @@
     "rating": 5.0,
     "content": "오가키의 그 다리 위에서 사진 찍을 때 울컥했습니다. 팬이라면 꼭 와야 할 투어예요.",
     "createdAt": "2026-02-26T09:00:00Z",
-    "profile": "/assets/guideImages/guide11.jpeg"
+    "profile": "/assets/guideImages/guide11.jpeg",
+    "guideId": "11"
   },
   {
     "reviewId": 19,
@@ -270,7 +288,8 @@
     "rating": 4.6,
     "content": "시부야의 숨겨진 편집샵들 너무 예뻐요. 덕분에 한국에 없는 유니크한 옷들 많이 샀습니다.",
     "createdAt": "2026-02-23T18:00:00Z",
-    "profile": "/assets/guideImages/guide2.svg"
+    "profile": "/assets/guideImages/guide2.svg",
+    "guideId": "2"
   },
   {
     "reviewId": 20,
@@ -285,6 +304,7 @@
     "rating": 4.8,
     "content": "기후성과 오다 노부나가에 대한 설명이 흥미로웠습니다. 역사 좋아하시는 분들께 추천하는 투어입니다.",
     "createdAt": "2026-02-26T21:00:00Z",
-    "profile": "/assets/guideImages/guide4.svg"
+    "profile": "/assets/guideImages/guide4.svg",
+    "guideId": "5"
   }
 ]

@@ -3,10 +3,13 @@
  * status: PENDING | CONFIRMED | REJECTED | COMPLETED
  */
 
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { useReservations } from "../components/context/ReservationContext";
-import postData from "../data/postData.json";
+import { acceptReservation, createOrGetChatRoom, getPostDetail, rejectReservation } from "../api/tomorang";
+import { isOwnPost } from "../utils/postOwner";
+import { getRequesterId, STATUS } from "../utils/reservationFlow";
 import StatusHeader from "../components/statusComponents/StatusHeader";
 import MeetingPointCard from "../components/statusComponents/MeetingPointCard";
 import MyReviewCard from "../components/statusComponents/MyReviewCard";
@@ -14,24 +17,213 @@ import Header from "../components/Header";
 import ChatIcon from "../assets/navIcons/message.svg";
 import ChatIcon2 from "../assets/navIcons/messageBlack.svg";
 
+const firstText = (...values) =>
+  values.find((value) => typeof value === "string" && value.trim())?.trim() ?? "";
+
+const extractMeetingAddressFromBlocks = (post) => {
+  const textBlocks = [
+    ...(Array.isArray(post?.contentBlocks) ? post.contentBlocks : []),
+    ...(Array.isArray(post?.content_blocks) ? post.content_blocks : []),
+  ]
+    .map((block) => (typeof block === "string" ? block : block?.value ?? block?.content ?? block?.text ?? ""))
+    .filter(Boolean);
+
+  const meetingText = textBlocks
+    .join("\n")
+    .match(/만남\s*장소\s*\n+(.+)/)?.[1];
+
+  return meetingText?.trim() ?? "";
+};
+
 export default function ReservationStatusPage() {
   const { reservationId } = useParams();
+  const { state } = useLocation();
   const navigate = useNavigate();
-  const { reservations } = useReservations();
+  const { reservations, isLoading, upsertReservation } = useReservations();
+  const savedState = (() => {
+    try {
+      return JSON.parse(sessionStorage.getItem(`reservationStatus:${reservationId}`) || "null");
+    } catch {
+      return null;
+    }
+  })();
+  const initialReservation = state?.reservation ?? savedState?.reservation ?? null;
+  const [post, setPost] = useState(() => state?.post ?? initialReservation?.post ?? savedState?.post ?? null);
+  const [localStatus, setLocalStatus] = useState(null);
+  const [actionError, setActionError] = useState("");
+  const [isActionBusy, setIsActionBusy] = useState(false);
 
-  const reservation = reservations.find((r) => r.reservationId === Number(reservationId));
-  const post = reservation ? postData.find((p) => p.postId === reservation.postId) : null;
+  const normalizeReservationView = (source) =>
+    source
+      ? {
+          ...source,
+          reservationId: source.reservationId ?? source.reservation_id ?? source.id ?? reservationId,
+          postId:
+            source.postId ??
+            source.post_id ??
+            source.post?.postId ??
+            source.post?.post_id ??
+            source.post?.id,
+          date: source.date ?? source.slotDate ?? source.slot_date,
+          time: source.time ?? source.slotTime ?? source.slot_time,
+          adults: source.adults ?? source.adultCount ?? source.adult_count ?? 1,
+          children: source.children ?? source.childCount ?? source.child_count ?? 0,
+          request: source.request ?? source.memo ?? source.message ?? "",
+          status: source.status ?? STATUS.PENDING,
+        }
+      : null;
+
+  const contextReservation = reservations.find((r) => String(r.reservationId) === String(reservationId));
+  const normalizedContextReservation = normalizeReservationView(contextReservation);
+  const normalizedInitialReservation = normalizeReservationView(initialReservation);
+  const reservation = normalizedContextReservation
+    ? {
+        ...normalizedContextReservation,
+        ...(normalizedInitialReservation &&
+        String(normalizedInitialReservation.reservationId) === String(normalizedContextReservation.reservationId)
+          ? normalizedInitialReservation
+          : {}),
+      }
+    : normalizedInitialReservation;
+
+  useEffect(() => {
+    if (!reservation) return undefined;
+    if (reservation.post) {
+      setPost(reservation.post);
+      return undefined;
+    }
+
+    let alive = true;
+    getPostDetail(reservation.postId)
+      .then((post) => {
+        if (alive) setPost(post);
+      })
+      .catch(() => {
+        if (alive) setPost(null);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [reservation]);
 
   if (!reservation || !post)
-    return <Wrapper><div style={{ padding: 40, color: "#ACACAC" }}>예약 정보를 찾을 수 없습니다.</div></Wrapper>;
+    return (
+      <Wrapper>
+        <div style={{ padding: 40, color: "#ACACAC" }}>
+          {isLoading ? "예약 정보를 불러오는 중입니다." : "예약 정보를 찾을 수 없습니다."}
+        </div>
+      </Wrapper>
+    );
 
   const {
-    status, date, time, adults, children, request,
+    status: reservationStatus, date, time, adults, children, request,
     meetingPoint, meetingPointAddress, meetingPointLat, meetingPointLng,
     myReview,
   } = reservation;
+  const status = localStatus ?? reservationStatus ?? STATUS.PENDING;
+  const isGuideView = isOwnPost(post);
+  const requesterId = getRequesterId(reservation);
+  const chatOtherUserId = isGuideView ? requesterId : post.userId ?? post.user_id;
+  const chatRoomId = reservation.chatRoomId ?? reservation.chat_room_id;
+
+  const handleStatusChange = async (nextStatus) => {
+    if (isActionBusy) return;
+    setIsActionBusy(true);
+    setActionError("");
+
+    try {
+      const updatedReservation =
+        nextStatus === STATUS.CONFIRMED
+          ? await acceptReservation(reservationId)
+          : await rejectReservation(reservationId);
+      const normalizedReservation = upsertReservation({
+        ...reservation,
+        ...updatedReservation,
+        status: updatedReservation.status ?? nextStatus,
+      });
+
+      setLocalStatus(normalizedReservation.status);
+      sessionStorage.setItem(
+        `reservationStatus:${reservationId}`,
+        JSON.stringify({ reservation: normalizedReservation, post })
+      );
+
+      if (normalizedReservation.status === STATUS.CONFIRMED && requesterId && !normalizedReservation.chatRoomId) {
+        createOrGetChatRoom(localStorage.getItem("userId"), requesterId)
+          .then((room) => {
+            const nextRoomId = room.roomId ?? room.id;
+            if (!nextRoomId) return;
+            upsertReservation({ ...normalizedReservation, chatRoomId: nextRoomId });
+          })
+          .catch(() => {});
+      }
+    } catch (error) {
+      setActionError(error.message || "예약 상태 변경에 실패했습니다.");
+    } finally {
+      setIsActionBusy(false);
+    }
+  };
 
   const isConfirmedOrCompleted = status === "CONFIRMED" || status === "COMPLETED";
+  const resolvedMeetingAddress = firstText(
+    meetingPointAddress,
+    reservation.meeting_point_address,
+    reservation.meetingAddress,
+    reservation.meeting_address,
+    reservation.address,
+    post.meetingPointAddress,
+    post.meeting_point_address,
+    post.meetingAddress,
+    post.meeting_address,
+    extractMeetingAddressFromBlocks(post)
+  );
+  const resolvedMeetingPoint = firstText(
+    meetingPoint,
+    reservation.meeting_point,
+    reservation.placeName,
+    reservation.place_name,
+    post.meetingPoint,
+    post.meeting_point,
+    post.meetingPlace?.label,
+    post.meeting_place?.label,
+    resolvedMeetingAddress,
+    post.cityName,
+    post.city_name
+  );
+  const meetingLat = Number(
+    meetingPointLat ??
+      reservation.meeting_point_lat ??
+      reservation.lat ??
+      reservation.latitude ??
+      post.meetingPointLat ??
+      post.meeting_point_lat ??
+      post.lat ??
+      post.latitude
+  );
+  const meetingLng = Number(
+    meetingPointLng ??
+      reservation.meeting_point_lng ??
+      reservation.lng ??
+      reservation.longitude ??
+      post.meetingPointLng ??
+      post.meeting_point_lng ??
+      post.lng ??
+      post.longitude
+  );
+  const hasMeetingPoint = Number.isFinite(meetingLat) && Number.isFinite(meetingLng);
+
+  const openPostReview = () => {
+    if (!post) return;
+    sessionStorage.setItem("currentCoursePost", JSON.stringify(post));
+    navigate("/course", {
+      state: {
+        post,
+        initialTab: "review",
+        initialReviews: myReview ? [myReview] : undefined,
+      },
+    });
+  };
 
   const formatDate = (d) => {
     const obj = new Date(d);
@@ -40,20 +232,20 @@ export default function ReservationStatusPage() {
 
   return (
     <Wrapper>
-      <Header coment="예약 현황" path={'/main'}/>
+      <Header coment="예약 현황" path={isGuideView ? "/guide-reservations" : "/main"}/>
       <Content>
 
         {/* 상태 헤더 */}
-        <StatusHeader status={status} path={'/main'} />
+        <StatusHeader status={status} isGuideView={isGuideView} path={'/main'} />
 
         {/* 만남 장소 */}
         <Section>
           <MeetingPointCard
-            locked={!isConfirmedOrCompleted}
-            address={meetingPointAddress}
-            meetingPoint={meetingPoint}
-            lat={meetingPointLat}
-            lng={meetingPointLng}
+            locked={!isConfirmedOrCompleted || !hasMeetingPoint}
+            address={resolvedMeetingAddress}
+            meetingPoint={resolvedMeetingPoint}
+            lat={meetingLat}
+            lng={meetingLng}
           />
         </Section>
 
@@ -84,16 +276,27 @@ export default function ReservationStatusPage() {
           </RequestCard>
         </Section>
 
-        {/* 나의 후기 (COMPLETED + 작성된 경우) */}
+        {/* 후기 (COMPLETED + 작성된 경우) */}
         {status === "COMPLETED" && myReview && (
           <Section>
-            <InfoTitle>나의 후기</InfoTitle>
-            <MyReviewCard review={myReview} time={time} />
+            <InfoTitle>{isGuideView ? "발견자의 후기" : "나의 후기"}</InfoTitle>
+            <MyReviewCard review={myReview} time={time} onClick={openPostReview} />
           </Section>
         )}
+        {actionError && <ErrorText>{actionError}</ErrorText>}
 
         {/* 하단 버튼 */}
-        {status === "PENDING" && (
+        {status === "PENDING" && isGuideView && (
+          <ButtonRow>
+            <RejectBtn type="button" disabled={isActionBusy} onClick={() => handleStatusChange(STATUS.REJECTED)}>
+              {isActionBusy ? "처리중..." : "거절하기"}
+            </RejectBtn>
+            <AcceptBtn type="button" disabled={isActionBusy} onClick={() => handleStatusChange(STATUS.CONFIRMED)}>
+              {isActionBusy ? "처리중..." : "수락하기"}
+            </AcceptBtn>
+          </ButtonRow>
+        )}
+        {status === "PENDING" && !isGuideView && (
           <ActionBtn $disabled>
             <img src={ChatIcon} alt="chat" width={21} height={20}/>
             채팅하기
@@ -101,20 +304,28 @@ export default function ReservationStatusPage() {
         )}
         {status === "CONFIRMED" && (
           <>
-            <ActionBtn onClick={() => navigate(`/review-write/${reservationId}`)}>
-              투어 완료하기
-            </ActionBtn>
-            <ChatBtn onClick={()=>navigate('/chat/1')}>
+            {!isGuideView && (
+              <ActionBtn onClick={() => navigate(`/review-write/${reservationId}`)}>
+                투어 완료하기
+              </ActionBtn>
+            )}
+            <ChatBtn
+              onClick={() =>
+                navigate(`/chat/${chatRoomId ?? post.postId}`, {
+                  state: { post, roomId: chatRoomId, otherUserId: chatOtherUserId },
+                })
+              }
+            >
               <img src={ChatIcon2} alt="chat" width={19} height={15} />
               채팅하기
             </ChatBtn>
           </>
         )}
-        {status === "REJECTED" && (
+        {status === "REJECTED" && !isGuideView && (
           <ActionBtn onClick={() => navigate("/main")}>다른 코스 찾아보기</ActionBtn>
         )}
-        {status === "COMPLETED" && !myReview && (
-          <ActionBtn onClick={() => navigate(`/review-write/${4}`)}>
+        {status === "COMPLETED" && !myReview && !isGuideView && (
+          <ActionBtn onClick={() => navigate(`/review-write/${reservationId}`)}>
             후기 등록하기
           </ActionBtn>
         )}
@@ -214,6 +425,14 @@ const RequestText = styled.div`
   color: #4E4E4E;
 `;
 
+const ErrorText = styled.p`
+  width: 348px;
+  margin: 0 auto;
+  color: #d93025;
+  font-size: 13px;
+  font-weight: 500;
+`;
+
 /* 버튼 */
 const ActionBtn = styled.button`
   width: 348px;
@@ -235,6 +454,49 @@ const ActionBtn = styled.button`
   justify-content: center;
   gap: 10px;
   align-self: center;
+`;
+
+const ButtonRow = styled.div`
+  width: 348px;
+  display: flex;
+  gap: 12px;
+  align-self: center;
+`;
+
+const AcceptBtn = styled.button`
+  flex: 1;
+  height: 56px;
+  border-radius: 12px;
+  background: #C5F598;
+  border: none;
+  cursor: pointer;
+  font-family: "Pretendard", sans-serif;
+  color: #111;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  &:disabled {
+    cursor: default;
+    opacity: 0.7;
+  }
+`;
+
+const RejectBtn = styled.button`
+  width: 108px;
+  height: 56px;
+  border-radius: 12px;
+  background: #DADADA;
+  border: none;
+  cursor: pointer;
+  font-family: "Pretendard", sans-serif;
+  color: #111;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  &:disabled {
+    cursor: default;
+    opacity: 0.7;
+  }
 `;
 
 const ChatBtn = styled.button`

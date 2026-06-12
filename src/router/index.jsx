@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useEffect, useRef } from "react";
+import { BrowserRouter, Navigate, Routes, Route, useLocation } from "react-router-dom";
 import { ReservationProvider } from "../components/context/ReservationContext"; // 추가
 
 import MainLayout from "../layouts/MainLayout";
@@ -12,6 +13,7 @@ import Login from "../pages/LoginPage";
 import RoleSelectPage from "../pages/RoleSelectPage";
 import TravelerSignupPage from "../pages/TravelerSignupPage";
 import MainPage from "../pages/MainPage";
+import MainMorePage from "../pages/MainMorePage";
 import EmergingDestination from "../pages/EmergingDestination";
 import DestinationListPage from "../pages/DestinationListPage";
 import CourseDescriptionPage from "../pages/CourseDescriptionPage";
@@ -22,9 +24,21 @@ import ReservationStatusPage from "../pages/ReservationStatusPage";
 import ReviewWritePage from "../pages/ReviewWritePage";
 import NotificationPage from "../pages/NotificationPage";
 import Chat from "../pages/Chat";
+import ChatListPage from "../pages/ChatListPage";
 import GuideProfilePage from "../pages/GuideProfilePage";
 import ReservationListPage from "../pages/ReservationListPage";
+import GuidePage from "../pages/GuidePage";
+import GuideRegistrationPage from "../pages/GuideRegistrationPage";
+import GuideDescriptionEditPage from "../pages/GuideDescriptionEditPage";
 import SearchResultPage from "../pages/SearchResultPage";
+
+import GuideReservationListPage from "../pages/GuideReservationListPage";
+import GuideSignupPage from "../pages/GuideSignupPage";
+import GuideSelectLanguage from "../pages/GuideSelectLanguage";
+import GuideSelectInterest from "../pages/GuideSelectInterest";
+import MakeGuideProfile from "../pages/MakeGuideProfile";
+import GuideWelcomePage from "../pages/GuideWelcomePage";
+
 import ProfilePage from "../pages/ProfilePage";
 import PickCourse from "../pages/PickCourse";
 import MyreviewPage from "../pages/MyreviewPage";
@@ -34,13 +48,47 @@ import InterestEditPage from "../pages/InterestEditPage";
 import LanguageEditPage from "../pages/LanguageEditPage";
 import GuideChatPage from "../pages/GuideChatPage";
 import GuideMyPage from "../pages/GuideMyPage";
+import { isCurrentGuide } from "../utils/authRole";
 
 
+function RoleAwareMainPage() {
+  return isCurrentGuide() ? <Navigate to="/guide" replace /> : <MainPage />;
+}
 
+function RouteViewport() {
+  const location = useLocation();
+  const viewportRef = useRef(null);
 
-function Router() {
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    viewport?.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+
+    const setViewportHeight = () => {
+      const height = window.visualViewport?.height ?? window.innerHeight;
+      document.documentElement.style.setProperty(
+        "--app-viewport-height",
+        `${height}px`
+      );
+    };
+
+    setViewportHeight();
+    window.addEventListener("resize", setViewportHeight);
+    window.visualViewport?.addEventListener("resize", setViewportHeight);
+
+    return () => {
+      window.removeEventListener("resize", setViewportHeight);
+      window.visualViewport?.removeEventListener("resize", setViewportHeight);
+    };
+  }, []);
+
   return (
-    <BrowserRouter>
+    <div className="app-viewport" ref={viewportRef}>
       <ReservationProvider>
         <Routes>
             <Route path="/" element={<StartPage />} />
@@ -53,7 +101,17 @@ function Router() {
             <Route path="/make-traveler-profile" element={<MakeTravelerProfile />} />
             <Route path="/welcome" element={<WelcomePage />} />
             <Route path="/travelersignup" element={<TravelerSignupPage />} />
-            <Route path="/main" element={<MainPage />} />
+            <Route path="/guidesignup" element={<GuideSignupPage />} />
+            <Route path="/guide-language" element={<GuideSelectLanguage />} />
+            <Route path="/guide-interest" element={<GuideSelectInterest />} />
+            <Route path="/make-guide-profile" element={<MakeGuideProfile />} />
+            <Route path="/guide-welcome" element={<GuideWelcomePage />} />
+            <Route path="/main" element={<RoleAwareMainPage />} />
+            <Route path="/main-more/:type" element={<MainMorePage />} />
+            <Route path="/guide" element={<GuidePage />} />
+            <Route path="/guide-reservations" element={<GuideReservationListPage />} />
+            <Route path="/guide-registration" element={<GuideRegistrationPage />} />
+            <Route path="/guide-description-edit" element={<GuideDescriptionEditPage />} />
             <Route path="emergingDestination" element={<EmergingDestination></EmergingDestination>}/>
             <Route path="/reservation/:postId" element={<ReservationPage />} />
             <Route path="/reservation-status/:reservationId" element={<ReservationStatusPage />} />
@@ -61,6 +119,7 @@ function Router() {
             <Route path="/course" element={<CourseDescriptionPage />} />
             <Route path="/review-write/:reservationId" element={<ReviewWritePage />} />
             <Route path="/notifications" element={<NotificationPage />} />
+            <Route path="/chats" element={<ChatListPage />} />
             <Route path="/chat/:postId" element={<Chat />} />
             <Route path="/guide/:id" element={<GuideProfilePage />} />
             <Route path="/book" element={<ReservationListPage />} />
@@ -78,6 +137,14 @@ function Router() {
 
           </Routes>
         </ReservationProvider>
+    </div>
+  );
+}
+
+function Router() {
+  return (
+    <BrowserRouter>
+      <RouteViewport />
     </BrowserRouter>
   );
 }

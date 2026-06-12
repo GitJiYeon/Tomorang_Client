@@ -1,35 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import styled from "styled-components";
-import regionData from "../data/regionData.json";
-import RegionCard from "../components/mainComponents/RegionCard";
-import ChevronIcon from "../assets/detailIcon.svg";
-import SearchIcon from "../assets/searchIcon2.svg";
-import BackArrow from "../assets/backarrow.svg";
 
-const TRENDING = [
-  { rank: 1, keyword: "맛집투어" },
-  { rank: 2, keyword: "소도시" },
-  { rank: 3, keyword: "가성비" },
-  { rank: 4, keyword: "야경" },
-  { rank: 5, keyword: "온천" },
-];
-
-const HISTORY_KEY = "searchHistory";
-
-function getHistory() {
-  try {
-    return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
-  } catch {
-    return [];
-  }
-}
-
-function addHistory(keyword) {
-  const prev = getHistory().filter((k) => k !== keyword);
-  localStorage.setItem(HISTORY_KEY, JSON.stringify([keyword, ...prev].slice(0, 10)));
-}
-
+ㅡ
 function clearHistory() {
   localStorage.removeItem(HISTORY_KEY);
 }
@@ -58,26 +28,24 @@ export default function SearchPage() {
 
   return (
     <Wrapper>
-      {/* 상단 검색바 */}
       <SearchBarRow>
         <BackBtn onClick={() => navigate(-1)}>
-          <img src={BackArrow} alt="뒤로가기" width={24} height={24} />
+          <img src={BackArrow} alt="back" width={24} height={24} />
         </BackBtn>
         <SearchBar>
           <SearchIconBtn onClick={() => handleSearch()}>
             <img src={SearchIcon} alt="search" width={28} height={28} />
           </SearchIconBtn>
           <SearchInput
-            placeholder="미식의 구마모토로..."
+            placeholder="미식, 구마모토..."
             value={inputVal}
-            onChange={(e) => setInputVal(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+            onChange={(event) => setInputVal(event.target.value)}
+            onKeyDown={(event) => event.key === "Enter" && handleSearch()}
             autoFocus
           />
         </SearchBar>
       </SearchBarRow>
 
-      {/* 내가 검색한 */}
       {history.length > 0 && (
         <Section>
           <SectionHeader>
@@ -94,16 +62,15 @@ export default function SearchPage() {
         </Section>
       )}
 
-      {/* 지금 가장 인기있는 */}
       <Section>
         <SectionTitle>지금 가장 인기있는</SectionTitle>
         <TrendingWrapper>
           <TrendingList>
-            {visibleTrending.map(({ rank, keyword }, idx) => (
+            {visibleTrending.map(({ rank, keyword }, index) => (
               <TrendingItem
                 key={rank}
                 onClick={() => handleSearch(keyword)}
-                $faded={!expanded && idx === 2}
+                $faded={!expanded && index === 2}
               >
                 <Rank>{rank}</Rank>
                 <TrendingKeyword>{keyword}</TrendingKeyword>
@@ -111,23 +78,21 @@ export default function SearchPage() {
             ))}
           </TrendingList>
 
-          {/* 3번째 항목 아래 페이드 + 토글 버튼 */}
           {!expanded && (
             <FadeOverlay onClick={() => setExpanded(true)}>
               <ToggleBtn>
-                <img src={ChevronIcon} alt="펼치기" width={14} height={14} />
+                <img src={ChevronIcon} alt="expand" width={14} height={14} />
               </ToggleBtn>
             </FadeOverlay>
           )}
           {expanded && (
             <CollapseBtn onClick={() => setExpanded(false)}>
-              <img src={ChevronIcon} alt="접기" width={14} height={14} style={{ transform: "rotate(180deg)" }} />
+              <img src={ChevronIcon} alt="collapse" width={14} height={14} style={{ transform: "rotate(180deg)" }} />
             </CollapseBtn>
           )}
         </TrendingWrapper>
       </Section>
 
-      {/* 여행지 카드 그리드 */}
       <Section>
         <Grid>
           {previewRegions.map((region) => (
@@ -173,7 +138,7 @@ const BackBtn = styled.button`
 const SearchBar = styled.div`
   flex: 1;
   height: 40px;
-  background: #F3F4F3;
+  background: #f3f4f3;
   border-radius: 20px;
   display: flex;
   align-items: center;
@@ -199,7 +164,7 @@ const SearchInput = styled.input`
   font-size: 14px;
   color: #111;
   width: 100%;
-  &::placeholder { color: #ACACAC; }
+  &::placeholder { color: #acacac; }
 `;
 
 const Section = styled.div`
@@ -217,8 +182,7 @@ const SectionTitle = styled.div`
   font-weight: 500;
   font-size: 14px;
   line-height: 22px;
-  letter-spacing: -0.7px;
-  color: #ACACAC;
+  color: #acacac;
   margin-bottom: 12px;
 `;
 
@@ -230,8 +194,7 @@ const ClearBtn = styled.button`
   font-weight: 500;
   font-size: 12px;
   line-height: 22px;
-  letter-spacing: -0.7px;
-  color: #4E4E4E;
+  color: #4e4e4e;
   padding: 0;
   margin-bottom: 12px;
 `;
@@ -246,14 +209,13 @@ const HistoryChip = styled.button`
   height: 42px;
   border-radius: 60px;
   padding: 10px 14px;
-  background: #EDFCDF;
+  background: #edfcdf;
   border: none;
   cursor: pointer;
   font-family: "Pretendard", sans-serif;
   font-weight: 500;
   font-size: 14px;
   line-height: 22px;
-  letter-spacing: -0.7px;
   color: #111;
   white-space: nowrap;
 `;
@@ -279,10 +241,8 @@ const TrendingItem = styled.div`
 
 const Rank = styled.span`
   font-weight: 600;
-  font-size: 17.22px;
-  line-height: 100%;
-  letter-spacing: 2%;
-  color: #B1DD89;
+  font-size: 17px;
+  color: #b1dd89;
   width: 16px;
   text-align: center;
 `;
@@ -290,8 +250,6 @@ const Rank = styled.span`
 const TrendingKeyword = styled.span`
   font-weight: 500;
   font-size: 14px;
-  line-height: 100%;
-  letter-spacing: 2%;
   color: #111;
 `;
 

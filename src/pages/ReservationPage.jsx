@@ -8,37 +8,169 @@
  * navigate(`/reservation/${post.postId}`, { state: { post } })
  */
 
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import postData from "../data/postData.json";
+import { useEffect, useState } from "react";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import CounterInput from "../components/bookComponents/CounterInput";
 import WarningBanner from "../components/WarningBanner";
 import Header from "../components/Header";
+import { bookReservation, getPostDetail } from "../api/tomorang";
+import { getPostImages } from "../utils/postDisplay";
+import { mergeLocalPostCache } from "../utils/localPostCache";
+import { STATUS } from "../utils/reservationFlow";
 
 const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 export default function ReservationPage() {
+  const { state } = useLocation();
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(1);
   const [request, setRequest] = useState("");
+  const [serverPost, setServerPost] = useState(() => {
+    const savedPost = state?.post ?? JSON.parse(sessionStorage.getItem("currentCoursePost") || "null");
+    return savedPost ? mergeLocalPostCache(savedPost) : null;
+  });
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { postId } = useParams();
-  const post = postData.find((p) => p.postId === Number(postId));
+  const post = serverPost;
   const navigate = useNavigate();
-  if (!post) return <div>포스트를 찾을 수 없습니다.</div>;
 
-  const rawPrice = parseInt(post.price.replace(/,/g, ""), 10);
+  useEffect(() => {
+    let alive = true;
+    getPostDetail(postId)
+      .then((detail) => {
+        if (!alive) return;
+        setServerPost((prev) =>
+          mergeLocalPostCache({
+            ...prev,
+            ...detail,
+            images: detail.images?.length ? detail.images : prev?.images ?? [],
+            contentBlocks: detail.contentBlocks?.length ? detail.contentBlocks : prev?.contentBlocks ?? [],
+            availableSchedules: detail.availableSchedules?.length
+              ? detail.availableSchedules
+              : prev?.availableSchedules ?? [],
+            schedules: detail.schedules?.length ? detail.schedules : prev?.schedules ?? [],
+          })
+        );
+      })
+      .catch((error) => console.error("게시물 상세 조회 실패", error));
+
+    return () => {
+      alive = false;
+    };
+  }, [postId]);
+
+  useEffect(() => {
+    const firstDate = serverPost?.availableSchedules?.[0]?.date;
+    if (!selectedDate && firstDate) {
+      setSelectedDate(firstDate);
+    }
+  }, [serverPost, selectedDate]);
+
+  if (!post) return <div style={{ padding: 40, color: "#ACACAC" }}>코스 정보를 불러오는 중입니다.</div>;
+
+  const rawPrice = parseInt(String(post.price).replace(/,/g, ""), 10) || 0;
   const discountedPrice = post.discountRate
     ? Math.round(rawPrice * (1 - post.discountRate / 100))
     : null;
 
+  const availableDates = [
+    ...new Set((post.availableSchedules ?? []).map((schedule) => schedule.date).filter(Boolean)),
+  ];
+
   // 선택된 날짜의 timeSlots
   const currentSlots = selectedDate
-    ? post.availableSchedules.find((s) => s.date === selectedDate)?.timeSlots || []
+    ? (post.availableSchedules ?? [])
+        .filter((schedule) => schedule.date === selectedDate)
+        .flatMap((schedule) => schedule.timeSlots ?? [])
     : [];
+
+  const handleReservation = async () => {
+    if (!selectedDate || !selectedSlot || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setErrorMessage("");
+
+    try {
+      const result = await bookReservation({
+        postId: post.postId,
+        slotId: selectedSlot.id,
+        slotDate: selectedDate,
+        slotTime: selectedSlot.time,
+        adultCount: adults,
+        childCount: children,
+        request,
+      });
+      const reservationId = result.id || result.reservationId || result.reservation_id || `local-${Date.now()}`;
+      const requesterId = localStorage.getItem("userId");
+      const reservation = {
+        ...result,
+        reservationId,
+        id: reservationId,
+        requesterId,
+        postId: post.postId,
+        post,
+        slotId: selectedSlot.id,
+        date: selectedDate,
+        time: selectedSlot.time,
+        slotDate: selectedDate,
+        slotTime: selectedSlot.time,
+        adults,
+        children,
+        adultCount: adults,
+        childCount: children,
+        request,
+        meetingPoint:
+          result.meetingPoint ??
+          result.meeting_point ??
+          post.meetingPoint ??
+          post.meeting_point ??
+          post.meetingAddress ??
+          post.meeting_address ??
+          post.cityName ??
+          "",
+        meetingPointAddress:
+          result.meetingPointAddress ??
+          result.meeting_point_address ??
+          result.meetingAddress ??
+          result.meeting_address ??
+          post.meetingPointAddress ??
+          post.meeting_point_address ??
+          post.meetingAddress ??
+          post.meeting_address ??
+          "",
+        meetingPointLat:
+          result.meetingPointLat ??
+          result.meeting_point_lat ??
+          result.lat ??
+          result.latitude ??
+          post.meetingPointLat ??
+          post.meeting_point_lat ??
+          post.lat ??
+          post.latitude,
+        meetingPointLng:
+          result.meetingPointLng ??
+          result.meeting_point_lng ??
+          result.lng ??
+          result.longitude ??
+          post.meetingPointLng ??
+          post.meeting_point_lng ??
+          post.lng ??
+          post.longitude,
+        status: result.status ?? STATUS.PENDING,
+      };
+      sessionStorage.setItem(`reservationStatus:${reservationId}`, JSON.stringify({ reservation, post }));
+      navigate(`/reservation-status/${reservationId}`, { state: { reservation, post } });
+    } catch (error) {
+      setErrorMessage(error.message || "예약에 실패했습니다.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <Wrapper>
@@ -48,7 +180,7 @@ export default function ReservationPage() {
         {/* ── 상단 게시물 카드 ── */}
         <PostCard>
           <PostImage
-            src={post.images?.[0]}
+            src={getPostImages(post)[0]}
             alt={post.title}
             onError={(e) => { e.target.style.background = "#ddd"; e.target.removeAttribute("src"); }}
           />
@@ -80,17 +212,17 @@ export default function ReservationPage() {
         <Section>
           <SectionLabel>날짜 선택</SectionLabel>
           <DateRow>
-            {post.availableSchedules.map((schedule) => {
-              const dateObj = new Date(schedule.date);
+            {availableDates.map((date) => {
+              const dateObj = new Date(date);
               const day = dateObj.getDate();
               const dow = DAYS[dateObj.getDay()];
-              const isSelected = selectedDate === schedule.date;
+              const isSelected = selectedDate === date;
               return (
                 <DateCard
-                  key={schedule.date}
+                  key={date}
                   $selected={isSelected}
                   onClick={() => {
-                    setSelectedDate(schedule.date);
+                    setSelectedDate(date);
                     setSelectedSlot(null);
                   }}
                 >
@@ -168,17 +300,14 @@ export default function ReservationPage() {
 
         {/* ── 경고 배너 ── */}
         <WarningBanner message="결제는 만남 후 현장에서 가이드와 직접 진행됩니다." />
+        {errorMessage && <ErrorText>{errorMessage}</ErrorText>}
 
         {/* ── 예약하기 버튼 ── */}
         <ReserveBtn
-          disabled={!selectedDate || !selectedSlot}
-          onClick={() => {
-            navigate('/reservation-status/1');
-            // TODO: 예약 API 연결
-            console.log({ post, selectedDate, selectedSlot, adults, children, request });
-          }}
+          disabled={!selectedDate || !selectedSlot || isSubmitting}
+          onClick={handleReservation}
         >
-          예약하기
+          {isSubmitting ? "예약 중..." : "예약하기"}
         </ReserveBtn>
       </Content>
     </Wrapper>
@@ -453,4 +582,11 @@ const ReserveBtn = styled.button`
   color: ${({ disabled }) => (disabled ? "#fff" : "#111")};
   margin-top: 18px;
   transition: background 0.2s;
+`;
+
+const ErrorText = styled.p`
+  margin: 8px 0 0;
+  color: #d93025;
+  font-size: 13px;
+  font-weight: 500;
 `;
