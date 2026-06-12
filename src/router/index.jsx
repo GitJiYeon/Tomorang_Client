@@ -17,7 +17,7 @@ import MainMorePage from "../pages/MainMorePage";
 import EmergingDestination from "../pages/EmergingDestination";
 import DestinationListPage from "../pages/DestinationListPage";
 import CourseDescriptionPage from "../pages/CourseDescriptionPage";
-import SearchPage from "../pages/SeachPage";
+import SearchPage from "../pages/SearchPage";
 import MapPage from "../pages/MapPage";
 import ReservationPage from "../pages/ReservationPage";
 import ReservationStatusPage from "../pages/ReservationStatusPage";

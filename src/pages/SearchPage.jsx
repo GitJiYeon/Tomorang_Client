@@ -1,5 +1,35 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import styled from "styled-components";
+import regionData from "../data/regionData.json";
+import RegionCard from "../components/mainComponents/RegionCard";
+import ChevronIcon from "../assets/detailIcon.svg";
+import SearchIcon from "../assets/searchIcon2.svg";
+import BackArrow from "../assets/backarrow.svg";
 
-ㅡ
+const TRENDING = [
+  { rank: 1, keyword: "맛집투어" },
+  { rank: 2, keyword: "도쿄" },
+  { rank: 3, keyword: "가성비" },
+  { rank: 4, keyword: "야경" },
+  { rank: 5, keyword: "온천" },
+];
+
+const HISTORY_KEY = "searchHistory";
+
+function getHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function addHistory(keyword) {
+  const prev = getHistory().filter((item) => item !== keyword);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify([keyword, ...prev].slice(0, 10)));
+}
+
 function clearHistory() {
   localStorage.removeItem(HISTORY_KEY);
 }
