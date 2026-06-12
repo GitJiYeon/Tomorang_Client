@@ -43,6 +43,40 @@ const normalizeImageValue = (image) => {
   );
 };
 
+const isPlaceholderText = (value) => {
+  const text = String(value ?? "").trim().toLowerCase();
+  return !text || ["string", "null", "undefined", "example", "test"].includes(text);
+};
+
+const getGuideIdValue = (guide) =>
+  guide?.id ??
+  guide?.guideId ??
+  guide?.guide_id ??
+  guide?.userId ??
+  guide?.user_id ??
+  guide?.username;
+
+const getGuideNameValue = (guide) =>
+  guide?.nickname ??
+  guide?.nickName ??
+  guide?.name ??
+  guide?.guideName ??
+  guide?.memberNickName ??
+  guide?.member_nick_name;
+
+const isRealGuide = (guide) => {
+  if (!guide || typeof guide !== "object") return false;
+
+  const id = getGuideIdValue(guide);
+  const name = getGuideNameValue(guide);
+  const displayText = String(name ?? id ?? "");
+
+  if (isPlaceholderText(id) && isPlaceholderText(name)) return false;
+  if (/서울\s*가이드\s*김/i.test(displayText)) return false;
+
+  return true;
+};
+
 const normalizeImages = (post) => {
   const candidates =
     post.images ??
@@ -430,7 +464,7 @@ export async function unlikeReview(reviewId) {
 
 export async function getPopularGuides(options = {}) {
   const data = await apiFetch("/api/guides/popular");
-  return filterVisibleGuides(pickList(data), options);
+  return filterVisibleGuides(pickList(data).filter(isRealGuide), options);
 }
 
 export async function getMypage() {
