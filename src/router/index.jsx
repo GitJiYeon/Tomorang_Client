@@ -50,6 +50,7 @@ import GuideChatPage from "../pages/GuideChatPage";
 import GuideMyPage from "../pages/GuideMyPage";
 import { isCurrentGuide } from "../utils/authRole";
 
+const routerBasename = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 function RoleAwareMainPage() {
   return isCurrentGuide() ? <Navigate to="/guide" replace /> : <MainPage />;
@@ -143,7 +144,7 @@ function RouteViewport() {
 
 function Router() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={routerBasename}>
       <RouteViewport />
     </BrowserRouter>
   );
