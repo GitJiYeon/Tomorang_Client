@@ -7,7 +7,7 @@
 
 import styled from "styled-components";
 import StarFillIcon from "../../assets/bookStatusIcons/starFill.svg";
-import StarEmptyIcon from "../../assets/bookStatusIcons/starEmpty.svg";
+import StarEmptyIcon from "../../assets/bookStatusIcons/StarEmpty.svg";
 import DefaultProfileIcon from "../../assets/defaultProfile.svg";
 
 export default function MyReviewCard({ review, time, onClick }) {

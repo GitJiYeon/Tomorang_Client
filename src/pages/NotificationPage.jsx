@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import NotificationCard from "../components/NotificationCard";
-import NotiBellIcon from "../assets/notiIcons/notiBell.svg";
+import NotiBellIcon from "../assets/notiIcons/notibell.svg";
 import { getNotifications, markNotificationRead } from "../api/tomorang";
 
 const formatTimeLabel = (value) => {
