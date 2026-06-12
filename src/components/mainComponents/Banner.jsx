@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import styled from "styled-components";
-import ArrowIcon from "/assets/bannerImages/linkArrow.svg";
+import { resolvePublicAsset } from "../../utils/publicAsset";
+
+const ArrowIcon = resolvePublicAsset("/assets/bannerImages/linkArrow.svg");
 
 const AUTO_PLAY_INTERVAL = 4000;
 
@@ -28,7 +30,7 @@ export default function Banner({ bannerData }) {
         >
           {bannerData.map((banner, i) => (
             <Card key={i} onClick={() => banner.link && window.open(banner.link, "_blank")}>
-              <SlideImg src={banner.image} alt={banner.name} />
+              <SlideImg src={resolvePublicAsset(banner.image)} alt={banner.name} />
 
               <CategoryTag>{banner.category}</CategoryTag>
 

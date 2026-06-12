@@ -1,3 +1,5 @@
+import { resolvePublicAsset } from "./publicAsset";
+
 const asArray = (value) => {
   if (value === undefined || value === null || value === "") return [];
   return Array.isArray(value) ? value : [value];
@@ -28,11 +30,12 @@ export function getPostDescription(post) {
 }
 
 export function getPostImages(post) {
-  const images = asArray(post?.images).filter(Boolean);
+  const images = asArray(post?.images).map(resolvePublicAsset).filter(Boolean);
   if (images.length > 0) return images;
 
   return asArray(post?.contentBlocks)
     .filter((block) => String(block?.type ?? "").toLowerCase().includes("image"))
     .map((block) => block?.value ?? block?.url ?? block?.imageUrl ?? block?.image_url)
+    .map(resolvePublicAsset)
     .filter(Boolean);
 }

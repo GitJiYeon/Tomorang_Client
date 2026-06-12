@@ -6,6 +6,7 @@ import Graystar from "../assets/graystar.svg";
 import DefaultProfileIcon from "../assets/defaultProfile.svg";
 import LikeIcon from "../assets/likeIcon.svg";
 import { likeReview, unlikeReview } from "../api/tomorang";
+import { resolvePublicAsset } from "../utils/publicAsset";
 
 export default function ReviewCard1({ review, variant = "default" }) {
   const [previewImage, setPreviewImage] = useState("");
@@ -15,10 +16,12 @@ export default function ReviewCard1({ review, variant = "default" }) {
   const isReceived = variant === "received";
   const reviewId = review.reviewId ?? review.id;
   const date = new Date(review.createdAt ?? Date.now());
-  const postImages = review.postImages ?? review.images ?? (review.postImage ? [review.postImage] : []);
+  const postImages = (review.postImages ?? review.images ?? (review.postImage ? [review.postImage] : []))
+    .map(resolvePublicAsset)
+    .filter(Boolean);
   const rating = Number(review.rating ?? 0);
   const nickname = review.nickname ?? review.memberNickName ?? review.memberId ?? "사용자";
-  const profile = review.profile ?? review.memberImage ?? DefaultProfileIcon;
+  const profile = resolvePublicAsset(review.profile ?? review.memberImage) || DefaultProfileIcon;
   const dateStr = `${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
   const yearStr = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
 

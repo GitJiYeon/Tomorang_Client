@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { resolvePublicAsset } from "../../utils/publicAsset";
 
 /**
  * 호출 방법:
@@ -12,7 +13,7 @@ export default function RegionCard({ region, lang = "ko" }) {
   return (
     <Card>
       <BgImg
-        src={region.image}
+        src={resolvePublicAsset(region.image)}
         alt={cityName}
         onError={e => { e.target.style.background = "#cde"; e.target.removeAttribute("src"); }}
       />

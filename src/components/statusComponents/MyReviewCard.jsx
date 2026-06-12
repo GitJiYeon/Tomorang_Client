@@ -9,6 +9,7 @@ import styled from "styled-components";
 import StarFillIcon from "../../assets/bookStatusIcons/starFill.svg";
 import StarEmptyIcon from "../../assets/bookStatusIcons/StarEmpty.svg";
 import DefaultProfileIcon from "../../assets/defaultProfile.svg";
+import { resolvePublicAsset } from "../../utils/publicAsset";
 
 export default function MyReviewCard({ review, time, onClick }) {
   if (!review) return null;
@@ -17,8 +18,8 @@ export default function MyReviewCard({ review, time, onClick }) {
   const dateStr = createdAt.slice(0, 10).replace(/-/g, ".");
   const shortDate = dateStr.slice(5);
   const nickname = review.nickname ?? review.memberNickName ?? review.memberId ?? "사용자";
-  const profile = review.profile ?? review.memberImage ?? DefaultProfileIcon;
-  const images = review.images ?? review.postImages ?? [];
+  const profile = resolvePublicAsset(review.profile ?? review.memberImage) || DefaultProfileIcon;
+  const images = (review.images ?? review.postImages ?? []).map(resolvePublicAsset).filter(Boolean);
 
   return (
     <Card
