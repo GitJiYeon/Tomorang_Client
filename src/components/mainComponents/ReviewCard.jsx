@@ -1,5 +1,6 @@
 import styled from "styled-components";
 import StarIcon from "../../assets/star.svg";
+import { resolvePublicAsset } from "../../utils/publicAsset";
 
 function getTimeAgo(dateString) {
   const now = new Date();
@@ -24,7 +25,7 @@ export default function ReviewCard({ review, onClick }) {
     <Wrapper onClick={onClick}>
       {/* 왼쪽 이미지 */}
       <PostImg
-        src={review.postImages[0]}
+        src={resolvePublicAsset(review.postImages[0])}
         alt="리뷰 이미지"
         onError={e => { e.target.style.background = "#ddd"; e.target.removeAttribute("src"); }}
       />

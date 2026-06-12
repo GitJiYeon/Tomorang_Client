@@ -2,6 +2,7 @@ import { apiFetch, appendJsonPart, getAuthHeader, parseResponse, API_BASE_URL } 
 import { mergeLocalPostCache } from "../utils/localPostCache";
 import { filterVisibleGuides, filterVisiblePosts } from "../utils/hiddenGuides";
 import { getPostRatingAverage, getPostWishlistCount } from "../utils/postStats";
+import { resolvePublicAsset } from "../utils/publicAsset";
 
 const toPriceText = (value) => String(value ?? 0);
 
@@ -26,8 +27,8 @@ const asArray = (value) => {
 
 const normalizeImageValue = (image) => {
   if (!image) return "";
-  if (typeof image === "string") return image;
-  return (
+  if (typeof image === "string") return resolvePublicAsset(image);
+  return resolvePublicAsset(
     image.url ??
     image.imageUrl ??
     image.image_url ??
@@ -94,7 +95,7 @@ const normalizeContentBlock = (block, index) => {
   return {
     ...block,
     type: rawType.includes("image") ? "image" : "text",
-    value,
+    value: normalizeImageValue(value),
     sequence: block.sequence ?? block.seq ?? block.order ?? index,
   };
 };
@@ -216,18 +217,21 @@ export function normalizeHiddenUser(user) {
     nickname: user.nickname ?? user.nickName ?? user.name ?? id,
     bio: user.bio ?? user.oneWord ?? user.introduction ?? "",
     answertime: user.answertime ?? user.answerTime ?? "",
-    profileImage:
+    profileImage: normalizeImageValue(
       user.profileImage ??
-      user.image ??
-      user.profile ??
-      user.profileUrl ??
-      user.profileImageUrl ??
-      "",
+        user.image ??
+        user.profile ??
+        user.profileUrl ??
+        user.profileImageUrl ??
+        ""
+    ),
   };
 }
 
 export function normalizeReview(review) {
-  const images = review.images ?? review.reviewImages ?? review.review_images ?? [];
+  const images = asArray(review.images ?? review.reviewImages ?? review.review_images ?? [])
+    .map(normalizeImageValue)
+    .filter(Boolean);
   const likeArray = Array.isArray(review.likes) ? review.likes : [];
 
   return {
@@ -236,9 +240,9 @@ export function normalizeReview(review) {
     postId: review.postId ?? review.post_id,
     memberId: review.memberId ?? review.member_id,
     nickname: review.nickname ?? review.memberNickName ?? review.memberId ?? "사용자",
-    profile: review.profile ?? review.memberImage,
+    profile: normalizeImageValue(review.profile ?? review.memberImage),
     images,
-    postImages: review.postImages ?? images,
+    postImages: asArray(review.postImages ?? images).map(normalizeImageValue).filter(Boolean),
     likeCount: review.likeCount ?? review.like_count ?? review.likesCount ?? likeArray.length ?? 0,
     liked: Boolean(review.liked ?? review.isLiked ?? review.is_liked ?? false),
     createdAt: review.createdAt ?? new Date().toISOString(),
