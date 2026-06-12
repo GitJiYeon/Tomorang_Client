@@ -26,7 +26,7 @@ const STATUS_CONFIG = {
   },
   REJECTED: {
     icon: XIcon,
-    iconBg: "#FFCBA4",
+    iconBg: "#FFA362",
     title: "예약이 거절되었어요",
     desc: "안내자가 시간이 없나봐요\n잠시 다른 투어를 찾아봐요",
     step: 0,
@@ -44,8 +44,21 @@ const STATUS_CONFIG = {
 
 const STEPS = ["안내자 확인", "예약 확정", "투어 완료"];
 
-export default function StatusHeader({ status,}) {
-  const config = STATUS_CONFIG[status] || STATUS_CONFIG.PENDING;
+export default function StatusHeader({ status, isGuideView = false }) {
+  const baseConfig = STATUS_CONFIG[status] || STATUS_CONFIG.PENDING;
+  const config =
+    status === "PENDING" && isGuideView
+      ? {
+          ...baseConfig,
+          title: "발견자에게서 요청이 왔어요",
+          desc: "요청사항과 정보를 확인하고\n요청을 수락할지 선택해주세요",
+        }
+      : status === "REJECTED" && isGuideView
+        ? {
+            ...baseConfig,
+            desc: "시간이 없으셨나보네요\n다른 예약을 기다려 볼까요",
+          }
+      : baseConfig;
   const isPending = status === "PENDING";
 
   return (
@@ -166,9 +179,9 @@ const StepCircle = styled.div`
   flex-shrink: 0;
   border-radius: 50%;
   background: ${({ $done, $rejected }) =>
-    $rejected ? "#FFCBA4" : $done ? "#C5F598" : "#DADADA"};
+    $rejected ? "#FFA362" : $done ? "#C5F598" : "#DADADA"};
   border: 2px solid ${({ $done, $rejected }) =>
-    $rejected ? "#FFCBA4" : $done ? "#C5F598" : "#DADADA"};
+    $rejected ? "#FFA362" : $done ? "#C5F598" : "#DADADA"};
   display: flex;
   align-items: center;
   justify-content: center;

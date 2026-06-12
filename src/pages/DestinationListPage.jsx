@@ -5,6 +5,7 @@ import Header from "../components/Header";
 import FilterBar from "../components/FilterBar";
 import PostCardList from "../components/PostCardList";
 import { getPosts } from "../api/tomorang";
+import { getPostRatingAverage, getPostWishlistCount } from "../utils/postStats";
 
 export default function DestinationListPage() {
   const { state } = useLocation();
@@ -47,7 +48,7 @@ export default function DestinationListPage() {
 
     return [...filtered].sort((a, b) => {
       if (filter.sort === "인기순") {
-        return Number(b.reviewCount ?? 0) - Number(a.reviewCount ?? 0);
+        return getPostWishlistCount(b) - getPostWishlistCount(a);
       }
 
       if (filter.sort === "가격순") {
@@ -56,7 +57,7 @@ export default function DestinationListPage() {
         return priceA - priceB;
       }
 
-      return Number(b.rating ?? 0) - Number(a.rating ?? 0);
+      return getPostRatingAverage(b) - getPostRatingAverage(a);
     });
   }, [filter, posts]);
 

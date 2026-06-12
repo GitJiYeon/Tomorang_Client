@@ -1,6 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import DefaultProfileIcon from "../assets/defaultProfile.svg";
+import { formatRating } from "../utils/postStats";
 
 const LEVEL_MAP = {
   beginner: 1,
@@ -114,7 +115,7 @@ export default function GuideTab({ guide }) {
           </StatItem>
           <VerticalLine />
           <StatItem>
-            <StatNum>{rating.toFixed(1)}점</StatNum>
+            <StatNum>{formatRating(rating)}점</StatNum>
             <StatLabel>리뷰</StatLabel>
           </StatItem>
         </StatsRow>

@@ -7,8 +7,30 @@ import NextButton from "../components/NextButton1";
 import DefaultProfileIcon from "../assets/defaultProfile.svg";
 import ImageIcon from "../assets/imageIcon.svg";
 import RemoveIcon from "../assets/removeIcon.svg";
-import { normalizeLanguages, signupMember } from "../api/member";
+import { loginMember, normalizeLanguages, signupMember, updateMember } from "../api/member";
+import { clearAuthStorage } from "../api/client";
 import { getMypage, switchMemberRole } from "../api/tomorang";
+
+const pickImageUrl = (...sources) => {
+  for (const source of sources) {
+    if (!source) continue;
+    if (typeof source === "string") return source;
+    const value =
+      source.image ??
+      source.profileImage ??
+      source.profile_image ??
+      source.imageUrl ??
+      source.image_url ??
+      source.fileUrl ??
+      source.file_url ??
+      source.url ??
+      source.data?.image ??
+      source.data?.profileImage ??
+      source.data?.imageUrl;
+    if (value) return value;
+  }
+  return "";
+};
 
 export default function MakeGuideProfile() {
   const navigate = useNavigate();
@@ -64,17 +86,29 @@ export default function MakeGuideProfile() {
         levels,
       };
 
+      let signupResponse = null;
       if (state?.mode === "switch") {
         await switchMemberRole("GUIDE");
+        const updateDto = { ...dto };
+        delete updateDto.pw;
+        signupResponse = await updateMember(updateDto, profileFile).catch(() => null);
       } else {
-        await signupMember(dto, profileFile);
+        signupResponse = await signupMember(dto, profileFile);
+        const loginResponse = await loginMember(dto.id, dto.pw);
+        if (!loginResponse?.token) {
+          throw new Error("가이드 계정 로그인 토큰을 받지 못했습니다.");
+        }
+        clearAuthStorage();
+        localStorage.setItem("accessToken", loginResponse.token);
+        localStorage.setItem("tokenType", loginResponse.type || "Bearer");
+        localStorage.setItem("userId", loginResponse.id ?? dto.id);
       }
 
       const nextProfile =
-        state?.mode === "switch"
-          ? await getMypage().catch(() => null)
-          : null;
+        await getMypage().catch(() => null);
+      const image = pickImageUrl(nextProfile, signupResponse, profileImage);
 
+      localStorage.setItem("userId", dto.id);
       localStorage.setItem(
         "profile",
         JSON.stringify({
@@ -86,6 +120,8 @@ export default function MakeGuideProfile() {
           nickName: dto.nickName,
           oneWord: dto.oneWord,
           city: city.trim(),
+          image,
+          profileImage: image,
           languages,
           levels,
         })

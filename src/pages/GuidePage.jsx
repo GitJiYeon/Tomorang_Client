@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import MainHeader from "../components/mainComponents/MainHeader";
@@ -6,27 +6,97 @@ import GuideBottomNav from "../components/mainComponents/GuideBottomNav";
 import PostCard from "../components/mainComponents/PostCard";
 import PlusIcon from "../assets/plusIcon.svg";
 import GuideEmptyLogo from "../assets/guideEmptyLogo.svg";
-import { getPosts } from "../api/tomorang";
+import { getPostDetail, getPosts } from "../api/tomorang";
+import { getPostOwnerId } from "../utils/postOwner";
+
+const getPostId = (post) => post?.postId ?? post?.post_id ?? post?.id;
+
+const sameId = (a, b) => String(a ?? "") === String(b ?? "");
+
+const getPostTime = (post) => {
+  const value =
+    post?.createdAt ??
+    post?.created_at ??
+    post?.updatedAt ??
+    post?.updated_at ??
+    post?.registeredAt ??
+    post?.registered_at;
+
+  if (Array.isArray(value)) {
+    const [year, month, day, hour = 0, minute = 0, second = 0] = value;
+    return new Date(year, Number(month) - 1, day, hour, minute, second).getTime();
+  }
+
+  if (value) {
+    const time = new Date(value).getTime();
+    if (!Number.isNaN(time)) return time;
+  }
+
+  const id = Number(getPostId(post));
+  return Number.isNaN(id) ? 0 : id;
+};
 
 export default function GuidePage() {
   const navigate = useNavigate();
-  const currentUserId = localStorage.getItem("userId");
+  const profile = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("profile") || "{}");
+    } catch {
+      return {};
+    }
+  }, []);
+  const currentUserId =
+    localStorage.getItem("userId") ||
+    profile?.id ||
+    profile?.userId ||
+    profile?.guideId ||
+    profile?.memberId ||
+    "";
   const [myPosts, setMyPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(!!currentUserId);
   const [errorMessage, setErrorMessage] = useState(
     currentUserId ? "" : "로그인 후 내 코스를 확인할 수 있어요."
   );
 
+  const loadMyPosts = useCallback(async () => {
+    const directPosts = await getPosts({ userId: currentUserId, includeHidden: true });
+    const posts =
+      directPosts.length > 0
+        ? directPosts
+        : (await getPosts({ includeHidden: true })).filter((post) =>
+            sameId(getPostOwnerId(post), currentUserId)
+          );
+
+    const hydratedPosts = await Promise.all(
+      posts.map(async (post) => {
+        const postId = getPostId(post);
+        if (!postId) return post;
+
+        try {
+          const detail = await getPostDetail(postId, { includeHidden: true });
+          return { ...post, ...detail };
+        } catch {
+          return post;
+        }
+      })
+    );
+
+    return hydratedPosts;
+  }, [currentUserId]);
+
   useEffect(() => {
     if (!currentUserId) return;
 
     let ignore = false;
 
-    getPosts({ userId: currentUserId })
+    setIsLoading(true);
+    setErrorMessage("");
+
+    loadMyPosts()
       .then((posts) => {
         if (ignore) return;
-        console.log("[Tomorang] 가이드 메인 내 게시물 목록:", posts);
-        setMyPosts(posts);
+        const sortedPosts = [...posts].sort((a, b) => getPostTime(b) - getPostTime(a));
+        setMyPosts(sortedPosts);
       })
       .catch((error) => {
         if (ignore) return;
@@ -41,7 +111,36 @@ export default function GuidePage() {
     return () => {
       ignore = true;
     };
-  }, [currentUserId]);
+  }, [currentUserId, loadMyPosts]);
+
+  useEffect(() => {
+    if (!currentUserId) return undefined;
+
+    let ignore = false;
+    const refreshMyPosts = () => {
+      loadMyPosts()
+        .then((posts) => {
+          if (ignore) return;
+          setMyPosts([...posts].sort((a, b) => getPostTime(b) - getPostTime(a)));
+        })
+        .catch((error) => console.error("[Tomorang] 가이드 게시물 새로고침 실패:", error));
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") refreshMyPosts();
+    };
+
+    window.addEventListener("focus", refreshMyPosts);
+    window.addEventListener("pageshow", refreshMyPosts);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      ignore = true;
+      window.removeEventListener("focus", refreshMyPosts);
+      window.removeEventListener("pageshow", refreshMyPosts);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [currentUserId, loadMyPosts]);
 
   const hasContent = myPosts.length > 0;
 
@@ -62,7 +161,7 @@ export default function GuidePage() {
           <GuideCardList>
             {myPosts.map((post, index) => (
               <GuideCardWrapper
-                key={post.postId ?? post.post_id ?? `${post.title}-${index}`}
+                key={getPostId(post) ?? `${post.title}-${index}`}
                 onClick={() => navigate("/course", { state: { post } })}
               >
                 <PostCard post={post} showHeart={false} showStats fullWidth />
@@ -99,7 +198,7 @@ const ContentArea = styled.div`
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 12px 12px;
+  padding: 12px;
   padding-bottom: calc(100px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;

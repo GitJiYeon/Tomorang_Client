@@ -8,10 +8,10 @@
 /* <ReserveButton isValid={true} onClick={handleNext} /> */
 import styled from "styled-components";
 
-function ReserveButton({ isValid, onClick }) {
+function ReserveButton({ isValid, onClick, label = "예약하기" }) {
   return (
     <Button disabled={!isValid} onClick={isValid ? onClick : undefined}>
-      예약하기
+      {label}
     </Button>
   );
 }
@@ -27,15 +27,16 @@ const Button = styled.button`
   justify-content: center;
   align-items: center;
 
-  background-color: #C5F598;
+  background-color: ${({ disabled }) => (disabled ? "#EDFCDF" : "#C5F598")};
 
-  color: #111;
+  color: ${({ disabled }) => (disabled ? "#fff" : "#111")};
 
   font-family: "Pretendard", sans-serif;
   font-weight: 500;
   font-size: 14px;
   line-height: 100%;
   letter-spacing: 0%;
+  cursor: ${({ disabled }) => (disabled ? "default" : "pointer")};
 
   ${({ disabled }) =>
     !disabled &&

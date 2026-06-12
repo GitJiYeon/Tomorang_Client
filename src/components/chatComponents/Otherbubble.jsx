@@ -1,20 +1,52 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 
-export default function OtherBubble({ message, translation, time, changeIcon }) {
+export default function OtherBubble({
+  message,
+  translation,
+  imageUrl,
+  time,
+  changeIcon,
+  onTranslate,
+  isTranslating,
+}) {
   const [showTranslation, setShowTranslation] = useState(false);
+
+  const handleTranslate = () => {
+    if (translation) {
+      setShowTranslation((prev) => !prev);
+      return;
+    }
+
+    onTranslate?.();
+    setShowTranslation(true);
+  };
 
   return (
     <Wrapper>
       <Row>
         <BubbleCol>
-          <Bubble>{showTranslation && translation ? translation : message}</Bubble>
-          {translation && (
-            <TranslateBtn onClick={() => setShowTranslation(!showTranslation)}>
+          <Bubble $imageOnly={!!imageUrl}>
+            {imageUrl ? (
+              <Image src={imageUrl} alt="받은 사진" />
+            ) : (
+              <>
+                <Text>{message}</Text>
+                {translation && showTranslation && (
+                  <>
+                    <Divider />
+                    <Text>{translation}</Text>
+                  </>
+                )}
+              </>
+            )}
+          </Bubble>
+          {!imageUrl && (
+            <TranslateBtn type="button" onClick={handleTranslate} disabled={isTranslating}>
               {changeIcon && (
                 <img src={changeIcon} alt="translate" width={24} height={24} />
               )}
-              {showTranslation ? "원문보기" : "번역보기"}
+              {isTranslating ? "번역중" : showTranslation && translation ? "원문만 보기" : "번역보기"}
             </TranslateBtn>
           )}
         </BubbleCol>
@@ -49,12 +81,28 @@ const Bubble = styled.div`
   font-size: 14px;
   font-weight: 400;
   line-height: 22px;
-  padding: 10px 14px;
+  padding: ${({ $imageOnly }) => ($imageOnly ? "4px" : "10px 14px")};
   border: 1px solid #EFEFEF;
   word-break: break-word;
   white-space: pre-wrap;
   border-radius: 0 12px 12px 12px;
   background: #F3F4F3;
+`;
+
+const Text = styled.div``;
+
+const Divider = styled.div`
+  height: 1px;
+  margin: 8px 0;
+  background: #dadada;
+`;
+
+const Image = styled.img`
+  display: block;
+  width: min(220px, 58vw);
+  max-height: 260px;
+  object-fit: cover;
+  border-radius: 0 10px 10px 10px;
 `;
 
 const TranslateBtn = styled.button`
@@ -69,6 +117,10 @@ const TranslateBtn = styled.button`
   display: flex;
   align-items: center;
   gap: 4px;
+
+  &:disabled {
+    cursor: default;
+  }
 `;
 
 const Time = styled.span`

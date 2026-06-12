@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 
@@ -17,6 +17,8 @@ import regionData from "../data/regionData.json";
 import MainHeader from "../components/mainComponents/MainHeader";
 import { getMyWishlists, getPopularGuides, getPostReviews, getPosts } from "../api/tomorang";
 import { syncLikedPostsFromWishlists } from "../utils/wishlist";
+import { getPostOwnerId } from "../utils/postOwner";
+import { getPostRatingAverage } from "../utils/postStats";
 
 const SCROLL_ROW = {
   display: "flex",
@@ -29,13 +31,55 @@ const SCROLL_ROW = {
 
 const getGuideId = (guide) => guide?.id ?? guide?.guideId ?? guide?.userId ?? guide?.username;
 const getPostId = (post) => post?.postId ?? post?.post_id ?? post?.id;
+const getReviewCount = (post) => Number(post?.reviewCount ?? post?.review_count ?? 0) || 0;
 
 const normalizeGuide = (guide) => ({
   ...guide,
   profileImage: guide.profileImage ?? guide.image,
   nickname: guide.nickname ?? guide.nickName ?? guide.id,
   rating: guide.rating ?? guide.avgRating ?? 0,
+  reviewCount: guide.reviewCount ?? guide.review_count ?? guide.totalReviews ?? 0,
 });
+
+const buildGuideStats = (posts, reviewsByPostId) => {
+  const stats = {};
+
+  posts.forEach((post) => {
+    const guideId = getPostOwnerId(post);
+    const postId = getPostId(post);
+    if (!guideId || !postId) return;
+
+    const reviews = reviewsByPostId[String(postId)] ?? [];
+    const reviewRatings = reviews
+      .map((review) => Number(review.rating))
+      .filter(Number.isFinite);
+    const fallbackCount = getReviewCount(post);
+    const fallbackRating = getPostRatingAverage(post);
+    const reviewCount = reviewRatings.length || fallbackCount;
+    if (!reviewCount) return;
+
+    const ratingSum = reviewRatings.length
+      ? reviewRatings.reduce((sum, rating) => sum + rating, 0)
+      : fallbackRating * fallbackCount;
+
+    if (!stats[guideId]) {
+      stats[guideId] = { ratingSum: 0, reviewCount: 0 };
+    }
+
+    stats[guideId].ratingSum += ratingSum;
+    stats[guideId].reviewCount += reviewCount;
+  });
+
+  return Object.fromEntries(
+    Object.entries(stats).map(([guideId, stat]) => [
+      guideId,
+      {
+        reviewCount: stat.reviewCount,
+        rating: stat.reviewCount ? stat.ratingSum / stat.reviewCount : 0,
+      },
+    ])
+  );
+};
 
 export default function MainPage() {
   const navigate = useNavigate();
@@ -43,6 +87,7 @@ export default function MainPage() {
   const [activeNav, setActiveNav] = useState(0);
   const [serverPosts, setServerPosts] = useState([]);
   const [serverGuides, setServerGuides] = useState([]);
+  const [guideStats, setGuideStats] = useState({});
   const [realtimeReviews, setRealtimeReviews] = useState([]);
 
   useEffect(() => {
@@ -52,11 +97,23 @@ export default function MainPage() {
       .then((posts) => {
         if (!alive) return null;
         setServerPosts(posts);
-        return Promise.all(posts.slice(0, 8).map((post) => getPostReviews(getPostId(post)).catch(() => [])));
+        return Promise.all(
+          posts.map((post) =>
+            getPostReviews(getPostId(post))
+              .then((reviews) => [String(getPostId(post)), reviews])
+              .catch(() => [String(getPostId(post)), []])
+          )
+        ).then((entries) => ({ posts, entries }));
       })
-      .then((reviewGroups) => {
-        if (!alive || !reviewGroups) return;
-        setRealtimeReviews(reviewGroups.flat().filter((review) => review.postImages?.length > 0));
+      .then((result) => {
+        if (!alive || !result) return;
+        const reviewsByPostId = Object.fromEntries(result.entries);
+        setGuideStats(buildGuideStats(result.posts, reviewsByPostId));
+        setRealtimeReviews(
+          result.entries
+            .flatMap(([, reviews]) => reviews)
+            .filter((review) => review.postImages?.length > 0)
+        );
       })
       .catch((error) => console.error("게시물 목록 조회 실패", error));
 
@@ -79,6 +136,26 @@ export default function MainPage() {
 
   const trendingPosts = serverPosts;
   const salePosts = serverPosts.filter((post) => Number(post.discountRate ?? post.discount_rate ?? 0) > 0);
+  const popularGuides = useMemo(
+    () =>
+      serverGuides
+        .map((guide) => {
+          const guideId = getGuideId(guide);
+          const stats = guideStats[String(guideId)] ?? {};
+          return {
+            ...guide,
+            rating: stats.rating ?? guide.rating ?? 0,
+            reviewCount: stats.reviewCount ?? guide.reviewCount ?? 0,
+          };
+        })
+        .sort((a, b) => {
+          const ratingDiff = Number(b.rating ?? 0) - Number(a.rating ?? 0);
+          if (ratingDiff !== 0) return ratingDiff;
+          return Number(b.reviewCount ?? 0) - Number(a.reviewCount ?? 0);
+        })
+        .slice(0, 5),
+    [guideStats, serverGuides]
+  );
 
   const openMore = (type) => {
     navigate(`/main-more/${type}`);
@@ -99,6 +176,11 @@ export default function MainPage() {
     navigate("/course", { state: { post, initialTab: "review", initialReviews } });
   };
 
+  const openCategorySearch = (category) => {
+    if (!category) return;
+    navigate("/search-result", { state: { category } });
+  };
+
   return (
     <PageWrapper>
       <MainHeader />
@@ -107,7 +189,7 @@ export default function MainPage() {
         <Banner bannerData={bannerData} />
       </TopSection>
 
-      <CategoryFilter onSelect={(cat) => console.log("selected:", cat)} />
+      <CategoryFilter onSelect={openCategorySearch} />
 
       <Section title="떠오르는 코스" onMore={() => openMore("trending-courses")}>
         <div style={SCROLL_ROW}>
@@ -137,7 +219,7 @@ export default function MainPage() {
 
       <Section title="인기있는 가이드" onMore={() => openMore("popular-guides")}>
         <div style={SCROLL_ROW}>
-          {serverGuides.map((guide, index) => (
+          {popularGuides.map((guide, index) => (
             <GuideCard
               key={getGuideId(guide) ?? guide.nickName ?? `guide-${index}`}
               guide={guide}

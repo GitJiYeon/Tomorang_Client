@@ -35,6 +35,8 @@ export function mergeLocalPostCache(post) {
       ...post,
       images: post.images?.length ? post.images : direct.images ?? [],
       contentBlocks: post.contentBlocks?.length ? post.contentBlocks : direct.contentBlocks ?? [],
+      availableSchedules: post.availableSchedules?.length ? post.availableSchedules : direct.availableSchedules ?? [],
+      schedules: post.schedules?.length ? post.schedules : direct.schedules ?? [],
     };
   }
 
@@ -57,5 +59,7 @@ export function mergeLocalPostCache(post) {
     ...post,
     images: post.images?.length ? post.images : looseFallback.images ?? [],
     contentBlocks: post.contentBlocks?.length ? post.contentBlocks : looseFallback.contentBlocks ?? [],
+    availableSchedules: post.availableSchedules?.length ? post.availableSchedules : looseFallback.availableSchedules ?? [],
+    schedules: post.schedules?.length ? post.schedules : looseFallback.schedules ?? [],
   };
 }

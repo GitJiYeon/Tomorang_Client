@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import styled, { keyframes } from 'styled-components';
-import CloseIcon from '../assets/CloseIcon.svg';
-import ArrowIcon from '../assets/graynextarrow.svg';
+import { useState } from "react";
+import styled, { keyframes } from "styled-components";
+import CloseIcon from "../assets/CloseIcon.svg";
+import ArrowIcon from "../assets/graynextarrow.svg";
+import { createReport, hideUser } from "../api/tomorang";
+import { hideGuide } from "../utils/hiddenGuides";
 
-// --- Animations ---
 const fadeIn = keyframes`
   from { opacity: 0; }
   to { opacity: 1; }
@@ -24,35 +25,221 @@ const slideDown = keyframes`
   to { transform: translateY(100%); }
 `;
 
-// --- Styled Components ---
+const REPORT_REASONS = [
+  { label: "부적절한 내용 또는 사진", value: "INAPPROPRIATE" },
+  { label: "허위 정보 또는 과장된 설명", value: "FRAUD" },
+  { label: "불쾌한 행동", value: "HARASSMENT" },
+  { label: "스팸 또는 광고", value: "SPAM" },
+  { label: "기타", value: "OTHER" },
+];
+
+const getReportMessage = (error, targetType) => {
+  if (error?.status === 401) return "로그인 후 신고할 수 있어요.";
+  if (error?.status === 400) {
+    return targetType === "USER"
+      ? "본인은 신고할 수 없어요."
+      : "본인이 작성한 게시물은 신고할 수 없어요.";
+  }
+  if (error?.status === 404) return "신고 대상을 찾을 수 없어요.";
+  if (error?.status === 409) return "이미 신고한 대상이에요.";
+  return error?.message || "신고 접수에 실패했어요.";
+};
+
+export default function ReportSystem({
+  isOpen,
+  onClose,
+  postId,
+  targetId,
+  targetType = "POST",
+  hiddenGuide,
+  onReported,
+}) {
+  const reportTargetType = String(targetType || "POST").toUpperCase();
+  const reportTargetId = targetId ?? postId;
+  const isUserReport = reportTargetType === "USER";
+  const [isClosing, setIsClosing] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [submittingReason, setSubmittingReason] = useState("");
+
+  if (!isOpen && !showToast) return null;
+
+  const closeWithAnimation = () => {
+    setIsClosing(true);
+    setTimeout(() => {
+      setIsClosing(false);
+      setErrorMessage("");
+      onClose?.();
+    }, 400);
+  };
+
+  const showResultToast = (message) => {
+    setToastMessage(message);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
+  };
+
+  const rememberHiddenUser = async () => {
+    if (!hiddenGuide) return;
+
+    hideGuide(hiddenGuide);
+    const hiddenUserId =
+      hiddenGuide.id ??
+      hiddenGuide.userId ??
+      hiddenGuide.user_id ??
+      hiddenGuide.guideId ??
+      hiddenGuide.guide_id ??
+      reportTargetId;
+
+    if (!hiddenUserId) return;
+
+    try {
+      await hideUser(hiddenUserId, isUserReport ? "REPORT_USER" : "REPORT");
+    } catch (error) {
+      console.warn("숨김 사용자 서버 저장 실패", error);
+    }
+  };
+
+  const finishReport = (message) => {
+    setIsClosing(true);
+    setTimeout(() => {
+      setIsClosing(false);
+      setSubmittingReason("");
+      onClose?.();
+      onReported?.();
+      showResultToast(message);
+    }, 400);
+  };
+
+  const handleReport = async (reason) => {
+    if (!reportTargetId) {
+      setErrorMessage(isUserReport ? "신고할 사용자 정보를 찾을 수 없어요." : "신고할 게시물 정보를 찾을 수 없어요.");
+      return;
+    }
+
+    setErrorMessage("");
+    setSubmittingReason(reason.value);
+
+    try {
+      await createReport({
+        targetType: reportTargetType,
+        targetId: reportTargetId,
+        reason: reason.value,
+        content: reason.label,
+      });
+      await rememberHiddenUser();
+      finishReport(isUserReport ? "사용자를 신고하고 숨겼어요." : "신고가 접수되었어요. 해당 안내자를 숨겼어요.");
+    } catch (error) {
+      if (isUserReport) {
+        await rememberHiddenUser();
+        console.warn("사용자 신고 API가 실패해 숨김 처리만 완료했습니다.", error);
+        finishReport("사용자를 숨겼어요.");
+        return;
+      }
+
+      if (error?.status === 409 && hiddenGuide) {
+        await rememberHiddenUser();
+        finishReport("이미 신고한 게시물이에요. 해당 안내자를 숨겼어요.");
+        return;
+      }
+
+      setErrorMessage(getReportMessage(error, reportTargetType));
+      setSubmittingReason("");
+    }
+  };
+
+  return (
+    <>
+      {isOpen && (
+        <Overlay $isClosing={isClosing} onClick={closeWithAnimation}>
+          <ModalSheet $isClosing={isClosing} onClick={(e) => e.stopPropagation()}>
+            <ModalHeader>
+              <TitleArea>
+                <h2>신고 사유 선택</h2>
+              </TitleArea>
+              <CloseBtn type="button" onClick={closeWithAnimation}>
+                <img src={CloseIcon} alt="닫기" />
+              </CloseBtn>
+            </ModalHeader>
+
+            <Description>
+              {isUserReport
+                ? "이 사용자를 신고하고 숨기는 사유를 선택해주세요."
+                : "이 게시물을 신고하는 사유를 선택해주세요."}
+            </Description>
+
+            {errorMessage && <ErrorText>{errorMessage}</ErrorText>}
+
+            <ReasonList>
+              {REPORT_REASONS.map((reason) => {
+                const isSubmitting = submittingReason === reason.value;
+                return (
+                  <ReasonItem
+                    key={reason.value}
+                    type="button"
+                    disabled={!!submittingReason}
+                    onClick={() => handleReport(reason)}
+                  >
+                    <span>{isSubmitting ? "접수 중..." : reason.label}</span>
+                    <span className="arrow">
+                      <img src={ArrowIcon} alt="" />
+                    </span>
+                  </ReasonItem>
+                );
+              })}
+            </ReasonList>
+          </ModalSheet>
+        </Overlay>
+      )}
+
+      {showToast && (
+        <Toast>
+          <p>{toastMessage}</p>
+        </Toast>
+      )}
+    </>
+  );
+}
 
 const Overlay = styled.div`
   position: fixed;
-  top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(18, 20, 25, 0.60);
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(18, 20, 25, 0.6);
   backdrop-filter: blur(3px);
   z-index: 999;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  animation: ${({ $isClosing }) => $isClosing ? fadeOut : fadeIn} 0.3s ease-in-out forwards;
+  animation: ${({ $isClosing }) => ($isClosing ? fadeOut : fadeIn)} 0.3s ease-in-out forwards;
 `;
 
 const ModalSheet = styled.div`
-  width: 390px;
-  height: 508px;
-  background: #FFF;
+  width: min(390px, 100vw);
+  min-height: 430px;
+  background: #fff;
   border-radius: 24px 24px 0 0;
   position: relative;
-  box-shadow: 0px -4px 20px rgba(0, 0, 0, 0.1);
-  animation: ${({ $isClosing }) => $isClosing ? slideDown : slideUp} 0.4s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+  animation: ${({ $isClosing }) => ($isClosing ? slideDown : slideUp)} 0.4s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
 `;
 
 const ModalHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 22px 21px 9px 21px;
+  padding: 22px 21px 9px;
+`;
+
+const TitleArea = styled.div`
+  h2 {
+    color: #111;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+  }
 `;
 
 const CloseBtn = styled.button`
@@ -70,18 +257,27 @@ const CloseBtn = styled.button`
   }
 `;
 
-const TitleArea = styled.div`
-  h2 {
-    color: #111;
-    font-size: 18px;
-    font-weight: 700;
-    margin: 0;
-  }
+const Description = styled.p`
+  padding: 0 24px 16px;
+  color: #acacac;
+  font-size: 14px;
+  margin: 0;
 `;
 
-const ReasonItem = styled.div`
-  width: 390px;
-  height: 60px;
+const ErrorText = styled.p`
+  margin: 0 24px 12px;
+  color: #d93025;
+  font-size: 13px;
+  line-height: 18px;
+`;
+
+const ReasonList = styled.div`
+  padding-bottom: 16px;
+`;
+
+const ReasonItem = styled.button`
+  width: 100%;
+  min-height: 60px;
   padding: 0 24px;
   display: flex;
   align-items: center;
@@ -89,24 +285,30 @@ const ReasonItem = styled.div`
   cursor: pointer;
   box-sizing: border-box;
   background: transparent;
+  border: 0;
   transition: background 0.15s;
 
-  &:hover, &:active {
-    background: #C5F598;
+  &:hover,
+  &:active {
+    background: #c5f598;
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.55;
   }
 
   span {
     color: #111;
     font-size: 14px;
     font-weight: 500;
-    letter-spacing: -0.014px;
+    text-align: left;
   }
 
   .arrow {
     display: flex;
-    width: 12px;
-    height: 12px;
-    padding: 5px;
+    width: 22px;
+    height: 22px;
     justify-content: center;
     align-items: center;
   }
@@ -114,12 +316,12 @@ const ReasonItem = styled.div`
 
 const Toast = styled.div`
   position: fixed;
-  top: 7px;
+  bottom: 83px;
   left: 50%;
   transform: translateX(-50%);
   width: 348px;
-  height: 72px;
-  background: #C5F598;
+  min-height: 72px;
+  background: #c5f598;
   border-radius: 82px;
   display: flex;
   align-items: center;
@@ -128,103 +330,12 @@ const Toast = styled.div`
   animation: ${fadeIn} 0.4s ease-out, ${fadeOut} 0.4s ease-in 2.6s forwards;
 
   p {
-    width: 199px;
+    width: 230px;
     color: #111;
     text-align: center;
     font-size: 14px;
-    font-weight: 500;
-    line-height: 19px;
+    font-weight: 600;
+    line-height: 22px;
     margin: 0;
   }
 `;
-
-// --- Main Component ---
-
-// ✅ guideId prop 추가
-const ReportSystem = ({ isOpen, onClose, guideId }) => {
-  const [isClosing, setIsClosing] = useState(false);
-  const [showToast, setShowToast] = useState(false);
-
-  if (!isOpen && !showToast) return null;
-
-  const reasons = [
-    "부적절한 내용 또는 사진",
-    "허위 정보/ 과장된 설명",
-    "불쾌한 언행",
-    "사기 의심",
-    "안전 문제 우려",
-    "기타"
-  ];
-
-  const handleClose = () => {
-    setIsClosing(true);
-    setTimeout(() => {
-      setIsClosing(false);
-      onClose();
-    }, 400);
-  };
-
-  const handleReportAction = () => {
-    setIsClosing(true);
-    setTimeout(() => {
-      setIsClosing(false);
-      onClose();
-
-      // ✅ 신고된 가이드 id를 localStorage에 저장
-      const hidden = JSON.parse(localStorage.getItem("hiddenGuides") ?? "[]");
-      if (!hidden.includes(guideId)) {
-        localStorage.setItem("hiddenGuides", JSON.stringify([...hidden, guideId]));
-      }
-
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 3000);
-    }, 400);
-    
-    setTimeout(() => {
-        navigate('/main');
-    }, 400);
-    };
-
-  return (
-    <>
-      {isOpen && (
-        <Overlay $isClosing={isClosing} onClick={handleClose}>
-          <ModalSheet $isClosing={isClosing} onClick={(e) => e.stopPropagation()}>
-
-            <ModalHeader>
-              <TitleArea>
-                <h2>신고 사유 선택</h2>
-              </TitleArea>
-              <CloseBtn onClick={handleClose}>
-                <img src={CloseIcon} alt="close" />
-              </CloseBtn>
-            </ModalHeader>
-
-            <div style={{ padding: "0 24px 16px 24px" }}>
-              <p style={{ color: "#ACACAC", fontSize: "14px", margin: 0 }}>
-                이 게시물을 신고하는 사유를 선택해주세요.
-              </p>
-            </div>
-
-            {reasons.map((text, index) => (
-              <ReasonItem key={index} onClick={handleReportAction}>
-                <span>{text}</span>
-                <div className="arrow">
-                  <img src={ArrowIcon} alt="arrow" />
-                </div>
-              </ReasonItem>
-            ))}
-          </ModalSheet>
-        </Overlay>
-      )}
-
-      {showToast && (
-        <Toast>
-          <p>신고가 정상적으로 접수되었습니다. 해당가이드는 숨김처리 됩니다.</p>
-        </Toast>
-      )}
-    </>
-  );
-};
-
-export default ReportSystem;

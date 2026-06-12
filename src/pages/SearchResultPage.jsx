@@ -7,16 +7,24 @@ import SearchIcon from "../assets/searchIcon2.svg";
 import BackArrow from "../assets/backarrow.svg";
 import XCircleIcon from "../assets/bookStatusIcons/xIcon.svg";
 import { getPosts } from "../api/tomorang";
+import { getPostRatingAverage, getPostWishlistCount } from "../utils/postStats";
 
 export default function SearchResultPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const initialKeyword = location.state?.keyword || "";
+  const initialCategory = location.state?.category || "";
 
   const [inputVal, setInputVal] = useState(initialKeyword);
   const [query, setQuery] = useState(initialKeyword);
   const [posts, setPosts] = useState([]);
-  const [filter, setFilter] = useState({ sort: "추천순", category: "" });
+  const [filter, setFilter] = useState({ sort: "추천순", category: initialCategory });
+
+  useEffect(() => {
+    setInputVal(initialKeyword);
+    setQuery(initialKeyword);
+    setFilter((prev) => ({ ...prev, category: initialCategory }));
+  }, [initialCategory, initialKeyword]);
 
   useEffect(() => {
     let alive = true;
@@ -44,22 +52,41 @@ export default function SearchResultPage() {
   };
 
   const sorted = useMemo(() => {
+    const getPostCategoryText = (post) => {
+      const values = [
+        post.category,
+        post.categoryName,
+        post.category_name,
+        post.tag?.ko,
+        post.title,
+      ];
+
+      if (Array.isArray(post.categories)) values.push(...post.categories);
+      if (Array.isArray(post.tags)) {
+        values.push(...post.tags.map((tag) => tag?.name ?? tag?.value ?? tag));
+      }
+
+      return values
+        .filter(Boolean)
+        .flatMap((value) => String(value).split(","))
+        .map((value) => value.trim())
+        .join(" ");
+    };
+
     const tagFiltered = filter.category
       ? posts.filter((post) =>
-          post.tags?.some((tag) => String(tag?.name ?? tag?.value ?? tag).includes(filter.category)) ||
-          post.tag?.ko?.includes(filter.category) ||
-          post.title?.includes(filter.category)
+          getPostCategoryText(post).includes(filter.category)
         )
       : posts;
 
     return [...tagFiltered].sort((a, b) => {
-      if (filter.sort === "인기순") return Number(b.likeCount ?? 0) - Number(a.likeCount ?? 0);
+      if (filter.sort === "인기순") return getPostWishlistCount(b) - getPostWishlistCount(a);
       if (filter.sort === "가격순") {
         const priceA = Number(String(a.price ?? 0).replace(/,/g, ""));
         const priceB = Number(String(b.price ?? 0).replace(/,/g, ""));
         return priceA - priceB;
       }
-      return Number(b.rating ?? 0) - Number(a.rating ?? 0);
+      return getPostRatingAverage(b) - getPostRatingAverage(a);
     });
   }, [filter, posts]);
 
@@ -88,7 +115,7 @@ export default function SearchResultPage() {
         </SearchBar>
       </SearchBarRow>
 
-      <FilterBar onFilterChange={setFilter} />
+      <FilterBar onFilterChange={setFilter} defaultCategory={initialCategory} />
 
       <ResultList>
         {sorted.length === 0 ? (

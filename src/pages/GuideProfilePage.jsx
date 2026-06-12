@@ -7,6 +7,7 @@ import GuideTabMenu from "../components/GuideTabMenu";
 import PostCardList from "../components/PostCardList";
 import ReviewCard from "../components/ReviewCard1";
 import { getPopularGuides, getPostReviews, getPosts } from "../api/tomorang";
+import { getPostRatingAverage, getPostWishlistCount } from "../utils/postStats";
 
 const TAB = {
   COURSE: "\uCF54\uC2A4",
@@ -54,8 +55,8 @@ function extractInterestsFromPosts(posts) {
 }
 
 function makeGuideFromPosts(id, posts) {
-  const likeCount = posts.reduce((sum, post) => sum + Number(post.likeCount ?? post.like_count ?? 0), 0);
-  const ratingTotal = posts.reduce((sum, post) => sum + Number(post.rating ?? 0), 0);
+  const likeCount = posts.reduce((sum, post) => sum + getPostWishlistCount(post), 0);
+  const ratingTotal = posts.reduce((sum, post) => sum + getPostRatingAverage(post), 0);
   const rating = posts.length ? ratingTotal / posts.length : 0;
 
   return normalizeGuide({

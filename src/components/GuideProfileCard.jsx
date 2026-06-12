@@ -1,6 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import DefaultProfileIcon from "../assets/defaultProfile.svg";
+import { formatRating } from "../utils/postStats";
 
 const LEVEL_MAP = {
   beginner: 1,
@@ -64,7 +65,7 @@ export default function GuideProfileCard({ profile, onEditPress }) {
   if (!profile) return null;
 
   const nickname = profile.nickname ?? profile.nickName ?? profile.id ?? "가이드";
-  const bio = profile.bio ?? profile.oneWord ?? "소개가 아직 없습니다.";
+  const bio = profile.oneWord ?? profile.bio ?? "소개가 아직 없습니다.";
   const profileImage = profile.profileImage ?? profile.image ?? DefaultProfileIcon;
   const interests = normalizeInterests(profile);
   const languages = normalizeLanguages(profile);
@@ -116,7 +117,7 @@ export default function GuideProfileCard({ profile, onEditPress }) {
           </StatItem>
           <VerticalLine />
           <StatItem>
-            <StatNum>{rating.toFixed(1)}점</StatNum>
+            <StatNum>{formatRating(rating)}점</StatNum>
             <StatLabel>리뷰</StatLabel>
           </StatItem>
         </StatsRow>

@@ -12,12 +12,15 @@ import styled from "styled-components";
 //   onClick={() => {}}
 // />
 
-export default function ReservationCard({ post, date, time, dateIcon, clockIcon, nextIcon, onClick }) {
+export default function ReservationCard({ post, date, time, statusBadge, dateIcon, clockIcon, nextIcon, onClick }) {
   const { title, subtitle, images } = post;
 
   return (
     <Card onClick={onClick}>
-      <Thumbnail src={images?.[0]} alt={title} />
+      <ImageBox>
+        <Thumbnail src={images?.[0]} alt={title} />
+        {statusBadge && <StatusBadge>{statusBadge}</StatusBadge>}
+      </ImageBox>
       <Info>
         <TopRow>
           <TextGroup>
@@ -72,8 +75,31 @@ const Thumbnail = styled.img`
   background: #F3F4F3;
 `;
 
+const ImageBox = styled.div`
+  position: relative;
+  width: 100px;
+  height: 100px;
+  flex-shrink: 0;
+`;
+
+const StatusBadge = styled.span`
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 7px;
+  background: #ffcba4;
+  color: #fff;
+  font-family: Pretendard, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 24px;
+`;
+
 const Info = styled.div`
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -85,21 +111,29 @@ const TopRow = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  min-width: 0;
 `;
 
 const TextGroup = styled.div`
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
 `;
 
 const Title = styled.span`
+  display: block;
+  width: 100%;
   color: #111;
   font-feature-settings: 'liga' off, 'clig' off;
   font-family: Pretendard;
   font-size: 14px;
   font-weight: 600;
   line-height: 22px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const Subtitle = styled.span`
@@ -113,8 +147,9 @@ const Subtitle = styled.span`
 
 const BottomRow = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
 `;
 
 const MetaItem = styled.div`
@@ -130,4 +165,5 @@ const MetaText = styled.span`
   font-size: 10px;
   font-weight: 500;
   line-height: 22px;
+  white-space: nowrap;
 `;

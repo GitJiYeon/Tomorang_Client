@@ -27,8 +27,12 @@ const pinIcon = L.icon({
 });
 
 export default function MeetingPointCard({ locked, address, meetingPoint, lat, lng }) {
+  const displayAddress = address || meetingPoint || "만남 장소 주소가 곧 공개됩니다";
+  const displayMeetingPoint = meetingPoint || address || "만남 장소";
+
   const handleCopy = () => {
-    if (address) navigator.clipboard.writeText(address);
+    const copyText = address || meetingPoint;
+    if (copyText) navigator.clipboard.writeText(copyText);
   };
 
   return (
@@ -58,8 +62,8 @@ export default function MeetingPointCard({ locked, address, meetingPoint, lat, l
           </MapWrap>
           <AddressCard>
             <AddressInner>
-              <AddressText>{address}</AddressText>
-              <MeetingText>{meetingPoint}</MeetingText>
+              <AddressText>{displayAddress}</AddressText>
+              <MeetingText>{displayMeetingPoint}</MeetingText>
             </AddressInner>
             <CopyBtn onClick={handleCopy}>
               <img src={CopyIcon} alt="copy" width={16} height={16} />

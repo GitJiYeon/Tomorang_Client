@@ -4,6 +4,9 @@ import StartComent from "../components/StartComent";
 import BackArrow from "../assets/backarrow.svg";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.svg";
+import { clearAuthStorage } from "../api/client";
+import { normalizeRole } from "../utils/authRole";
+import { syncLikedPostsFromWishlists } from "../utils/wishlist";
 
 function LoginPage() {
   const [saveInfo, setSaveInfo] = useState(false);
@@ -16,7 +19,7 @@ function LoginPage() {
   const navigate = useNavigate();
   const apiBaseUrl =
     import.meta.env.VITE_API_BASE_URL ||
-    "https://tomorangserver-production.up.railway.app";
+    "https://tomorang.mirim-it-show.site";
 
   const handleBack = () => {
     setIsClosing(true);
@@ -72,11 +75,21 @@ function LoginPage() {
 
       const tokenType = data.type || "Bearer";
       const authHeader = `${tokenType} ${token}`;
+      const tokenPayload = (() => {
+        try {
+          const payload = token.split(".")[1];
+          return payload ? JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/"))) : null;
+        } catch {
+          return null;
+        }
+      })();
       const loginProfile = {
         id: data.id ?? id.trim(),
         nickName: data.nickName ?? "",
+        role: data.role,
       };
 
+      clearAuthStorage();
       localStorage.setItem("accessToken", token);
       localStorage.setItem("tokenType", tokenType);
       localStorage.setItem("userId", loginProfile.id);
@@ -98,6 +111,15 @@ function LoginPage() {
       }
 
       localStorage.setItem("profile", JSON.stringify(profile));
+      const normalizedRole = normalizeRole(profile, data, tokenPayload);
+      if (normalizedRole) {
+        profile = { ...profile, role: normalizedRole };
+        localStorage.setItem("profile", JSON.stringify(profile));
+        localStorage.setItem("role", normalizedRole);
+      } else {
+        localStorage.removeItem("role");
+      }
+      syncLikedPostsFromWishlists(Array.isArray(profile.wishlists) ? profile.wishlists : []);
 
       if (saveInfo) {
         localStorage.setItem("savedLoginId", id.trim());
@@ -105,7 +127,7 @@ function LoginPage() {
         localStorage.removeItem("savedLoginId");
       }
 
-      navigate(String(profile.role).toUpperCase() === "GUIDE" ? "/guide" : "/main");
+      navigate(normalizedRole === "GUIDE" ? "/guide" : "/main", { replace: true });
     } catch (error) {
       setErrorMessage(error.message || "서버와 연결할 수 없습니다.");
     } finally {

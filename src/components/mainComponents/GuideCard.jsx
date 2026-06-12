@@ -1,5 +1,6 @@
 import styled from "styled-components";
 import StarIcon from "../../assets/star.svg"; // 별 아이콘 직접 삽입
+import { formatRating } from "../../utils/postStats";
 
 /**
  * 호출 방법:
@@ -18,7 +19,10 @@ export default function GuideCard({ guide, onClick }) {
       <Nickname>{guide.nickname}</Nickname>
       <RatingRow>
         <img src={StarIcon} alt="star" width={10} height={10} />
-        <RatingText>{guide.rating}</RatingText>
+        <RatingText>
+          {formatRating(guide.rating)}
+          {Number(guide.reviewCount ?? 0) > 0 && <ReviewCount>({guide.reviewCount})</ReviewCount>}
+        </RatingText>
       </RatingRow>
     </Card>
   );
@@ -79,5 +83,10 @@ const RatingText = styled.span`
   line-height: 100%;
   letter-spacing: 0%;
   text-align: center;
+  color: #4E4E4E;
+`;
+
+const ReviewCount = styled.span`
+  margin-left: 2px;
   color: #4E4E4E;
 `;

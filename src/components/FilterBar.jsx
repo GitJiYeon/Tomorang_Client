@@ -1,17 +1,21 @@
 // 호출방법: <FilterBar onFilterChange={handleFilterChange} />
 
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import styled from "styled-components";
 import DownArrowIcon from "../assets/downarrow.svg"; 
 
 const SORT_OPTIONS = ["추천순", "인기순", "가격순"];
-const FILTER_TAGS = ["체험", "힐링", "풍경", "액티비티", "애니메이션", "쇼핑", "맛집", "탐방", "사진"];
+export const FILTER_TAGS = ["체험", "힐링", "풍경", "액티비티", "애니메이션", "쇼핑", "맛집", "탐방", "사진"];
 
-export default function FilterBar({ onFilterChange }) {
+export default function FilterBar({ onFilterChange, defaultCategory = "애니메이션" }) {
   const [sortOpen, setSortOpen] = useState(false);
   const [selectedSort, setSelectedSort] = useState("추천순");
-  const [selectedTag, setSelectedTag] = useState("애니메이션");
+  const [selectedTag, setSelectedTag] = useState(defaultCategory);
   const scrollRef = useRef(null);
+
+  useEffect(() => {
+    setSelectedTag(defaultCategory);
+  }, [defaultCategory]);
 
   const handleTagSelect = (tag) => {
     setSelectedTag(tag);
@@ -77,6 +81,7 @@ const Wrapper = styled.div`
   width: 390px;
   padding-top: 16px;
   padding-left: 21px;
+  padding-bottom: 5px;
   box-sizing: border-box;
   gap: 8px;
   font-family: "Pretendard", sans-serif;

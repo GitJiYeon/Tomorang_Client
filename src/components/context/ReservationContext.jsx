@@ -1,5 +1,10 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { getMyReservations } from "../../api/tomorang";
+import { hasValidAuthToken } from "../../api/client";
+import {
+  getEffectiveReservationStatus,
+  getReservationId,
+} from "../../utils/reservationFlow";
 
 const ReservationContext = createContext(null);
 
@@ -13,22 +18,47 @@ const asArray = (value) => {
   return value ? [value] : [];
 };
 
-const normalizeReservation = (reservation) => ({
-  ...reservation,
-  reservationId: reservation.reservationId ?? reservation.reservation_id ?? reservation.id,
-  postId:
-    reservation.postId ??
-    reservation.post_id ??
-    reservation.post?.postId ??
-    reservation.post?.post_id ??
-    reservation.post?.id,
-  date: reservation.date ?? reservation.slotDate ?? reservation.slot_date ?? reservation.scheduleDate,
-  time: reservation.time ?? reservation.slotTime ?? reservation.slot_time ?? reservation.timeSlot,
-  adults: reservation.adults ?? reservation.adultCount ?? reservation.adult_count ?? 1,
-  children: reservation.children ?? reservation.childCount ?? reservation.child_count ?? 0,
-  request: reservation.request ?? reservation.memo ?? reservation.message ?? "",
-  status: reservation.status ?? "PENDING",
-});
+const normalizeReservation = (reservation) => {
+  const normalized = {
+    ...reservation,
+    reservationId: reservation.reservationId ?? reservation.reservation_id ?? reservation.id,
+    postId:
+      reservation.postId ??
+      reservation.post_id ??
+      reservation.post?.postId ??
+      reservation.post?.post_id ??
+      reservation.post?.id,
+    date: reservation.date ?? reservation.slotDate ?? reservation.slot_date ?? reservation.scheduleDate,
+    time: reservation.time ?? reservation.slotTime ?? reservation.slot_time ?? reservation.timeSlot,
+    adults: reservation.adults ?? reservation.adultCount ?? reservation.adult_count ?? 1,
+    children: reservation.children ?? reservation.childCount ?? reservation.child_count ?? 0,
+    request: reservation.request ?? reservation.memo ?? reservation.message ?? "",
+  };
+
+  return {
+    ...normalized,
+    status: getEffectiveReservationStatus(normalized),
+  };
+};
+
+const dedupeReservations = (reservations) => {
+  const seen = new Set();
+  return reservations.filter((reservation) => {
+    const id = getReservationId(reservation);
+    const key = id
+      ? `id:${id}`
+      : [
+          reservation.postId,
+          reservation.date,
+          reservation.time,
+          reservation.adults,
+          reservation.children,
+        ].join("|");
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
 
 export function ReservationProvider({ children }) {
   const [reservations, setReservations] = useState([]);
@@ -36,7 +66,7 @@ export function ReservationProvider({ children }) {
   const [errorMessage, setErrorMessage] = useState("");
 
   const refreshReservations = async () => {
-    if (!localStorage.getItem("accessToken")) {
+    if (!hasValidAuthToken()) {
       setReservations([]);
       return [];
     }
@@ -45,7 +75,7 @@ export function ReservationProvider({ children }) {
     setErrorMessage("");
     try {
       const data = await getMyReservations();
-      const nextReservations = asArray(data).map(normalizeReservation);
+      const nextReservations = dedupeReservations(asArray(data).map(normalizeReservation));
       setReservations(nextReservations);
       return nextReservations;
     } catch (error) {
@@ -81,9 +111,38 @@ export function ReservationProvider({ children }) {
     );
   };
 
+  const upsertReservation = (nextReservation) => {
+    const normalized = normalizeReservation(nextReservation);
+    setReservations((prev) =>
+      dedupeReservations([
+        normalized,
+        ...prev.filter((reservation) => String(getReservationId(reservation)) !== String(getReservationId(normalized))),
+      ])
+    );
+    return normalized;
+  };
+
+  const updateReservationStatus = (reservationId, status) => {
+    setReservations((prev) =>
+      prev.map((reservation) =>
+        String(getReservationId(reservation)) === String(reservationId)
+          ? { ...reservation, status }
+          : reservation
+      )
+    );
+  };
+
   return (
     <ReservationContext.Provider
-      value={{ reservations, isLoading, errorMessage, refreshReservations, completeAndSaveReview }}
+      value={{
+        reservations,
+        isLoading,
+        errorMessage,
+        refreshReservations,
+        completeAndSaveReview,
+        upsertReservation,
+        updateReservationStatus,
+      }}
     >
       {children}
     </ReservationContext.Provider>

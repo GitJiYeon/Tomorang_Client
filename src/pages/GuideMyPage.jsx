@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import Header from "../components/Header";
@@ -6,15 +6,101 @@ import GuideBottomNav from "../components/mainComponents/GuideBottomNav";
 import LogoutButton from "../components/LogoutButton";
 import GuideProfileCard from "../components/GuideProfileCard";
 import ActivitySection from "../components/ActivitySection";
-import { getMypage, logoutMember, switchMemberRole } from "../api/tomorang";
+import { getMypage, getPosts, logoutMember, switchMemberRole } from "../api/tomorang";
+import { clearAuthStorage } from "../api/client";
+import { getPostRatingAverage, getPostWishlistCount } from "../utils/postStats";
+
+const toNumber = (value) => {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
+};
+
+const getReviewCount = (post) => toNumber(post?.reviewCount ?? post?.review_count);
+
+function getGuidePostStats(posts = []) {
+  const ratings = posts
+    .map((post) => ({
+      rating: getPostRatingAverage(post),
+      reviewCount: getReviewCount(post),
+    }))
+    .filter(({ rating }) => rating > 0);
+  const totalReviewCount = ratings.reduce((sum, item) => sum + item.reviewCount, 0);
+  const rating =
+    totalReviewCount > 0
+      ? ratings.reduce((sum, item) => sum + item.rating * item.reviewCount, 0) / totalReviewCount
+      : ratings.length > 0
+        ? ratings.reduce((sum, item) => sum + item.rating, 0) / ratings.length
+        : 0;
+  const likeCount = posts.reduce((sum, post) => sum + getPostWishlistCount(post), 0);
+
+  return {
+    postCount: posts.length,
+    likeCount,
+    totalLikes: likeCount,
+    rating,
+    avgRating: rating,
+  };
+}
 
 export default function GuideMyPage() {
   const navigate = useNavigate();
   const [isBusy, setIsBusy] = useState(false);
 
   const raw = localStorage.getItem("profile");
-  const profile = raw ? JSON.parse(raw) : null;
+  const [profile, setProfile] = useState(() => (raw ? JSON.parse(raw) : null));
   const currentGuideId = localStorage.getItem("userId") || profile?.id || profile?.guideId || "1";
+
+  useEffect(() => {
+    let alive = true;
+
+    getMypage()
+      .then((mypage) => {
+        if (!alive || !mypage) return;
+        setProfile((prev) => {
+          const nextProfile = { ...(prev ?? {}), ...mypage, role: mypage.role ?? prev?.role ?? "GUIDE" };
+          localStorage.setItem("profile", JSON.stringify(nextProfile));
+          return nextProfile;
+        });
+      })
+      .catch((error) => console.error("마이페이지 프로필 조회 실패", error));
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+
+    async function loadGuideStats() {
+      const guideId =
+        currentGuideId ??
+        localStorage.getItem("userId") ??
+        profile?.id ??
+        profile?.guideId;
+      if (!guideId) return;
+
+      try {
+        const posts = await getPosts({ userId: guideId, includeHidden: true });
+        const postStats = getGuidePostStats(posts);
+        if (!alive) return;
+
+        setProfile((prev) => {
+          const nextProfile = { ...(prev ?? {}), ...postStats };
+          localStorage.setItem("profile", JSON.stringify(nextProfile));
+          return nextProfile;
+        });
+      } catch (error) {
+        console.error("가이드 마이페이지 통계 조회 실패", error);
+      }
+    }
+
+    loadGuideStats();
+
+    return () => {
+      alive = false;
+    };
+  }, [currentGuideId, profile?.guideId, profile?.id]);
 
   const handleSwitchToDiscoverer = async () => {
     if (isBusy) return;
@@ -36,10 +122,7 @@ export default function GuideMyPage() {
     setIsBusy(true);
     try {
       await logoutMember().catch(() => null);
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("tokenType");
-      localStorage.removeItem("userId");
-      localStorage.removeItem("profile");
+      clearAuthStorage();
       navigate("/", { replace: true });
     } finally {
       setIsBusy(false);
@@ -47,7 +130,7 @@ export default function GuideMyPage() {
   };
 
   const activityItems = [
-    { label: "나의 코스", onClick: () => navigate("/my-course") },
+    { label: "나의 코스", onClick: () => navigate("/my-course", { state: { mode: "guide" } }) },
     {
       label: "내가 받은 리뷰",
       onClick: () => navigate("/my-reviews", { state: { mode: "received", guideId: currentGuideId } }),

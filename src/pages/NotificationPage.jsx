@@ -4,16 +4,70 @@ import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import NotificationCard from "../components/NotificationCard";
 import NotiBellIcon from "../assets/notiIcons/notiBell.svg";
-import { getMypage } from "../api/tomorang";
+import { getNotifications, markNotificationRead } from "../api/tomorang";
 
-const pickNotifications = (profile) => {
-  const candidates = [
-    profile?.notifications,
-    profile?.notificationList,
-    profile?.alarms,
-    profile?.messages,
-  ];
-  return candidates.find(Array.isArray) ?? [];
+const formatTimeLabel = (value) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+
+  const diffMs = Date.now() - date.getTime();
+  const diffMinutes = Math.max(0, Math.floor(diffMs / 60000));
+  if (diffMinutes < 1) return "방금 전";
+  if (diffMinutes < 60) return `${diffMinutes}분 전`;
+
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours}시간 전`;
+
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 7) return `${diffDays}일 전`;
+
+  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
+};
+
+const getNotificationId = (notification) =>
+  notification.notificationId ?? notification.notification_id ?? notification.id;
+
+const getTargetPostId = (notification) => notification.postId ?? notification.post_id;
+
+const getTargetReservationId = (notification) => notification.reservationId ?? notification.reservation_id;
+
+const getNotificationType = (notification) => String(notification.type ?? "").toUpperCase();
+
+const FALLBACK_BY_TYPE = {
+  RESERVATION_REQUESTED: {
+    title: "예약 요청이 왔어요!",
+    body: "발견자가 예약을 신청했어요. 요청사항과 예약 정보를 확인해주세요.",
+  },
+  RESERVATION_CONFIRMED: {
+    title: "예약이 확정되었어요!",
+    body: "안내자가 예약을 확정했어요.",
+  },
+  RESERVATION_REJECTED: {
+    title: "예약이 거절되었어요",
+    body: "안내자가 예약을 거절했어요.",
+  },
+  REVIEW_CREATED: {
+    title: "새 리뷰가 등록되었어요!",
+    body: "발견자가 코스에 리뷰를 남겼어요.",
+  },
+};
+
+const getNotificationTitle = (notification) => {
+  const title = notification.title ?? "";
+  if (title.trim()) return title;
+  return FALLBACK_BY_TYPE[getNotificationType(notification)]?.title ?? "알림이 도착했어요";
+};
+
+const getNotificationBody = (notification) => {
+  const body = notification.message ?? notification.body ?? notification.content ?? "";
+  if (String(body).trim()) return body;
+  return FALLBACK_BY_TYPE[getNotificationType(notification)]?.body ?? "";
+};
+
+const isUnreadNotification = (notification) => {
+  if (notification.isUnread !== undefined) return Boolean(notification.isUnread);
+  return !Boolean(notification.isRead ?? notification.is_read ?? notification.read);
 };
 
 export default function NotificationPage() {
@@ -22,12 +76,13 @@ export default function NotificationPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (!localStorage.getItem("accessToken")) return undefined;
+    const userId = localStorage.getItem("userId");
+    if (!localStorage.getItem("accessToken") || !userId) return undefined;
     let alive = true;
     setIsLoading(true);
-    getMypage()
-      .then((profile) => {
-        if (alive) setNotifications(pickNotifications(profile));
+    getNotifications(userId)
+      .then((items) => {
+        if (alive) setNotifications(items);
       })
       .catch(() => {
         if (alive) setNotifications([]);
@@ -40,10 +95,50 @@ export default function NotificationPage() {
     };
   }, []);
 
-  const handleClick = (noti) => {
-    const reservationId = noti.reservationId ?? noti.reservation_id;
+  const handleClick = async (noti) => {
+    const notificationId = getNotificationId(noti);
+    if (notificationId && isUnreadNotification(noti)) {
+      setNotifications((items) =>
+        items.map((item) =>
+          getNotificationId(item) === notificationId ? { ...item, isRead: true, isUnread: false } : item
+        )
+      );
+      markNotificationRead(notificationId).catch(() => {});
+    }
+
+    const type = getNotificationType(noti);
+    const postId = getTargetPostId(noti);
+
+    if (type.includes("REVIEW") && postId) {
+      sessionStorage.setItem("currentCoursePost", JSON.stringify({ postId }));
+      navigate("/course", {
+        state: {
+          post: { postId },
+          initialTab: "review",
+        },
+      });
+      return;
+    }
+
+    const reservationId = getTargetReservationId(noti);
     if (reservationId) {
       navigate(`/reservation-status/${reservationId}`);
+      return;
+    }
+
+    if (type === "RESERVATION_REQUESTED") {
+      navigate("/guide-reservations");
+      return;
+    }
+
+    if (postId) {
+      sessionStorage.setItem("currentCoursePost", JSON.stringify({ postId }));
+      navigate("/course", {
+        state: {
+          post: { postId },
+          initialTab: String(noti.type ?? "").includes("REVIEW") ? "review" : "course",
+        },
+      });
     }
   };
 
@@ -59,10 +154,10 @@ export default function NotificationPage() {
           notifications.map((noti, index) => (
             <NotificationCard
               key={noti.notificationId ?? noti.id ?? index}
-              title={noti.title}
-              body={noti.body ?? noti.content ?? noti.message}
-              timeLabel={noti.timeLabel ?? noti.createdAt ?? noti.created_at}
-              isUnread={noti.isUnread ?? !noti.read}
+              title={getNotificationTitle(noti)}
+              body={getNotificationBody(noti)}
+              timeLabel={noti.timeLabel ?? formatTimeLabel(noti.createdAt ?? noti.created_at)}
+              isUnread={isUnreadNotification(noti)}
               icon={NotiBellIcon}
               onClick={() => handleClick(noti)}
             />

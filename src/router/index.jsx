@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route, useLocation } from "react-router-dom";
 import { ReservationProvider } from "../components/context/ReservationContext"; // 추가
 
 import MainLayout from "../layouts/MainLayout";
@@ -48,10 +48,12 @@ import InterestEditPage from "../pages/InterestEditPage";
 import LanguageEditPage from "../pages/LanguageEditPage";
 import GuideChatPage from "../pages/GuideChatPage";
 import GuideMyPage from "../pages/GuideMyPage";
-import { getMyWishlists } from "../api/tomorang";
-import { syncLikedPostsFromWishlists } from "../utils/wishlist";
+import { isCurrentGuide } from "../utils/authRole";
 
 
+function RoleAwareMainPage() {
+  return isCurrentGuide() ? <Navigate to="/guide" replace /> : <MainPage />;
+}
 
 function RouteViewport() {
   const location = useLocation();
@@ -63,12 +65,6 @@ function RouteViewport() {
   }, [location.pathname]);
 
   useEffect(() => {
-    if (localStorage.getItem("accessToken")) {
-      getMyWishlists()
-        .then(syncLikedPostsFromWishlists)
-        .catch(() => {});
-    }
-
     if ("scrollRestoration" in window.history) {
       window.history.scrollRestoration = "manual";
     }
@@ -110,7 +106,7 @@ function RouteViewport() {
             <Route path="/guide-interest" element={<GuideSelectInterest />} />
             <Route path="/make-guide-profile" element={<MakeGuideProfile />} />
             <Route path="/guide-welcome" element={<GuideWelcomePage />} />
-            <Route path="/main" element={<MainPage />} />
+            <Route path="/main" element={<RoleAwareMainPage />} />
             <Route path="/main-more/:type" element={<MainMorePage />} />
             <Route path="/guide" element={<GuidePage />} />
             <Route path="/guide-reservations" element={<GuideReservationListPage />} />

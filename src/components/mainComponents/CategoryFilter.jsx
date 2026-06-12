@@ -7,11 +7,11 @@ import ShopingIcon from "../../assets/categoryIcons/shoping.svg";
 import ViewIcon from "../../assets/categoryIcons/view.svg";
 
 const CATEGORIES = [
-  { icon: AnimeIcon,   label: "애니메이션", id: "anime" },
-  { icon: FoodIcon,    label: "음식",       id: "food" },
-  { icon: ViewIcon,    label: "풍경",       id: "nature" },
-  { icon: PhotoIcon,   label: "사진",       id: "photo" },
-  { icon: ShopingIcon, label: "쇼핑",       id: "shopping" },
+  { icon: AnimeIcon, label: "애니메이션", id: "anime", category: "애니메이션" },
+  { icon: FoodIcon, label: "음식", id: "food", category: "맛집" },
+  { icon: ViewIcon, label: "풍경", id: "nature", category: "풍경" },
+  { icon: PhotoIcon, label: "사진", id: "photo", category: "사진" },
+  { icon: ShopingIcon, label: "쇼핑", id: "shopping", category: "쇼핑" },
 ];
 
 const Wrapper = styled.div`
@@ -79,10 +79,9 @@ const Label = styled.span`
 export default function CategoryFilter({ onSelect }) {
   const [selected, setSelected] = useState(null);
 
-  const handleSelect = (id) => {
-    const next = selected === id ? null : id;
-    setSelected(next);
-    onSelect?.(next);
+  const handleSelect = (category) => {
+    setSelected(category.id);
+    onSelect?.(category.category);
   };
 
   return (
@@ -92,7 +91,7 @@ export default function CategoryFilter({ onSelect }) {
         {CATEGORIES.map((cat) => {
           const isActive = selected === cat.id;
           return (
-            <Item key={cat.id} onClick={() => handleSelect(cat.id)}>
+            <Item key={cat.id} onClick={() => handleSelect(cat)}>
               <Circle $active={isActive}>
                 <IconImg src={cat.icon} alt={cat.label} />
               </Circle>

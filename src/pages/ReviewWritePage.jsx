@@ -105,7 +105,18 @@ export default function ReviewWritePage() {
     setIsSubmitting(true);
     setErrorMessage("");
     try {
-      await createReview(
+      const savedProfile = JSON.parse(localStorage.getItem("profile") || "{}");
+      const myNickname =
+        savedProfile.nickname ??
+        savedProfile.nickName ??
+        savedProfile.name ??
+        localStorage.getItem("userId") ??
+        "사용자";
+      const myProfile =
+        savedProfile.profileImage ??
+        savedProfile.image ??
+        savedProfile.profile;
+      const createdReview = await createReview(
         {
           postId: reservation.postId,
           rating: reviewRating,
@@ -115,11 +126,19 @@ export default function ReviewWritePage() {
       );
 
       await completeAndSaveReview(Number(reservationId), {
-        rating: reviewRating,
+        ...createdReview,
+        nickname: createdReview.nickname ?? createdReview.memberNickName ?? myNickname,
+        profile: createdReview.profile ?? createdReview.memberImage ?? myProfile,
+        rating: createdReview.rating ?? reviewRating,
         answers,
-        content: reviewText,
-        images: reviewImages,
-        createdAt: new Date().toISOString(),
+        content: createdReview.content ?? reviewText,
+        images:
+          createdReview.images?.length
+            ? createdReview.images
+            : createdReview.postImages?.length
+              ? createdReview.postImages
+              : reviewImages,
+        createdAt: createdReview.createdAt ?? new Date().toISOString(),
       });
       // 제출 완료 → 예약현황 페이지로 이동 (이제 COMPLETED + myReview 있음)
       navigate(`/reservation-status/${reservationId}`, { replace: true });
