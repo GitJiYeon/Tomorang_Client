@@ -14,7 +14,7 @@ import styled from "styled-components";
 import { useReservations } from "../components/context/ReservationContext";
 import Header from "../components/Header";
 import StarFillIcon from "../assets/bookStatusIcons/starFill.svg";
-import StarEmptyIcon from "../assets/bookStatusIcons/starEmpty.svg";
+import StarEmptyIcon from "../assets/bookStatusIcons/StarEmpty.svg";
 import PlusIcon from "../assets/bookStatusIcons/plusIcon.svg";
 import XSmallIcon from "../assets/bookStatusIcons/xSmall.svg";
 import { createReview, getPostDetail } from "../api/tomorang";
