@@ -7,25 +7,36 @@
 
 import styled from "styled-components";
 import StarFillIcon from "../../assets/bookStatusIcons/starFill.svg";
-import StarEmptyIcon from "../../assets/bookStatusIcons/starEmpty.svg";
+import StarEmptyIcon from "../../assets/bookStatusIcons/StarEmpty.svg";
+import DefaultProfileIcon from "../../assets/defaultProfile.svg";
+import { resolvePublicAsset } from "../../utils/publicAsset";
 
-export default function MyReviewCard({ review, time }) {
+export default function MyReviewCard({ review, time, onClick }) {
   if (!review) return null;
 
-  const dateStr = review.createdAt.slice(0, 10).replace(/-/g, ".");   // 2026.02.19
-  const shortDate = dateStr.slice(5);                                  // 02.19
+  const createdAt = review.createdAt ?? new Date().toISOString();
+  const dateStr = createdAt.slice(0, 10).replace(/-/g, ".");
+  const shortDate = dateStr.slice(5);
+  const nickname = review.nickname ?? review.memberNickName ?? review.memberId ?? "사용자";
+  const profile = resolvePublicAsset(review.profile ?? review.memberImage) || DefaultProfileIcon;
+  const images = (review.images ?? review.postImages ?? []).map(resolvePublicAsset).filter(Boolean);
 
   return (
-    <Card>
+    <Card
+      as={onClick ? "button" : "div"}
+      type={onClick ? "button" : undefined}
+      onClick={onClick}
+      $clickable={Boolean(onClick)}
+    >
       {/* ── 헤더 ──
           [Avatar]  [KIM  ★★★★☆ 4.2  2026.02]
                     [02.19 | 12:00-13:00      ]
       */}
       <CardHeader>
-        <Avatar />
+        <Avatar src={profile} alt="profile" />
         <HeaderRight>
           <TopRow>
-            <ReviewerName>KIM</ReviewerName>
+            <ReviewerName>{nickname}</ReviewerName>
             <StarGroup>
               {[1, 2, 3, 4, 5].map((s) => (
                 <img
@@ -47,9 +58,9 @@ export default function MyReviewCard({ review, time }) {
       </CardHeader>
 
       {/* ── 이미지 ── */}
-      {review.images?.length > 0 && (
+      {images.length > 0 && (
         <ImageRow>
-          {review.images.slice(0, 3).map((img, idx) => (
+          {images.slice(0, 3).map((img, idx) => (
             <ReviewImg
               key={idx}
               src={img}
@@ -65,7 +76,7 @@ export default function MyReviewCard({ review, time }) {
 
       {/* ── 텍스트 ── \n → 실제 줄바꿈으로 표시 */}
       <ReviewContent>
-        {review.content.split(/\\n|\n/).map((line, i, arr) => (
+        {String(review.content ?? "").split(/\\n|\n/).map((line, i, arr) => (
           <span key={i}>
             {line}
             {i < arr.length - 1 && <br />}
@@ -80,9 +91,9 @@ export default function MyReviewCard({ review, time }) {
 
 const Card = styled.div`
   width: 348px;
-  height: 346px;
-  border-radius: 12px;
+  max-height: 346px;
   border: 1px solid #DADADA;
+  border-radius: 12px;
   background: #fff;
   box-sizing: border-box;
   padding: 16px;
@@ -90,6 +101,17 @@ const Card = styled.div`
   flex-direction: column;
   gap: 12px;
   overflow: hidden;
+  text-align: left;
+  cursor: ${({ $clickable }) => ($clickable ? "pointer" : "default")};
+  font: inherit;
+
+  &:focus {
+    outline: none;
+  }
+
+  &:active {
+    transform: ${({ $clickable }) => ($clickable ? "scale(0.995)" : "none")};
+  }
 `;
 
 const CardHeader = styled.div`
@@ -98,10 +120,11 @@ const CardHeader = styled.div`
   gap: 10px;
 `;
 
-const Avatar = styled.div`
+const Avatar = styled.img`
   width: 50px;
   height: 50px;
   border-radius: 50%;
+  object-fit: cover;
   background: #DADADA;
   flex-shrink: 0;
 `;
@@ -189,10 +212,9 @@ const ReviewContent = styled.div`
   font-feature-settings: 'liga' off, 'clig' off;
   overflow: hidden;
   display: -webkit-box;
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: 6;
   -webkit-box-orient: vertical;
   color: #4E4E4E;
   padding-top:10px;
-  height:112px;
   width: 310px;
 `;

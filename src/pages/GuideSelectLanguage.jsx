@@ -21,6 +21,7 @@ export default function GuideSelectLanguage() {
   const [selections, setSelections] = useState(
     Object.fromEntries(LANGUAGES.map((language) => [language.languageCode, null]))
   );
+  const [openLanguage, setOpenLanguage] = useState(null);
 
   const isValid = Object.values(selections).some(Boolean);
 
@@ -37,6 +38,14 @@ export default function GuideSelectLanguage() {
     });
   };
 
+  const handleToggle = (languageCode) => {
+    setOpenLanguage((prev) => (prev === languageCode ? null : languageCode));
+  };
+
+  const handleSelect = ({ languageCode, level }) => {
+    setSelections((prev) => ({ ...prev, [languageCode]: level }));
+  };
+
   return (
     <Wrapper>
       <Top>
@@ -51,9 +60,9 @@ export default function GuideSelectLanguage() {
             key={language.languageCode}
             {...language}
             selectedLevel={selections[language.languageCode]}
-            onSelect={({ languageCode, level }) =>
-              setSelections((prev) => ({ ...prev, [languageCode]: level }))
-            }
+            isOpen={openLanguage === language.languageCode}
+            onToggle={() => handleToggle(language.languageCode)}
+            onSelect={handleSelect}
           />
         ))}
       </ButtonArea>

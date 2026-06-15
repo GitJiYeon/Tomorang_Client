@@ -7,7 +7,30 @@ import NextButton from "../components/NextButton1";
 import DefaultProfileIcon from "../assets/defaultProfile.svg";
 import ImageIcon from "../assets/imageIcon.svg";
 import RemoveIcon from "../assets/removeIcon.svg";
-import { normalizeLanguages, signupMember } from "../api/member";
+import { loginMember, normalizeLanguages, signupMember } from "../api/member";
+import { clearAuthStorage } from "../api/client";
+import { getMypage } from "../api/tomorang";
+
+const pickImageUrl = (...sources) => {
+  for (const source of sources) {
+    if (!source) continue;
+    if (typeof source === "string") return source;
+    const value =
+      source.image ??
+      source.profileImage ??
+      source.profile_image ??
+      source.imageUrl ??
+      source.image_url ??
+      source.fileUrl ??
+      source.file_url ??
+      source.url ??
+      source.data?.image ??
+      source.data?.profileImage ??
+      source.data?.imageUrl;
+    if (value) return value;
+  }
+  return "";
+};
 
 /**
  * 호출 방법:
@@ -77,17 +100,32 @@ function MakeTravelerProfile() {
         levels,
       };
 
-      await signupMember(dto, profileFile);
+      const signupResponse = await signupMember(dto, profileFile);
+      const loginResponse = await loginMember(dto.id, dto.pw);
+      if (!loginResponse?.token) {
+        throw new Error("회원가입 후 로그인 토큰을 받지 못했습니다.");
+      }
+
+      clearAuthStorage();
+      localStorage.setItem("accessToken", loginResponse.token);
+      localStorage.setItem("tokenType", loginResponse.type || "Bearer");
+      localStorage.setItem("userId", loginResponse.id ?? dto.id);
+
+      const nextProfile = await getMypage().catch(() => null);
+      const image = pickImageUrl(nextProfile, signupResponse, profileImage);
 
       localStorage.setItem(
         "profile",
         JSON.stringify({
+          ...(nextProfile ?? {}),
           id: dto.id,
           email: dto.email,
           role: dto.role,
           interest: dto.interest,
           nickName: dto.nickName,
           oneWord: dto.oneWord,
+          image,
+          profileImage: image,
           languages,
           levels,
         })

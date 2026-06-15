@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import EmergingCard from "../components/EmergingCard";
 import regionData from "../data/regionData.json";
+import { resolvePublicAsset } from "../utils/publicAsset";
 
 export default function EmergingDestination() {
   const navigate = useNavigate();
@@ -10,7 +11,7 @@ export default function EmergingDestination() {
   const handleCardClick = (item) => {
     navigate("/destination", {
       state: {
-        image: item.risingimg,
+        image: resolvePublicAsset(item.risingimg),
         cityName: item.translations,
         tags: item.tags,
       },

@@ -16,33 +16,139 @@ import {
   getChatHistoryByRoom,
   getPostDetail,
   markChatRoomRead,
+  sendChatMessage,
+  translateText,
 } from "../api/tomorang";
+import {
+  createChatSocketClient,
+  getRoomTopic,
+  publishChatMessage,
+} from "../api/chatSocket";
+import { getEffectiveReservationStatus, STATUS } from "../utils/reservationFlow";
+
+const parseChatTime = (value) => {
+  if (!value) return new Date();
+  if (Array.isArray(value)) {
+    const [year, month, day, hour = 0, minute = 0, second = 0] = value;
+    return new Date(year, Number(month) - 1, day, hour, minute, second);
+  }
+  if (typeof value === "string") {
+    const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/.test(value);
+    return new Date(hasTimezone ? value : `${value}Z`);
+  }
+  return new Date(value);
+};
 
 const formatTime = (value) =>
-  new Date(value || Date.now()).toLocaleTimeString("ko-KR", {
+  parseChatTime(value).toLocaleTimeString("ko-KR", {
     hour: "2-digit",
     minute: "2-digit",
   });
 
+const normalizeId = (value) => String(value ?? "").trim();
+
+const isImageContent = (content) =>
+  /^data:image\//.test(content) || /^https?:\/\/.+\.(png|jpe?g|gif|webp|bmp|svg)(\?.*)?$/i.test(content);
+
+const getTargetLang = () => {
+  try {
+    const profile = JSON.parse(localStorage.getItem("profile") || "{}");
+    const firstLanguage = Array.isArray(profile.languages) ? profile.languages[0] : "";
+    const code = typeof firstLanguage === "object" ? firstLanguage.code ?? firstLanguage.language : firstLanguage;
+    const normalized = String(code || "").toUpperCase();
+    if (["JA", "JP", "JAPANESE"].includes(normalized)) return "JA";
+    if (["EN", "ENGLISH"].includes(normalized)) return "EN";
+  } catch {
+    // Keep Korean as the default app language.
+  }
+  return "KO";
+};
+
+const extractTranslation = (data) =>
+  typeof data === "string"
+    ? data
+    : data?.translatedText ?? data?.translation ?? data?.text ?? data?.result ?? "";
+
+const toChatMessage = (message, currentUserId, index = 0) => {
+  const timestamp = message.timestamp ?? message.createdAt ?? message.created_at;
+  const sender = message.sender ?? message.senderId ?? message.sender_id;
+  const recipient = message.recipient ?? message.recipientId ?? message.recipient_id;
+  const content = message.content ?? message.message ?? "";
+  const imageUrl = message.imageUrl ?? message.image_url ?? (isImageContent(content) ? content : "");
+  const current = normalizeId(currentUserId);
+  const normalizedSender = normalizeId(sender);
+
+  return {
+    id:
+      message.messageId ??
+      message.message_id ??
+      message.id ??
+      `${timestamp || Date.now()}_${sender || "unknown"}_${content}_${index}`,
+    sender,
+    recipient,
+    type: normalizedSender && normalizedSender === current ? "me" : "other",
+    message: imageUrl ? "" : content,
+    imageUrl,
+    translation: message.translation ?? message.translatedText ?? "",
+    time: formatTime(timestamp),
+  };
+};
+
+const upsertMessage = (messages, nextMessage) => {
+  if (messages.some((message) => String(message.id) === String(nextMessage.id))) {
+    return messages.map((message) =>
+      String(message.id) === String(nextMessage.id) ? nextMessage : message
+    );
+  }
+
+  const duplicateIndex = messages.findIndex((message) =>
+    message.pending &&
+    message.type === nextMessage.type &&
+    message.sender === nextMessage.sender &&
+    message.message === nextMessage.message &&
+    message.imageUrl === nextMessage.imageUrl
+  );
+
+  if (duplicateIndex >= 0) {
+    return messages.map((message, index) => (index === duplicateIndex ? nextMessage : message));
+  }
+
+  return [...messages, nextMessage];
+};
+
 export default function Chat() {
   const { postId } = useParams();
   const { state } = useLocation();
+  const routeId = postId;
+  const isRoutePostId = /^\d+$/.test(String(routeId ?? ""));
+  const currentUserId = localStorage.getItem("userId");
+  const roomId = state?.roomId ?? (!isRoutePostId ? routeId : null);
 
   const [post, setPost] = useState(state?.post ?? null);
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState("");
   const [showReport, setShowReport] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [activeRoomId, setActiveRoomId] = useState(roomId);
+  const [translatingIds, setTranslatingIds] = useState(() => new Set());
   const bottomRef = useRef(null);
+  const chatClientRef = useRef(null);
 
-  const currentUserId = localStorage.getItem("userId");
-  const roomIdFromState = state?.roomId;
   const otherUserId = state?.otherUserId ?? post?.userId ?? post?.user_id;
+  const headerName = otherUserId ?? post?.userId ?? "가이드";
+  const headerSubtitle = state?.postTitle ?? state?.post?.title ?? post?.title ?? "";
+  const isCompletedChat =
+    Boolean(state?.isCompleted) ||
+    getEffectiveReservationStatus(state?.reservation ?? { status: state?.status }) === STATUS.COMPLETED;
 
   useEffect(() => {
-    if (!postId) return undefined;
+    if (roomId) setActiveRoomId(roomId);
+  }, [roomId]);
+
+  useEffect(() => {
+    if (!isRoutePostId || !routeId) return undefined;
     let alive = true;
-    getPostDetail(postId)
+    getPostDetail(routeId)
       .then((post) => {
         if (alive) setPost(post);
       })
@@ -51,39 +157,35 @@ export default function Chat() {
     return () => {
       alive = false;
     };
-  }, [postId]);
+  }, [isRoutePostId, routeId]);
 
   useEffect(() => {
     if (!currentUserId) return;
 
     let alive = true;
-    const loadMessages = roomIdFromState
-      ? getChatHistoryByRoom(roomIdFromState).then((history) => {
+    const loadMessages = roomId
+      ? getChatHistoryByRoom(roomId).then((history) => {
           if (!alive) return;
+          setActiveRoomId(roomId);
           setMessages(
-            history.map((message, index) => ({
-              id: `${message.timestamp || Date.now()}_${index}`,
-              type: message.sender === currentUserId ? "me" : "other",
-              message: message.content,
-              time: formatTime(message.timestamp),
-            }))
+            history.map((message, index) => toChatMessage(message, currentUserId, index))
           );
-          markChatRoomRead(roomIdFromState, currentUserId).catch(() => {});
+          markChatRoomRead(roomId, currentUserId).catch(() => {});
         })
       : otherUserId
         ? createOrGetChatRoom(currentUserId, otherUserId)
       .then((room) => {
         if (!alive) return;
         const nextRoomId = room.roomId || room.id || "";
-        return getChatHistory(currentUserId, otherUserId).then((history) => {
+        if (nextRoomId) setActiveRoomId(nextRoomId);
+        const historyRequest = nextRoomId
+          ? getChatHistoryByRoom(nextRoomId)
+          : getChatHistory(currentUserId, otherUserId);
+
+        return historyRequest.then((history) => {
           if (!alive) return;
           setMessages(
-            history.map((message, index) => ({
-              id: `${message.timestamp || Date.now()}_${index}`,
-              type: message.sender === currentUserId ? "me" : "other",
-              message: message.content,
-              time: formatTime(message.timestamp),
-            }))
+            history.map((message, index) => toChatMessage(message, currentUserId, index))
           );
 
           if (nextRoomId) {
@@ -101,26 +203,147 @@ export default function Chat() {
     return () => {
       alive = false;
     };
-  }, [currentUserId, otherUserId, roomIdFromState]);
+  }, [currentUserId, otherUserId, roomId]);
+
+  useEffect(() => {
+    if (!activeRoomId || !currentUserId) return undefined;
+
+    let subscription;
+    const client = createChatSocketClient({
+      onConnect: () => {
+        setErrorMessage("");
+        subscription = client.subscribe(getRoomTopic(activeRoomId), (frame) => {
+          try {
+            const received = JSON.parse(frame.body);
+            const nextMessage = toChatMessage(received, currentUserId);
+            setMessages((prev) => upsertMessage(prev, nextMessage));
+            markChatRoomRead(activeRoomId, currentUserId).catch(() => {});
+          } catch {
+            setErrorMessage("채팅 메시지를 읽지 못했습니다.");
+          }
+        });
+      },
+      onStompError: () => {
+        setErrorMessage("채팅 서버 연결 중 오류가 발생했습니다.");
+      },
+      onWebSocketError: () => {
+        setErrorMessage("채팅 서버에 연결하지 못했습니다.");
+      },
+    });
+
+    chatClientRef.current = client;
+    client.activate();
+
+    return () => {
+      subscription?.unsubscribe();
+      if (chatClientRef.current === client) {
+        chatClientRef.current = null;
+      }
+      client.deactivate();
+    };
+  }, [activeRoomId, currentUserId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const sendMessage = (text) => {
-    if (!text.trim()) return;
+  const handleTranslate = async (messageId) => {
+    const targetMessage = messages.find((message) => String(message.id) === String(messageId));
+    if (!targetMessage?.message || targetMessage.translation) return;
 
-    const now = new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
-    const newMsg = {
-      id: Date.now(),
-      type: "me",
-      message: text.trim(),
-      time: now,
-      pending: true,
+    setTranslatingIds((prev) => new Set(prev).add(String(messageId)));
+    try {
+      const data = await translateText(targetMessage.message, getTargetLang());
+      const translation = extractTranslation(data);
+      if (!translation) return;
+      setMessages((prev) =>
+        prev.map((message) =>
+          String(message.id) === String(messageId)
+            ? { ...message, translation }
+            : message
+        )
+      );
+    } catch {
+      setErrorMessage("번역에 실패했습니다.");
+    } finally {
+      setTranslatingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(String(messageId));
+        return next;
+      });
+    }
+  };
+
+  const sendMessage = async (text) => {
+    if (isCompletedChat) {
+      setErrorMessage("완료된 투어의 채팅은 더 이상 보낼 수 없어요.");
+      return;
+    }
+    if (!text.trim()) return;
+    if (!currentUserId) {
+      setErrorMessage("로그인 후 채팅을 사용할 수 있습니다.");
+      return;
+    }
+    if (!activeRoomId) {
+      setErrorMessage("채팅방을 준비하는 중입니다. 잠시 후 다시 시도해주세요.");
+      return;
+    }
+
+    const client = chatClientRef.current;
+    const payload = {
+      roomId: activeRoomId,
+      sender: currentUserId,
+      recipient: otherUserId,
+      content: text.trim(),
+      type: "CHAT",
     };
 
-    setMessages((prev) => [...prev, newMsg]);
-    setInputValue("");
+    if (client?.connected && otherUserId) {
+      try {
+        publishChatMessage(client, payload);
+        setMessages((prev) =>
+          upsertMessage(prev, {
+            id: `pending_${Date.now()}`,
+            type: "me",
+            sender: currentUserId,
+            recipient: otherUserId,
+            message: isImageContent(payload.content) ? "" : payload.content,
+            imageUrl: isImageContent(payload.content) ? payload.content : "",
+            time: formatTime(),
+            pending: true,
+          })
+        );
+        setInputValue("");
+        return;
+      } catch {
+        // REST fallback below keeps the message saved even if STOMP publish fails.
+      }
+    }
+
+    try {
+      const savedMessage = await sendChatMessage(payload);
+      setMessages((prev) => upsertMessage(prev, toChatMessage(savedMessage, currentUserId)));
+      setInputValue("");
+      setErrorMessage("");
+    } catch (error) {
+      setErrorMessage(error.message || "메시지를 전송하지 못했습니다.");
+    }
+  };
+
+  const sendImage = async (file) => {
+    if (isCompletedChat) {
+      setErrorMessage("완료된 투어의 채팅은 더 이상 보낼 수 없어요.");
+      return;
+    }
+    if (!file.type.startsWith("image/")) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const imageUrl = String(reader.result || "");
+      if (imageUrl) sendMessage(imageUrl);
+    };
+    reader.onerror = () => setErrorMessage("사진을 불러오지 못했습니다.");
+    reader.readAsDataURL(file);
   };
 
   const handleKeyDown = (e) => {
@@ -133,8 +356,8 @@ export default function Chat() {
   return (
     <PageWrapper>
       <ChatHeader
-        name={post?.userId ?? "가이드"}
-        subtitle={post?.title ?? otherUserId ?? ""}
+        name={headerName}
+        subtitle={headerSubtitle}
         onFlag={() => setShowReport(true)}
       />
 
@@ -143,14 +366,17 @@ export default function Chat() {
         {!currentUserId && <ErrorText>로그인 후 채팅을 사용할 수 있습니다.</ErrorText>}
         {messages.map((msg) =>
           msg.type === "me" ? (
-            <Mybubble key={msg.id} message={msg.message} time={msg.time} />
+            <Mybubble key={msg.id} message={msg.message} imageUrl={msg.imageUrl} time={msg.time} />
           ) : (
             <Otherbubble
               key={msg.id}
               message={msg.message}
               translation={msg.translation}
+              imageUrl={msg.imageUrl}
               time={msg.time}
               changeIcon={ChangeIcon}
+              onTranslate={() => handleTranslate(msg.id)}
+              isTranslating={translatingIds.has(String(msg.id))}
             />
           )
         )}
@@ -161,21 +387,35 @@ export default function Chat() {
       </MessageList>
 
       <BottomArea>
-        <Quickreply onSelect={(text) => setInputValue(text)} />
+        {isCompletedChat ? (
+          <CompletedNotice>완료된 투어의 채팅입니다.</CompletedNotice>
+        ) : (
+          <Quickreply onSelect={(text) => setInputValue(text)} />
+        )}
         <Divider />
         <MessageInput
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onSend={() => sendMessage(inputValue)}
           onKeyDown={handleKeyDown}
+          onImageSelect={sendImage}
           addIcon={AddIcon}
           sendIcon={SendIcon}
+          disabled={isCompletedChat}
         />
       </BottomArea>
 
       <ReportSystem
         isOpen={showReport}
         onClose={() => setShowReport(false)}
+        targetType="USER"
+        targetId={otherUserId}
+        hiddenGuide={{
+          id: otherUserId,
+          userId: otherUserId,
+          nickname: otherUserId,
+          bio: post?.title ?? "",
+        }}
       />
     </PageWrapper>
   );
@@ -209,6 +449,14 @@ const Divider = styled.div`
   width: 100%;
   height: 1px;
   background: #F3F4F3;
+`;
+
+const CompletedNotice = styled.div`
+  padding: 12px 16px;
+  color: #acacac;
+  font-family: Pretendard, sans-serif;
+  font-size: 13px;
+  text-align: center;
 `;
 
 const ErrorText = styled.p`

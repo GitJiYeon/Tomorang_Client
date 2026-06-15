@@ -2,10 +2,13 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import HeartIcon from "../../assets/heart.svg";
+import FilledHeartIcon from "../../assets/fillheart.svg";
 import StarIcon from "../../assets/mapStar.svg";
 import LikeIcon from "../../assets/likeIcon.svg";
 import { addWishlist, removeWishlist } from "../../api/tomorang";
 import { getPostDescription, getPostImages } from "../../utils/postDisplay";
+import { formatRating, getPostRatingAverage, getPostWishlistCount } from "../../utils/postStats";
+import { isOwnPost } from "../../utils/postOwner";
 import { isPostLiked, setPostLiked, subscribeWishlistChanges } from "../../utils/wishlist";
 
 export default function PostCard({
@@ -18,16 +21,27 @@ export default function PostCard({
   const navigate = useNavigate();
   const postId = post.postId ?? post.post_id ?? post.id;
   const [liked, setLiked] = useState(() => isPostLiked(postId));
+  const [initialLiked, setInitialLiked] = useState(() => isPostLiked(postId));
+  const [localWishlistDelta, setLocalWishlistDelta] = useState(0);
   const image = getPostImages(post)[0];
   const description = getPostDescription(post);
+  const canWishlist = showHeart && !isOwnPost(post);
+  const ratingAverage = getPostRatingAverage(post);
+  const wishlistCount = getPostWishlistCount(post);
+  const displayWishlistCount = Math.max(0, wishlistCount + localWishlistDelta);
 
   useEffect(() => {
-    setLiked(isPostLiked(postId));
+    const nextLiked = isPostLiked(postId);
+    setLiked(nextLiked);
+    setInitialLiked(nextLiked);
+    setLocalWishlistDelta(0);
     return subscribeWishlistChanges(() => setLiked(isPostLiked(postId)));
   }, [postId]);
 
   const handleLike = async (event) => {
     event.stopPropagation();
+    if (!postId) return;
+
     const nextLiked = !liked;
     try {
       if (nextLiked) {
@@ -37,6 +51,7 @@ export default function PostCard({
       }
       setPostLiked(postId, nextLiked);
       setLiked(nextLiked);
+      setLocalWishlistDelta(nextLiked === initialLiked ? 0 : nextLiked ? 1 : -1);
     } catch (error) {
       console.error("찜 변경 실패", error);
       alert(error.message || "찜 변경에 실패했습니다.");
@@ -70,9 +85,9 @@ export default function PostCard({
           <ImagePlaceholder>이미지 없음</ImagePlaceholder>
         )}
         {isSale && <SaleBadge>SALE</SaleBadge>}
-        {showHeart && (
+        {canWishlist && (
           <HeartBtn onClick={handleLike}>
-            <img src={HeartIcon} alt="heart" style={{ width: 12, height: 11 }} />
+            <img src={liked ? FilledHeartIcon : HeartIcon} alt="heart" style={{ width: 12, height: 11 }} />
           </HeartBtn>
         )}
       </ImageWrap>
@@ -83,12 +98,12 @@ export default function PostCard({
         {showStats && (
           <BadgeRow>
             <StatBadge $filled>
-              <img src={StarIcon} alt="bookmark" width={15} height={15} />
-              <StatText>{post.reviewCount ?? post.rating ?? 0}</StatText>
+              <img src={StarIcon} alt="star" width={15} height={15} />
+              <StatText>{formatRating(ratingAverage)}</StatText>
             </StatBadge>
             <StatBadge>
               <img src={LikeIcon} alt="like" width={15} height={15} />
-              <StatText>{post.likeCount ?? 0}</StatText>
+              <StatText>{displayWishlistCount}</StatText>
             </StatBadge>
           </BadgeRow>
         )}

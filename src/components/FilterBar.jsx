@@ -1,17 +1,21 @@
 // 호출방법: <FilterBar onFilterChange={handleFilterChange} />
 
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import styled from "styled-components";
 import DownArrowIcon from "../assets/downarrow.svg"; 
 
 const SORT_OPTIONS = ["추천순", "인기순", "가격순"];
-const FILTER_TAGS = ["체험", "힐링", "풍경", "액티비티", "애니메이션", "쇼핑", "맛집", "탐방", "사진"];
+export const FILTER_TAGS = ["체험", "힐링", "풍경", "액티비티", "애니메이션", "쇼핑", "맛집", "탐방", "사진"];
 
-export default function FilterBar({ onFilterChange }) {
+export default function FilterBar({ onFilterChange, defaultCategory = "애니메이션" }) {
   const [sortOpen, setSortOpen] = useState(false);
   const [selectedSort, setSelectedSort] = useState("추천순");
-  const [selectedTag, setSelectedTag] = useState("애니메이션");
+  const [selectedTag, setSelectedTag] = useState(defaultCategory);
   const scrollRef = useRef(null);
+
+  useEffect(() => {
+    setSelectedTag(defaultCategory);
+  }, [defaultCategory]);
 
   const handleTagSelect = (tag) => {
     setSelectedTag(tag);
@@ -77,6 +81,7 @@ const Wrapper = styled.div`
   width: 390px;
   padding-top: 16px;
   padding-left: 21px;
+  padding-bottom: 5px;
   box-sizing: border-box;
   gap: 8px;
   font-family: "Pretendard", sans-serif;
@@ -158,15 +163,13 @@ const TagChip = styled.button`
   height: 42px;
   padding: 10px 14px;
   border-radius: 60px;
-  border: ${({ selected }) => (selected ? "none" : "1px solid #dadada")};
+  border: 1px solid ${({ selected }) => (selected ? "transparent" : "#dadada")};  /* ✅ 수정 */
   background: ${({ selected }) => (selected ? "#C5F598" : "#ffffff")};
   font-size: 14px;
   font-weight: 500;
   font-family: Pretendard;
   line-height: 22px;
   cursor: pointer;
-
-  /* order: -1 속성을 삭제하여 순서가 바뀌지 않도록 설정했습니다. */
   transition: all 0.2s ease;
 
   &:focus {

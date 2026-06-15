@@ -34,7 +34,7 @@ function LevelDots({ level }) {
 export default function ProfileCard({ profile, onEditPress }) {
   if (!profile) return null;
   const nickname = profile.nickname ?? profile.nickName ?? profile.id ?? "사용자";
-  const bio = profile.bio ?? profile.oneWord ?? "소개가 아직 없습니다.";
+  const bio = profile.oneWord ?? profile.bio ?? "소개가 아직 없습니다.";
   const profileImage = profile.profileImage ?? profile.image;
   const interests = Array.isArray(profile.interests)
     ? profile.interests

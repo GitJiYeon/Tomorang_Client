@@ -29,11 +29,18 @@ const FilterWrapper = styled.div`
   gap: 8px; /* 칩 사이의 간격 */
   padding: 10px 20px;
   background-color: #fff;
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 `;
 
 const StatusChip = styled.button`
   /* 공통 스타일 */
   display: flex;
+  flex-shrink: 0;
   padding: 10px 14px;
   justify-content: center;
   align-items: center;

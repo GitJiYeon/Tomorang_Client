@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route, useLocation } from "react-router-dom";
 import { ReservationProvider } from "../components/context/ReservationContext"; // 추가
 
 import MainLayout from "../layouts/MainLayout";
@@ -17,7 +17,7 @@ import MainMorePage from "../pages/MainMorePage";
 import EmergingDestination from "../pages/EmergingDestination";
 import DestinationListPage from "../pages/DestinationListPage";
 import CourseDescriptionPage from "../pages/CourseDescriptionPage";
-import SearchPage from "../pages/SeachPage";
+import SearchPage from "../pages/SearchPage";
 import MapPage from "../pages/MapPage";
 import ReservationPage from "../pages/ReservationPage";
 import ReservationStatusPage from "../pages/ReservationStatusPage";
@@ -48,10 +48,13 @@ import InterestEditPage from "../pages/InterestEditPage";
 import LanguageEditPage from "../pages/LanguageEditPage";
 import GuideChatPage from "../pages/GuideChatPage";
 import GuideMyPage from "../pages/GuideMyPage";
-import { getMyWishlists } from "../api/tomorang";
-import { syncLikedPostsFromWishlists } from "../utils/wishlist";
+import { isCurrentGuide } from "../utils/authRole";
 
+const routerBasename = import.meta.env.BASE_URL.replace(/\/$/, "");
 
+function RoleAwareMainPage() {
+  return isCurrentGuide() ? <Navigate to="/guide" replace /> : <MainPage />;
+}
 
 function RouteViewport() {
   const location = useLocation();
@@ -63,12 +66,6 @@ function RouteViewport() {
   }, [location.pathname]);
 
   useEffect(() => {
-    if (localStorage.getItem("accessToken")) {
-      getMyWishlists()
-        .then(syncLikedPostsFromWishlists)
-        .catch(() => {});
-    }
-
     if ("scrollRestoration" in window.history) {
       window.history.scrollRestoration = "manual";
     }
@@ -110,7 +107,7 @@ function RouteViewport() {
             <Route path="/guide-interest" element={<GuideSelectInterest />} />
             <Route path="/make-guide-profile" element={<MakeGuideProfile />} />
             <Route path="/guide-welcome" element={<GuideWelcomePage />} />
-            <Route path="/main" element={<MainPage />} />
+            <Route path="/main" element={<RoleAwareMainPage />} />
             <Route path="/main-more/:type" element={<MainMorePage />} />
             <Route path="/guide" element={<GuidePage />} />
             <Route path="/guide-reservations" element={<GuideReservationListPage />} />
@@ -147,7 +144,7 @@ function RouteViewport() {
 
 function Router() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={routerBasename}>
       <RouteViewport />
     </BrowserRouter>
   );

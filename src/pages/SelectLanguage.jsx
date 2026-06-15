@@ -22,18 +22,23 @@ function SelectLanguage() {
   const [selections, setSelections] = useState(
     Object.fromEntries(LANGUAGES.map((l) => [l.languageCode, null]))
   );
+  const [openCode, setOpenCode] = useState(null); // 추가
+
+  const handleToggle = (languageCode) => {
+    setOpenCode((prev) => (prev === languageCode ? null : languageCode)); // 추가
+  };
 
   const handleSelect = ({ languageCode, level }) => {
     setSelections((prev) => ({ ...prev, [languageCode]: level }));
+    // setOpenCode 없음 → 선택해도 드롭다운 유지
   };
 
-  // 하나라도 선택되면 다음 버튼 활성화
   const isValid = Object.values(selections).some(Boolean);
 
- const handleNext = () => {
-  const payload = Object.entries(selections)
-    .filter(([, level]) => level)
-    .map(([languageCode, level]) => ({ languageCode, level }));
+  const handleNext = () => {
+    const payload = Object.entries(selections)
+      .filter(([, level]) => level)
+      .map(([languageCode, level]) => ({ languageCode, level }));
     navigate("/interest", {
       state: {
         ...state,
@@ -61,6 +66,8 @@ function SelectLanguage() {
             subtitle={lang.subtitle}
             languageCode={lang.languageCode}
             selectedLevel={selections[lang.languageCode]}
+            isOpen={openCode === lang.languageCode} // 추가
+            onToggle={handleToggle}                 // 추가
             onSelect={handleSelect}
           />
         ))}

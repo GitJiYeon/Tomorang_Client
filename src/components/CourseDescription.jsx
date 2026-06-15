@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import Greenstar from "../assets/greenstar.svg";
 import Graystar from "../assets/graystar.svg";
@@ -7,10 +8,16 @@ import Heart from "../assets/heart.svg";
 import Filledheart from "../assets/fillheart.svg";
 import ReportSystem from "../components/ReportModal";
 import { addWishlist, removeWishlist } from "../api/tomorang";
+import { getHiddenGuideFromPost } from "../utils/hiddenGuides";
+import { formatRating, getPostRatingAverage } from "../utils/postStats";
+import { isOwnPost } from "../utils/postOwner";
 import { getPostId, isPostLiked, setPostLiked, subscribeWishlistChanges } from "../utils/wishlist";
 
 export default function CourseDescription({ post }) {
+  const navigate = useNavigate();
   const postId = getPostId(post);
+  const canWishlist = !isOwnPost(post);
+  const canReport = !isOwnPost(post);
   const [liked, setLiked] = useState(() => isPostLiked(postId));
   const [isReportOpen, setIsReportOpen] = useState(false);
 
@@ -40,7 +47,7 @@ export default function CourseDescription({ post }) {
   if (!post) return null;
 
   const images = Array.isArray(post.images) ? post.images.filter(Boolean) : [];
-  const rating = Number(post.rating ?? 0);
+  const rating = getPostRatingAverage(post);
   const discountRate = Number(post.discountRate ?? post.discount_rate ?? 0);
   const originalPriceNum = Number(String(post.price ?? 0).replace(/,/g, ""));
   const discountedPrice = discountRate > 0
@@ -66,9 +73,11 @@ export default function CourseDescription({ post }) {
         ) : (
           <ImagePlaceholder>이미지 없음</ImagePlaceholder>
         )}
-        <FlagButton onClick={() => setIsReportOpen(true)}>
-          <FlagIcon src={Flag} alt="report" />
-        </FlagButton>
+        {canReport && (
+          <FlagButton onClick={() => setIsReportOpen(true)}>
+            <FlagIcon src={Flag} alt="report" />
+          </FlagButton>
+        )}
       </MainImageWrapper>
 
       <Body>
@@ -77,10 +86,12 @@ export default function CourseDescription({ post }) {
             <Title>{post.title}</Title>
             <Subtitle>{post.subtitle}</Subtitle>
           </TitleGroup>
-          <SaveButton onClick={toggleLike}>
-            <HeartIcon src={liked ? Filledheart : Heart} alt="heart" />
-            <SaveText>저장</SaveText>
-          </SaveButton>
+          {canWishlist && (
+            <SaveButton onClick={toggleLike}>
+              <HeartIcon src={liked ? Filledheart : Heart} alt="heart" />
+              <SaveText>저장</SaveText>
+            </SaveButton>
+          )}
         </TitleRow>
 
         <PriceRatingRow>
@@ -96,7 +107,7 @@ export default function CourseDescription({ post }) {
 
           <RatingGroup>
             <Stars>{renderStars(rating)}</Stars>
-            <RatingNumber>{rating.toFixed(1)}</RatingNumber>
+            <RatingNumber>{formatRating(rating)}</RatingNumber>
           </RatingGroup>
         </PriceRatingRow>
       </Body>
@@ -117,6 +128,9 @@ export default function CourseDescription({ post }) {
       <ReportSystem
         isOpen={isReportOpen}
         onClose={() => setIsReportOpen(false)}
+        postId={postId}
+        hiddenGuide={getHiddenGuideFromPost(post)}
+        onReported={() => navigate("/main", { replace: true })}
       />
     </Card>
   );

@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { resolvePublicAsset } from "../utils/publicAsset";
 
 export default function EmergingCard({ region, lang = "ko", onClick }) {  // ← onClick 추가
   const cityName = region.translations[lang]?.cityName ?? region.translations.ko.cityName;
@@ -7,7 +8,7 @@ export default function EmergingCard({ region, lang = "ko", onClick }) {  // ←
   return (
     <Card onClick={onClick}>
       <BgImg
-        src={region.risingimg}
+        src={resolvePublicAsset(region.risingimg)}
         alt={cityName}
         onError={e => { e.target.style.background = "#cde"; e.target.removeAttribute("src"); }}
       />

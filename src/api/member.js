@@ -1,4 +1,4 @@
-import { API_BASE_URL, appendJsonPart, parseResponse } from "./client";
+import { API_BASE_URL, appendJsonPart, getAuthHeader, parseResponse } from "./client";
 
 const LANGUAGE_MAP = {
   ko: "KOREAN",
@@ -29,6 +29,18 @@ export function normalizeLanguages(selectedLanguages = []) {
   );
 }
 
+export async function loginMember(id, pw) {
+  const query = new URLSearchParams({ id, pw });
+  const response = await fetch(`${API_BASE_URL}/api/login?${query.toString()}`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  return parseResponse(response);
+}
+
 export async function signupMember(dto, imageFile) {
   const formData = new FormData();
   appendJsonPart(formData, "dto", dto);
@@ -39,6 +51,23 @@ export async function signupMember(dto, imageFile) {
 
   const response = await fetch(`${API_BASE_URL}/api/signup`, {
     method: "POST",
+    body: formData,
+  });
+
+  return parseResponse(response);
+}
+
+export async function updateMember(dto, imageFile) {
+  const formData = new FormData();
+  appendJsonPart(formData, "dto", dto);
+
+  if (imageFile) {
+    formData.append("image", imageFile);
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/member`, {
+    method: "PUT",
+    headers: getAuthHeader(),
     body: formData,
   });
 

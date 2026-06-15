@@ -8,7 +8,7 @@ import MyPageIcon from "../../assets/navIcons/mypage.svg";
 const NAV_ITEMS = [
   { path: "/guide", iconSrc: HomeIcon, label: "홈" },
   { path: "/guide-reservations", iconSrc: BookIcon, label: "예약" },
-  { path: "/guide-chat", iconSrc: MessageIcon, label: "메시지" },
+  { path: "/guide-chat", iconSrc: MessageIcon, label: "채팅" },
   { path: "/guide-mypage", iconSrc: MyPageIcon, label: "마이" },
 ];
 

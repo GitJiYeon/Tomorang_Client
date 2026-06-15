@@ -1,19 +1,39 @@
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
 import Header from "../components/Header";
 import BottomNav from "../components/mainComponents/BottomNav";
 import LogoutButton from "../components/LogoutButton";
 import ProfileCard from "../components/ProfileCard";
 import ActivitySection from "../components/ActivitySection";
-import { logoutMember } from "../api/tomorang";
+import { getMypage, logoutMember } from "../api/tomorang";
+import { clearAuthStorage } from "../api/client";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const raw = localStorage.getItem("profile");
-  const profile = raw ? JSON.parse(raw) : null;
+  const [profile, setProfile] = useState(() => (raw ? JSON.parse(raw) : null));
+
+  useEffect(() => {
+    let alive = true;
+
+    getMypage()
+      .then((mypage) => {
+        if (!alive || !mypage) return;
+        setProfile((prev) => {
+          const nextProfile = { ...(prev ?? {}), ...mypage, role: mypage.role ?? prev?.role ?? "DISCOVERER" };
+          localStorage.setItem("profile", JSON.stringify(nextProfile));
+          return nextProfile;
+        });
+      })
+      .catch((error) => console.error("마이페이지 프로필 조회 실패", error));
+
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const activityItems = [
     { label: "찜한 코스",     onClick: () => navigate("/my-course") },
@@ -30,10 +50,7 @@ export default function ProfilePage() {
     } catch (error) {
       console.error("로그아웃 요청 실패", error);
     } finally {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("tokenType");
-      localStorage.removeItem("userId");
-      localStorage.removeItem("profile");
+      clearAuthStorage();
       setIsLoggingOut(false);
       navigate("/", { replace: true });
     }

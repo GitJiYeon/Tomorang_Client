@@ -13,7 +13,9 @@ import ReviewSummary from "../components/ReviewSummary";
 import ReviewCard from "../components/ReviewCard1";
 import GuideTab from "../components/GuideTab";
 import GuideDescriptionCard from "../components/GuideDescriptionCard";
-import { getPostDetail, getPostReviews, getPosts } from "../api/tomorang";
+import { getPopularGuides, getPostDetail, getPostReviews, getPosts } from "../api/tomorang";
+import { getPostOwnerId, isOwnPost } from "../utils/postOwner";
+import { getPostRatingAverage, getPostWishlistCount, getReviewRatingAverage } from "../utils/postStats";
 
 const TAB = {
   COURSE: "course",
@@ -23,6 +25,106 @@ const TAB = {
 
 function getPostId(post) {
   return post?.postId ?? post?.post_id ?? post?.id;
+}
+
+function getGuideId(guide) {
+  return guide?.guideId ?? guide?.guide_id ?? guide?.userId ?? guide?.user_id ?? guide?.username ?? guide?.id;
+}
+
+function firstText(...values) {
+  return values.find((value) => typeof value === "string" && value.trim());
+}
+
+function normalizeGuide(guide, ownerId, posts = []) {
+  if (!guide && !ownerId) return null;
+  const source = { ...(guide ?? {}) };
+  const likeCount = posts.reduce((sum, item) => sum + getPostWishlistCount(item), 0);
+  const ratingTotal = posts.reduce((sum, item) => sum + getPostRatingAverage(item), 0);
+  const rating = posts.length ? ratingTotal / posts.length : 0;
+  const guideIntro = firstText(source.oneWord, source.one_word, source.introduction);
+  const normalizedBio = firstText(guideIntro, source.bio, source.about, source.summary);
+  const normalizedDescription = firstText(
+    source.guideDescription,
+    source.guide_description,
+    guideIntro,
+    source.description,
+    source.bio
+  );
+  source.bio = normalizedBio ?? source.bio;
+  source.description = normalizedDescription ?? source.description;
+
+  return {
+    ...source,
+    id: getGuideId(source) ?? ownerId,
+    userId: source.userId ?? source.user_id ?? ownerId,
+    profileImage:
+      source.profileImage ??
+      source.profile_image ??
+      source.image ??
+      source.memberImage ??
+      source.member_image ??
+      source.profile ??
+      source.profileUrl ??
+      source.profile_url,
+    nickname:
+      source.nickname ??
+      source.nickName ??
+      source.name ??
+      source.memberNickName ??
+      source.member_nick_name ??
+      ownerId,
+    bio: source.bio ?? source.oneWord ?? source.introduction ?? "소개가 아직 없습니다.",
+    description:
+      source.description ??
+      source.guideDescription ??
+      source.guide_description ??
+      source.bio ??
+      source.oneWord ??
+      "등록된 코스를 안내하는 가이드입니다.",
+    rating: source.rating ?? source.avgRating ?? rating,
+    likeCount: source.likeCount ?? source.totalLikes ?? likeCount,
+    postCount: source.postCount ?? source.postIds?.length ?? posts.length,
+  };
+}
+
+function makeGuideFromPost(post, posts = []) {
+  const ownerId = getPostOwnerId(post);
+  if (!ownerId) return null;
+  return normalizeGuide(
+    {
+      ...(post?.guide ?? {}),
+      id: ownerId,
+      userId: ownerId,
+      profileImage:
+        post?.guideImage ??
+        post?.guideProfileImage ??
+        post?.guide_profile_image ??
+        post?.memberImage ??
+        post?.member_image ??
+        post?.profileImage ??
+        post?.profile_image ??
+        post?.userImage ??
+        post?.user_image,
+      nickname:
+        post?.guideNickname ??
+        post?.guideNickName ??
+        post?.guide_nickname ??
+        post?.memberNickName ??
+        post?.member_nick_name ??
+        post?.nickname,
+      bio: post?.guideBio ?? post?.guide_bio ?? post?.guide?.bio ?? post?.guide?.oneWord,
+      description:
+        post?.guideDescription ??
+        post?.guide_description ??
+        post?.guide?.description ??
+        post?.guide?.guideDescription ??
+        post?.guide?.guide_description ??
+        post?.guide?.bio ??
+        post?.guide?.oneWord,
+    },
+    ownerId,
+    posts
+  );
 }
 
 export default function CourseDescriptionPage() {
@@ -38,7 +140,9 @@ export default function CourseDescriptionPage() {
   const [isReviewExpanded, setIsReviewExpanded] = useState(false);
   const [postReviews, setPostReviews] = useState(state?.initialReviews ?? []);
   const [relatedPosts, setRelatedPosts] = useState([]);
+  const [guideInfo, setGuideInfo] = useState(null);
   const postId = getPostId(post);
+  const ownerId = getPostOwnerId(post);
 
   useEffect(() => {
     setPost(initialPost);
@@ -88,10 +192,10 @@ export default function CourseDescriptionPage() {
   }, [postId]);
 
   useEffect(() => {
-    if (!post?.userId) return;
+    if (!ownerId) return;
 
     let alive = true;
-    getPosts({ userId: post.userId })
+    getPosts({ userId: ownerId })
       .then((posts) => {
         if (!alive) return;
         setRelatedPosts(posts.filter((item) => getPostId(item) !== postId));
@@ -101,7 +205,46 @@ export default function CourseDescriptionPage() {
     return () => {
       alive = false;
     };
-  }, [post?.userId, postId]);
+  }, [ownerId, postId]);
+
+  useEffect(() => {
+    if (!ownerId) return;
+
+    let alive = true;
+    const fallbackGuide = makeGuideFromPost(post, [post, ...relatedPosts].filter(Boolean));
+    setGuideInfo(fallbackGuide);
+
+    getPopularGuides()
+      .then((guides) => {
+        if (!alive) return;
+        const matchedGuide = guides.find((guide) => String(getGuideId(guide)) === String(ownerId));
+        if (!matchedGuide) return;
+        setGuideInfo((prev) =>
+          normalizeGuide(
+            {
+              ...fallbackGuide,
+              ...prev,
+              ...matchedGuide,
+              profileImage: matchedGuide.profileImage ?? matchedGuide.image ?? prev?.profileImage ?? fallbackGuide?.profileImage,
+            },
+            ownerId,
+            [post, ...relatedPosts].filter(Boolean)
+          )
+        );
+      })
+      .catch((error) => console.error("가이드 정보 조회 실패", error));
+
+    return () => {
+      alive = false;
+    };
+  }, [ownerId, post, relatedPosts]);
+
+  const guideForTab = guideInfo ?? makeGuideFromPost(post, [post, ...relatedPosts].filter(Boolean));
+  const reviewAverage =
+    postReviews.length > 0
+      ? getReviewRatingAverage(postReviews)
+      : getPostRatingAverage(post);
+  const displayPost = post ? { ...post, rating: reviewAverage } : post;
 
   const scrollRow = {
     display: "flex",
@@ -116,8 +259,8 @@ export default function CourseDescriptionPage() {
 
   return (
     <PageWrapper>
-      <Header coment={post.title} />
-      <CourseDescription post={post} />
+      <Header coment={displayPost.title} />
+      <CourseDescription post={displayPost} />
 
       <TabSection>
         <CourseTabMenu activeTab={activeTab} onTabChange={setActiveTab} />
@@ -162,7 +305,7 @@ export default function CourseDescriptionPage() {
           <>
             <SummarySection>
               <ReviewSummary
-                rating={post.rating || 0}
+                rating={reviewAverage}
                 reviewCount={postReviews.length || post.reviewCount || 0}
               />
             </SummarySection>
@@ -199,10 +342,10 @@ export default function CourseDescriptionPage() {
         )}
 
         {activeTab === TAB.GUIDE && (
-          post.guide ? (
+          guideForTab ? (
             <GuideBg>
-              <GuideTab guide={post.guide} />
-              <GuideDescriptionCard guide={post.guide} />
+              <GuideTab guide={guideForTab} />
+              <GuideDescriptionCard guide={guideForTab} />
             </GuideBg>
           ) : (
             <PlaceholderText>가이드 정보를 찾을 수 없습니다.</PlaceholderText>
@@ -220,12 +363,14 @@ export default function CourseDescriptionPage() {
         </Section>
       )}
 
-      <Bottom>
-        <ReserveButton
-          isValid
-          onClick={() => navigate(`/reservation/${getPostId(post)}`)}
-        />
-      </Bottom>
+      {!isOwnPost(post) && (
+        <Bottom>
+          <ReserveButton
+            isValid
+            onClick={() => navigate(`/reservation/${getPostId(post)}`, { state: { post } })}
+          />
+        </Bottom>
+      )}
     </PageWrapper>
   );
 }

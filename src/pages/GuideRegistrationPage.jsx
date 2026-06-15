@@ -9,6 +9,8 @@ import ReserveButton from "../components/ReserveButton";
 import MapBubble2 from "../assets/mapBubble2.svg";
 import ImageIcon from "../assets/imageIcon.svg";
 import { createPost, getPosts } from "../api/tomorang";
+import { hasValidAuthToken } from "../api/client";
+import { cacheLocalPost } from "../utils/localPostCache";
 import {
   clearGuideRegistrationDraftFiles,
   getContentImageDrafts,
@@ -17,9 +19,15 @@ import {
   setRepresentativeImageDraft,
 } from "../utils/guideRegistrationDraft";
 
+const REGISTRATION_CATEGORY_ROWS = [
+  ["체험", "힐링", "풍경", "쇼핑", "맛집"],
+  ["탐방", "사진", "액티비티", "애니메이션"],
+];
+
 const initialFormData = {
   location: "",
   category: "",
+  scheduleDates: [],
   price: "",
   duration: "",
   startTime: "",
@@ -39,11 +47,63 @@ const escapeHtml = (value) =>
 
 function loadDraft() {
   try {
-    return { ...initialFormData, ...JSON.parse(sessionStorage.getItem(GUIDE_REGISTRATION_DRAFT_KEY) || "{}") };
+    const draft = { ...initialFormData, ...JSON.parse(sessionStorage.getItem(GUIDE_REGISTRATION_DRAFT_KEY) || "{}") };
+    if (!Array.isArray(draft.scheduleDates)) {
+      draft.scheduleDates = draft.scheduleDate ? [draft.scheduleDate] : [];
+    }
+    delete draft.scheduleDate;
+    return draft;
   } catch {
     return initialFormData;
   }
 }
+
+const splitCommaList = (value) =>
+  String(value ?? "")
+    .split(/[,\n]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+const hasMeetingPoint = (meetingPlace) =>
+  Number.isFinite(Number(meetingPlace?.lat)) && Number.isFinite(Number(meetingPlace?.lng));
+
+const createSlotBatchId = () => {
+  const randomId =
+    typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  return randomId.replace(/[^a-zA-Z0-9]/g, "").slice(0, 12);
+};
+
+const uniqueAddressParts = (parts) => {
+  const seen = new Set();
+  return parts
+    .map((part) => String(part ?? "").trim())
+    .filter((part) => {
+      if (!part || seen.has(part)) return false;
+      seen.add(part);
+      return true;
+    });
+};
+
+const formatShortAddress = (place, fallback = "") => {
+  const address = place?.address ?? {};
+  const parts = uniqueAddressParts([
+    address.city ?? address.town ?? address.village ?? address.municipality ?? address.state,
+    address.city_district ?? address.borough ?? address.county,
+    address.suburb ?? address.quarter ?? address.neighbourhood ?? address.hamlet ?? address.road,
+  ]);
+
+  if (parts.length > 0) return parts.slice(0, 3).join(" ");
+
+  const displayName = place?.display_name ?? fallback;
+  return String(displayName)
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .slice(0, 3)
+    .join(" ");
+};
 
 function buildContentBlocks(markdown, meetingAddress, imageMap = {}) {
   const value = meetingAddress
@@ -104,25 +164,31 @@ function MeetingPlacePicker({ onBack, onSelect }) {
   const [pickedPoint, setPickedPoint] = useState(null);
   const [pickedAddress, setPickedAddress] = useState("지도를 클릭해 위치를 선택하세요");
   const [addressInput, setAddressInput] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const initialCenter = [35.3191, 139.5467];
 
   const handlePick = async (latlng) => {
     const fallbackAddress = `위도 ${latlng.lat.toFixed(4)}, 경도 ${latlng.lng.toFixed(4)}`;
     setPickedPoint(latlng);
+    setSearchResults([]);
     setPickedAddress("주소 불러오는 중...");
     try {
       const params = new URLSearchParams({
         format: "jsonv2",
         lat: String(latlng.lat),
         lon: String(latlng.lng),
+        addressdetails: "1",
         "accept-language": "ko",
       });
       const response = await fetch(`https://nominatim.openstreetmap.org/reverse?${params}`);
       const data = await response.json();
-      setPickedAddress(data.display_name || fallbackAddress);
+      const shortAddress = formatShortAddress(data, fallbackAddress);
+      setPickedAddress(shortAddress);
+      setAddressInput(shortAddress);
     } catch {
       setPickedAddress(fallbackAddress);
+      setAddressInput(fallbackAddress);
     }
   };
 
@@ -134,31 +200,42 @@ function MeetingPlacePicker({ onBack, onSelect }) {
       const params = new URLSearchParams({
         format: "jsonv2",
         q: query,
-        limit: "1",
+        limit: "5",
+        addressdetails: "1",
         "accept-language": "ko",
       });
       const response = await fetch(`https://nominatim.openstreetmap.org/search?${params}`);
       const data = await response.json();
-      const first = Array.isArray(data) ? data[0] : null;
-      if (!first) {
+      const results = Array.isArray(data) ? data : [];
+      setSearchResults(results);
+      if (results.length === 0) {
         setPickedPoint(null);
-        setPickedAddress(query);
+        setPickedAddress("검색 결과가 없어요.");
         return;
       }
-      setPickedPoint({ lat: Number(first.lat), lng: Number(first.lon) });
-      setPickedAddress(first.display_name || query);
     } catch {
       setPickedPoint(null);
-      setPickedAddress(query);
+      setSearchResults([]);
+      setPickedAddress("주소 검색에 실패했어요.");
     } finally {
       setIsSearching(false);
     }
   };
 
+  const selectSearchResult = (result) => {
+    const point = { lat: Number(result.lat), lng: Number(result.lon) };
+    if (!Number.isFinite(point.lat) || !Number.isFinite(point.lng)) return;
+    const label = formatShortAddress(result, addressInput.trim());
+    setPickedPoint(point);
+    setPickedAddress(label);
+    setAddressInput(label);
+    setSearchResults([]);
+  };
+
   const selectDirectAddress = () => {
-    const label = addressInput.trim();
-    if (!label) return;
-    onSelect({ lat: pickedPoint?.lat, lng: pickedPoint?.lng, label });
+    const label = pickedAddress || addressInput.trim();
+    if (!label || !pickedPoint) return;
+    onSelect({ lat: pickedPoint.lat, lng: pickedPoint.lng, label });
   };
 
   return (
@@ -177,7 +254,22 @@ function MeetingPlacePicker({ onBack, onSelect }) {
         <AddressButton type="button" onClick={handleAddressSearch} disabled={isSearching}>
           {isSearching ? "검색 중" : "검색"}
         </AddressButton>
-        <AddressButton type="button" onClick={selectDirectAddress} disabled={!addressInput.trim()}>
+        <SelectedAddress>{pickedAddress}</SelectedAddress>
+        {searchResults.length > 0 && (
+          <SearchResultList>
+            {searchResults.map((result) => (
+              <SearchResultButton
+                key={`${result.place_id}-${result.lat}-${result.lon}`}
+                type="button"
+                onClick={() => selectSearchResult(result)}
+              >
+                <SearchResultTitle>{formatShortAddress(result, result.display_name)}</SearchResultTitle>
+                <SearchResultDetail>{result.display_name}</SearchResultDetail>
+              </SearchResultButton>
+            ))}
+          </SearchResultList>
+        )}
+        <AddressButton type="button" onClick={selectDirectAddress} disabled={!pickedPoint}>
           이 주소로 설정
         </AddressButton>
       </AddressSearchPanel>
@@ -224,6 +316,38 @@ export default function GuideRegistrationPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const selectedCategories = splitCommaList(formData.category);
+
+  const handleCategoryToggle = (category) => {
+    setFormData((prev) => {
+      const currentCategories = splitCommaList(prev.category);
+      const nextCategories = currentCategories.includes(category)
+        ? currentCategories.filter((item) => item !== category)
+        : [...currentCategories, category];
+      return { ...prev, category: nextCategories.join(", ") };
+    });
+  };
+
+  const handleDateToggle = (event) => {
+    const date = event.target.value;
+    if (!date) return;
+    setFormData((prev) => {
+      const dates = Array.isArray(prev.scheduleDates) ? prev.scheduleDates : [];
+      const nextDates = dates.includes(date)
+        ? dates.filter((item) => item !== date)
+        : [...dates, date].sort();
+      return { ...prev, scheduleDates: nextDates };
+    });
+    event.target.value = "";
+  };
+
+  const handleDateRemove = (date) => {
+    setFormData((prev) => ({
+      ...prev,
+      scheduleDates: (prev.scheduleDates ?? []).filter((item) => item !== date),
+    }));
+  };
+
   const handleImageAdd = (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -243,10 +367,29 @@ export default function GuideRegistrationPage() {
     setShowMeetingPicker(false);
   };
 
+  const isFormComplete = Boolean(
+    formData.location.trim() &&
+      formData.category.trim() &&
+      (formData.scheduleDates ?? []).length > 0 &&
+      String(formData.price).trim() &&
+      String(formData.duration).trim() &&
+      splitCommaList(formData.startTime).length > 0 &&
+      formData.title.trim() &&
+      formData.description.trim() &&
+      formData.meetingAddress.trim() &&
+      hasMeetingPoint(formData.meetingPlace) &&
+      representativeImage.file
+  );
+  const canSubmit = isFormComplete && !isSubmitting;
+
   const handleRegister = async () => {
     if (isSubmitting) return;
+    if (!isFormComplete) {
+      setErrorMessage("모든 항목을 작성해주세요.");
+      return;
+    }
     const userId = localStorage.getItem("userId");
-    if (!userId) {
+    if (!userId || !hasValidAuthToken()) {
       setErrorMessage("로그인 후 코스를 등록해주세요.");
       return;
     }
@@ -258,40 +401,67 @@ export default function GuideRegistrationPage() {
     setIsSubmitting(true);
     setErrorMessage("");
     try {
-      const times = formData.startTime.split(",").map((time) => time.trim()).filter(Boolean);
-      const today = new Date().toISOString().slice(0, 10);
+      const dates = Array.isArray(formData.scheduleDates) ? formData.scheduleDates : [];
+      const times = splitCommaList(formData.startTime);
+      if (dates.length === 0) {
+        setErrorMessage("예약 가능한 날짜를 선택해주세요.");
+        return;
+      }
+      if (times.length === 0) {
+        setErrorMessage("예약 가능한 시간을 1개 이상 입력해주세요.");
+        return;
+      }
+      if (!hasMeetingPoint(formData.meetingPlace)) {
+        setErrorMessage("만남 장소는 지도에서 위치를 선택해 주세요.");
+        return;
+      }
       const { files: contentImages } = getContentImageDrafts();
+      const durationValue = Number(String(formData.duration).replace(/[^0-9.]/g, "")) || 1;
+      const slotBatchId = createSlotBatchId();
       const postDto = {
         user_id: userId,
         title: formData.title.trim(),
-        subtitle: formData.category.trim(),
+        subtitle: selectedCategories.join(", "),
         price: Number(String(formData.price).replace(/,/g, "")) || 0,
         discount_rate: 0,
-        duration: `${formData.duration || 1}시간`,
+        duration: `${durationValue}시간`,
         max_participants: 4,
         city_name: formData.location.trim(),
         country: "",
         lat: formData.meetingPlace?.lat,
         lng: formData.meetingPlace?.lng,
+        meetingAddress: formData.meetingAddress,
+        meetingPoint: formData.meetingAddress,
+        meetingPointAddress: formData.meetingAddress,
+        meetingPointLat: formData.meetingPlace?.lat,
+        meetingPointLng: formData.meetingPlace?.lng,
         contentBlocks: buildContentBlocks(formData.description, formData.meetingAddress),
-        tags: formData.category ? [{ langCode: "ko", tagName: formData.category.trim() }] : [],
-        schedules: [
-          {
-            date: today,
-            timeSlots: times.map((time, index) => ({
-              id: `slot_${Date.now()}_${index}`,
-              time,
-              status: "OPEN",
-              maxCapacity: 4,
-              bookedCount: 0,
-            })),
-          },
-        ],
+        tags: selectedCategories.map((tagName) => ({ langCode: "ko", tagName })),
+        schedules: dates.map((date, dateIndex) => ({
+          date,
+          timeSlots: times.map((time, index) => ({
+            id: `slot_${slotBatchId}_${date.replaceAll("-", "")}_${dateIndex}_${time.replace(/[^0-9]/g, "")}_${index}`,
+            time,
+            status: "OPEN",
+            maxCapacity: 4,
+            bookedCount: 0,
+          })),
+        })),
       };
 
       const createdPost = await createPost(postDto, {
         courseImages: [representativeImage.file],
         contentImages,
+      });
+      cacheLocalPost({
+        ...createdPost,
+        ...postDto,
+        postId: createdPost.postId ?? createdPost.post_id ?? createdPost.id,
+        userId,
+        images: createdPost.images ?? [],
+        contentBlocks: postDto.contentBlocks,
+        availableSchedules: postDto.schedules,
+        schedules: postDto.schedules,
       });
       console.log("[Tomorang] 게시물 등록 응답:", createdPost);
 
@@ -328,7 +498,38 @@ export default function GuideRegistrationPage() {
           </FormGroup>
           <FormGroup>
             <Label>카테고리</Label>
-            <Input name="category" placeholder="풍경, 사진, 맛집..." value={formData.category} onChange={handleInputChange} />
+            <CategoryChipGroup>
+              {REGISTRATION_CATEGORY_ROWS.map((row) => (
+                <CategoryChipRow key={row.join("-")}>
+                  {row.map((category) => {
+                    const selected = selectedCategories.includes(category);
+                    return (
+                      <CategoryChip
+                        key={category}
+                        type="button"
+                        $selected={selected}
+                        $length={category.length}
+                        onClick={() => handleCategoryToggle(category)}
+                      >
+                        {category}
+                      </CategoryChip>
+                    );
+                  })}
+                </CategoryChipRow>
+              ))}
+            </CategoryChipGroup>
+          </FormGroup>
+          <FormGroup>
+            <Label>예약 가능 날짜</Label>
+            <DateInput type="date" onChange={handleDateToggle} />
+            <DateChipRow>
+              {(formData.scheduleDates ?? []).map((date) => (
+                <DateChip key={date} type="button" onClick={() => handleDateRemove(date)}>
+                  {date}
+                  <DateChipRemove aria-hidden="true">×</DateChipRemove>
+                </DateChip>
+              ))}
+            </DateChipRow>
           </FormGroup>
           <DoubleFormGroup>
             <FormGroup>
@@ -390,7 +591,11 @@ export default function GuideRegistrationPage() {
         </FormSection>
         <ButtonGroup>
           {errorMessage && <ErrorText>{errorMessage}</ErrorText>}
-          <ReserveButton isValid={!isSubmitting} onClick={handleRegister} />
+          <ReserveButton
+            isValid={canSubmit}
+            label={isSubmitting ? "작성 중..." : "작성하기"}
+            onClick={handleRegister}
+          />
         </ButtonGroup>
       </FormContainer>
     </PageWrapper>
@@ -462,7 +667,7 @@ const AddressSearchPanel = styled.div`
   display: grid;
   grid-template-columns: 1fr 72px;
   gap: 8px;
-  padding: 12px 16px;
+  padding: 14px 16px 12px;
   border-bottom: 1px solid #f3f4f3;
   background: #fff;
   box-sizing: border-box;
@@ -472,11 +677,12 @@ const AddressInput = styled.input`
   grid-column: 1 / 2;
   width: 100%;
   height: 42px;
-  padding: 0 12px;
+  padding: 0 14px;
   border: 1px solid #dadada;
-  border-radius: 10px;
+  border-radius: 12px;
   box-sizing: border-box;
-  font-size: 13px;
+  font-size: 14px;
+  font-family: "Pretendard", "Noto Sans KR", sans-serif;
   outline: none;
   &:focus { border-color: #c5f598; }
 `;
@@ -485,13 +691,72 @@ const AddressButton = styled.button`
   min-width: 0;
   height: 42px;
   border: 0;
-  border-radius: 10px;
+  border-radius: 12px;
   background: ${({ disabled }) => (disabled ? "#eefbe3" : "#c5f598")};
   color: ${({ disabled }) => (disabled ? "#acacac" : "#111")};
   font-size: 12px;
   font-weight: 700;
   cursor: ${({ disabled }) => (disabled ? "default" : "pointer")};
   &:last-child { grid-column: 1 / 3; }
+`;
+
+const SelectedAddress = styled.p`
+  grid-column: 1 / 3;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f7ffef;
+  color: #4e4e4e;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 19px;
+  word-break: keep-all;
+`;
+
+const SearchResultList = styled.div`
+  grid-column: 1 / 3;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 148px;
+  overflow-y: auto;
+`;
+
+const SearchResultButton = styled.button`
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #f3f4f3;
+  border-radius: 10px;
+  background: #fff;
+  color: #111;
+  font-family: "Pretendard", "Noto Sans KR", sans-serif;
+  font-size: 12px;
+  line-height: 17px;
+  text-align: left;
+  cursor: pointer;
+
+  &:active {
+    background: #f7ffef;
+  }
+`;
+
+const SearchResultTitle = styled.span`
+  display: block;
+  color: #111;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 18px;
+`;
+
+const SearchResultDetail = styled.span`
+  display: block;
+  margin-top: 3px;
+  color: #9b9b9b;
+  font-size: 11px;
+  line-height: 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 const PageWrapper = styled.div`
@@ -557,6 +822,67 @@ const Input = styled.input`
     border-color: #c5f598;
     background-color: #fafafa;
   }
+`;
+const CategoryChipGroup = styled.div`
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+`;
+const CategoryChipRow = styled.div`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+const CategoryChip = styled.button`
+  height: 34px;
+  width: ${({ $length }) => {
+    if ($length >= 5) return "112px";
+    if ($length >= 4) return "96px";
+    return "58px";
+  }};
+  padding: 0 12px;
+  border: ${({ $selected }) => ($selected ? "1px solid #c5f598" : "1px solid #dadada")};
+  border-radius: 60px;
+  background: ${({ $selected }) => ($selected ? "#c5f598" : "#fff")};
+  color: #111;
+  font-family: "Noto Sans KR", sans-serif;
+  font-size: 12px;
+  font-weight: ${({ $selected }) => ($selected ? 700 : 500)};
+  cursor: pointer;
+  white-space: nowrap;
+`;
+const DateInput = styled(Input)`
+  cursor: pointer;
+`;
+const DateChipRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  min-height: 32px;
+`;
+const DateChip = styled.button`
+  height: 32px;
+  padding: 0 10px 0 12px;
+  border: 1px solid #c5f598;
+  border-radius: 16px;
+  background: #f7ffef;
+  color: #111;
+  font-family: "Noto Sans KR", sans-serif;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+`;
+const DateChipRemove = styled.span`
+  color: #7ca65b;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
 `;
 const PhotoBox = styled.div`
   width: 100%;
@@ -629,6 +955,7 @@ const DetailText = styled.p`
   white-space: pre-line;
 `;
 const AddressTextInput = styled.input`
+  display: none;
   width: 100%;
   height: 48px;
   padding: 0 12px;

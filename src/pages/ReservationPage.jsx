@@ -9,23 +9,29 @@
  */
 
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import CounterInput from "../components/bookComponents/CounterInput";
 import WarningBanner from "../components/WarningBanner";
 import Header from "../components/Header";
 import { bookReservation, getPostDetail } from "../api/tomorang";
 import { getPostImages } from "../utils/postDisplay";
+import { mergeLocalPostCache } from "../utils/localPostCache";
+import { STATUS } from "../utils/reservationFlow";
 
 const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 export default function ReservationPage() {
+  const { state } = useLocation();
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(1);
   const [request, setRequest] = useState("");
-  const [serverPost, setServerPost] = useState(null);
+  const [serverPost, setServerPost] = useState(() => {
+    const savedPost = state?.post ?? JSON.parse(sessionStorage.getItem("currentCoursePost") || "null");
+    return savedPost ? mergeLocalPostCache(savedPost) : null;
+  });
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -36,8 +42,20 @@ export default function ReservationPage() {
   useEffect(() => {
     let alive = true;
     getPostDetail(postId)
-      .then((post) => {
-        if (alive) setServerPost(post);
+      .then((detail) => {
+        if (!alive) return;
+        setServerPost((prev) =>
+          mergeLocalPostCache({
+            ...prev,
+            ...detail,
+            images: detail.images?.length ? detail.images : prev?.images ?? [],
+            contentBlocks: detail.contentBlocks?.length ? detail.contentBlocks : prev?.contentBlocks ?? [],
+            availableSchedules: detail.availableSchedules?.length
+              ? detail.availableSchedules
+              : prev?.availableSchedules ?? [],
+            schedules: detail.schedules?.length ? detail.schedules : prev?.schedules ?? [],
+          })
+        );
       })
       .catch((error) => console.error("게시물 상세 조회 실패", error));
 
@@ -46,6 +64,13 @@ export default function ReservationPage() {
     };
   }, [postId]);
 
+  useEffect(() => {
+    const firstDate = serverPost?.availableSchedules?.[0]?.date;
+    if (!selectedDate && firstDate) {
+      setSelectedDate(firstDate);
+    }
+  }, [serverPost, selectedDate]);
+
   if (!post) return <div style={{ padding: 40, color: "#ACACAC" }}>코스 정보를 불러오는 중입니다.</div>;
 
   const rawPrice = parseInt(String(post.price).replace(/,/g, ""), 10) || 0;
@@ -53,9 +78,15 @@ export default function ReservationPage() {
     ? Math.round(rawPrice * (1 - post.discountRate / 100))
     : null;
 
+  const availableDates = [
+    ...new Set((post.availableSchedules ?? []).map((schedule) => schedule.date).filter(Boolean)),
+  ];
+
   // 선택된 날짜의 timeSlots
   const currentSlots = selectedDate
-    ? post.availableSchedules.find((s) => s.date === selectedDate)?.timeSlots || []
+    ? (post.availableSchedules ?? [])
+        .filter((schedule) => schedule.date === selectedDate)
+        .flatMap((schedule) => schedule.timeSlots ?? [])
     : [];
 
   const handleReservation = async () => {
@@ -72,9 +103,68 @@ export default function ReservationPage() {
         slotTime: selectedSlot.time,
         adultCount: adults,
         childCount: children,
+        request,
       });
-      const reservationId = result.id || result.reservationId || 1;
-      navigate(`/reservation-status/${reservationId}`);
+      const reservationId = result.id || result.reservationId || result.reservation_id || `local-${Date.now()}`;
+      const requesterId = localStorage.getItem("userId");
+      const reservation = {
+        ...result,
+        reservationId,
+        id: reservationId,
+        requesterId,
+        postId: post.postId,
+        post,
+        slotId: selectedSlot.id,
+        date: selectedDate,
+        time: selectedSlot.time,
+        slotDate: selectedDate,
+        slotTime: selectedSlot.time,
+        adults,
+        children,
+        adultCount: adults,
+        childCount: children,
+        request,
+        meetingPoint:
+          result.meetingPoint ??
+          result.meeting_point ??
+          post.meetingPoint ??
+          post.meeting_point ??
+          post.meetingAddress ??
+          post.meeting_address ??
+          post.cityName ??
+          "",
+        meetingPointAddress:
+          result.meetingPointAddress ??
+          result.meeting_point_address ??
+          result.meetingAddress ??
+          result.meeting_address ??
+          post.meetingPointAddress ??
+          post.meeting_point_address ??
+          post.meetingAddress ??
+          post.meeting_address ??
+          "",
+        meetingPointLat:
+          result.meetingPointLat ??
+          result.meeting_point_lat ??
+          result.lat ??
+          result.latitude ??
+          post.meetingPointLat ??
+          post.meeting_point_lat ??
+          post.lat ??
+          post.latitude,
+        meetingPointLng:
+          result.meetingPointLng ??
+          result.meeting_point_lng ??
+          result.lng ??
+          result.longitude ??
+          post.meetingPointLng ??
+          post.meeting_point_lng ??
+          post.lng ??
+          post.longitude,
+        status: result.status ?? STATUS.PENDING,
+      };
+      sessionStorage.setItem(`reservationStatus:${reservationId}`, JSON.stringify({ reservation, post }));
+      navigate(`/reservation-status/${reservationId}`, { state: { reservation, post } });
     } catch (error) {
       setErrorMessage(error.message || "예약에 실패했습니다.");
     } finally {
@@ -122,17 +212,17 @@ export default function ReservationPage() {
         <Section>
           <SectionLabel>날짜 선택</SectionLabel>
           <DateRow>
-            {post.availableSchedules.map((schedule) => {
-              const dateObj = new Date(schedule.date);
+            {availableDates.map((date) => {
+              const dateObj = new Date(date);
               const day = dateObj.getDate();
               const dow = DAYS[dateObj.getDay()];
-              const isSelected = selectedDate === schedule.date;
+              const isSelected = selectedDate === date;
               return (
                 <DateCard
-                  key={schedule.date}
+                  key={date}
                   $selected={isSelected}
                   onClick={() => {
-                    setSelectedDate(schedule.date);
+                    setSelectedDate(date);
                     setSelectedSlot(null);
                   }}
                 >

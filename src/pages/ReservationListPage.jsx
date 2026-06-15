@@ -9,17 +9,10 @@ import StatusFilter from "../components/reservation/StatusFilter";
 import ReservationCard from "../components/reservation/ReservationCard";
 import BottomNav from "../components/mainComponents/BottomNav";
 import { useReservations } from "../components/context/ReservationContext";
-import { getPostDetail } from "../api/tomorang";
+import { getPostDetail, getPostReviews } from "../api/tomorang";
+import { applyReviewCompletion, getReservationStatusLabel } from "../utils/reservationFlow";
 
 const STATUS_OPTIONS = ["대기중", "확정됨", "완료됨", "취소/거절"];
-const STATUS_LABEL = {
-  PENDING: "대기중",
-  CONFIRMED: "확정됨",
-  COMPLETED: "완료됨",
-  REJECTED: "취소/거절",
-  CANCELED: "취소/거절",
-  CANCELLED: "취소/거절",
-};
 
 const getReservationPostId = (reservation) =>
   reservation.postId ?? reservation.post_id ?? reservation.post?.postId ?? reservation.post?.post_id ?? reservation.post?.id;
@@ -28,8 +21,9 @@ const getReservationId = (reservation) =>
   reservation.reservationId ?? reservation.reservation_id ?? reservation.id;
 
 export default function ReservationListPage() {
-  const [selectedStatus, setSelectedStatus] = useState("확정됨");
+  const [selectedStatus, setSelectedStatus] = useState("대기중");
   const [postMap, setPostMap] = useState({});
+  const [reviewMap, setReviewMap] = useState({});
   const navigate = useNavigate();
   const { reservations, isLoading, errorMessage } = useReservations();
 
@@ -62,12 +56,47 @@ export default function ReservationListPage() {
     };
   }, [postMap, reservations]);
 
+  useEffect(() => {
+    let alive = true;
+    const postIds = [
+      ...new Set(
+        reservations
+          .map(getReservationPostId)
+          .filter((postId) => postId && !reviewMap[String(postId)])
+      ),
+    ];
+
+    Promise.all(
+      postIds.map((postId) =>
+        getPostReviews(postId)
+          .then((reviews) => [String(postId), reviews])
+          .catch(() => [String(postId), []])
+      )
+    ).then((entries) => {
+      if (!alive || entries.length === 0) return;
+      setReviewMap((prev) => ({ ...prev, ...Object.fromEntries(entries) }));
+    });
+
+    return () => {
+      alive = false;
+    };
+  }, [reservations, reviewMap]);
+
   const filtered = useMemo(
     () =>
-      reservations.filter(
-        (reservation) => (STATUS_LABEL[reservation.status] ?? reservation.status) === selectedStatus
-      ),
-    [reservations, selectedStatus]
+      reservations
+        .map((reservation) => {
+          const postId = getReservationPostId(reservation);
+          return applyReviewCompletion(reservation, reviewMap[String(postId)] ?? []);
+        })
+        .filter((reservation) => {
+          const statusLabel = getReservationStatusLabel(reservation);
+          if (selectedStatus === "취소/거절") {
+            return statusLabel === "거절됨" || statusLabel === "취소됨";
+          }
+          return statusLabel === selectedStatus;
+        }),
+    [reservations, reviewMap, selectedStatus]
   );
 
   return (
@@ -92,10 +121,15 @@ export default function ReservationListPage() {
                 post={post}
                 date={reservation.date}
                 time={reservation.time}
+                statusBadge={selectedStatus === "취소/거절" ? "취소/거절" : ""}
                 dateIcon={DateIcon}
                 clockIcon={Clocklogo}
                 nextIcon={NextButton}
-                onClick={() => navigate(`/reservation-status/${getReservationId(reservation)}`)}
+                onClick={() =>
+                  navigate(`/reservation-status/${getReservationId(reservation)}`, {
+                    state: { reservation, post },
+                  })
+                }
               />
             );
           })
