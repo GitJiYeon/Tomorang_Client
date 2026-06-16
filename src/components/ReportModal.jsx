@@ -217,7 +217,7 @@ const Overlay = styled.div`
 `;
 
 const ModalSheet = styled.div`
-  width: min(390px, 100vw);
+  width: min(var(--app-page-width), 100vw);
   min-height: 430px;
   background: #fff;
   border-radius: 24px 24px 0 0;
@@ -319,7 +319,7 @@ const Toast = styled.div`
   bottom: 83px;
   left: 50%;
   transform: translateX(-50%);
-  width: 348px;
+  width: var(--app-content-width);
   min-height: 72px;
   background: #c5f598;
   border-radius: 82px;

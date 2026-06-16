@@ -78,7 +78,7 @@ export default function FilterBar({ onFilterChange, defaultCategory = "애니메
 const Wrapper = styled.div`
   display: flex;
   align-items: center;
-  width: 390px;
+  width: var(--app-page-width);
   padding-top: 16px;
   padding-left: 21px;
   padding-bottom: 5px;

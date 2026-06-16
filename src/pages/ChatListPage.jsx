@@ -214,7 +214,7 @@ export default function ChatListPage() {
 }
 
 const PageWrapper = styled.div`
-  width: min(390px, 100vw);
+  width: min(var(--app-page-width), 100vw);
   height: 100dvh;
   margin: 0 auto;
   background: #fff;
@@ -227,7 +227,7 @@ const Content = styled.div`
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 12px 16px calc(100px + env(safe-area-inset-bottom));
+  padding: 12px 16px var(--app-bottom-nav-reserved-space);
   scrollbar-width: none;
 
   &::-webkit-scrollbar {

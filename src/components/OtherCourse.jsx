@@ -39,7 +39,7 @@ export default function OtherCourse({ otherPosts }) {
 }
 
 const Container = styled.div`
-  width: 390px;
+  width: var(--app-page-width);
   margin: 0 auto;
   padding: 30px 0;
   background-color: #fff;

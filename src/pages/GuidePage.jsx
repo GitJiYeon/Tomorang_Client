@@ -183,7 +183,7 @@ export default function GuidePage() {
 
 const PageWrapper = styled.div`
   font-family: "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
-  width: min(390px, 100vw);
+  width: min(var(--app-page-width), 100vw);
   height: 100dvh;
   max-height: 100dvh;
   margin: 0 auto;
@@ -199,7 +199,7 @@ const ContentArea = styled.div`
   min-height: 0;
   overflow-y: auto;
   padding: 12px;
-  padding-bottom: calc(100px + env(safe-area-inset-bottom));
+  padding-bottom: var(--app-bottom-nav-reserved-space);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -229,7 +229,7 @@ const StateArea = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 30px 20px calc(100px + env(safe-area-inset-bottom));
+  padding: 30px 20px var(--app-bottom-nav-reserved-space);
   background-color: #fff;
 `;
 

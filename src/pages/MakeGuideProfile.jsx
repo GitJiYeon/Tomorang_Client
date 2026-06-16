@@ -194,7 +194,7 @@ export default function MakeGuideProfile() {
 }
 
 const Wrapper = styled.div`
-  width: 390px;
+  width: var(--app-page-width);
   min-height: 100dvh;
   margin: 0 auto;
   padding: 24px 0 16px;
@@ -319,7 +319,7 @@ const Bottom = styled.div`
 `;
 
 const ErrorText = styled.p`
-  width: 348px;
+  width: var(--app-content-width);
   margin: 8px auto 0;
   color: #d93025;
   font-family: Pretendard, sans-serif;

@@ -90,7 +90,7 @@ export default function MyReviewCard({ review, time, onClick }) {
 /* ─── Styled Components ─── */
 
 const Card = styled.div`
-  width: 348px;
+  width: var(--app-content-width);
   max-height: 346px;
   border: 1px solid #DADADA;
   border-radius: 12px;

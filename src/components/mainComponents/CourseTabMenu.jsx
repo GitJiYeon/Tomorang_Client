@@ -29,7 +29,7 @@ const MenuContainer = styled.div`
   border-radius: 140px;
   background: #222;
   padding: 7px 8px;
-  width: 350px;
+  width: var(--app-bottom-nav-width);
   height: 56px;
   margin: 0 auto;
   box-sizing: border-box;

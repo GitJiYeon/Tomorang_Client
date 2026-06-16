@@ -250,13 +250,13 @@ export default function MainPage() {
 
 const PageWrapper = styled.div`
   font-family: "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
-  width: min(390px, 100vw);
+  width: min(var(--app-page-width), 100vw);
   height: 100dvh;
   margin: 0 auto;
   background-color: #fff;
   overflow-x: hidden;
   overflow-y: auto;
-  padding-bottom: calc(90px + env(safe-area-inset-bottom));
+  padding-bottom: var(--app-bottom-nav-reserved-space);
   position: relative;
   scrollbar-width: none;
 `;

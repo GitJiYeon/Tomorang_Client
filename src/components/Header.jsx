@@ -33,7 +33,7 @@ function Header({coment, path, onBack}) {
   );
 }
 const Container = styled.div`
-  width: 390px;
+  width: var(--app-page-width);
   height: 56px;
   display: flex;
   align-items: center;
@@ -87,7 +87,7 @@ const Spacer = styled.div`
   width: 40px; 
 `;
 const Border = styled.div`
-  width: 390px;
+  width: var(--app-page-width);
   height: 1px;
   background: #F3F4F3;
   margin: 0 auto;

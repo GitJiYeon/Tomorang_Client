@@ -170,7 +170,7 @@ export default function GuideReservationListPage() {
 }
 
 const PageWrapper = styled.div`
-  width: min(390px, 100vw);
+  width: min(var(--app-page-width), 100vw);
   height: 100dvh;
   max-height: 100dvh;
   margin: 0 auto;
@@ -188,7 +188,7 @@ const CardList = styled.div`
   align-items: center;
   gap: 18px;
   padding: 20px;
-  padding-bottom: calc(100px + env(safe-area-inset-bottom));
+  padding-bottom: var(--app-bottom-nav-reserved-space);
   background: #fff;
   min-height: 0;
   overflow-y: auto;

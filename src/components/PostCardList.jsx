@@ -131,7 +131,7 @@ function DeleteIcon() {
 }
 
 const CardContainer = styled.div`
-  width: 348px;
+  width: var(--app-content-width);
   height: 240px;
   background: #ffffff;
   border-radius: 24px;

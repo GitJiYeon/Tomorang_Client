@@ -169,7 +169,7 @@ export default function NotificationPage() {
 }
 
 const Wrapper = styled.div`
-  width: min(390px, 100vw);
+  width: min(var(--app-page-width), 100vw);
   margin: 0 auto;
   height: 100dvh;
   max-height: 100dvh;

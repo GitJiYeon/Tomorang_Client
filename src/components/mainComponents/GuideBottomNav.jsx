@@ -49,9 +49,9 @@ export default function GuideBottomNav({ activeIndex = 0 }) {
 const NavPosition = styled.div`
   position: fixed;
   right: 0;
-  bottom: 16px;
+  bottom: var(--app-bottom-nav-bottom);
   left: 0;
-  width: min(390px, 100vw);
+  width: min(var(--app-page-width), 100vw);
   max-width: 100vw;
   margin: 0 auto;
   display: flex;
@@ -61,8 +61,8 @@ const NavPosition = styled.div`
 `;
 
 const NavBar = styled.nav`
-  width: 350px;
-  height: 68px;
+  width: var(--app-bottom-nav-width);
+  height: var(--app-bottom-nav-height);
   padding: 0 10px;
   border-radius: 70px;
   background: #222;
@@ -75,7 +75,7 @@ const NavBar = styled.nav`
 `;
 
 const NavButton = styled.button`
-  width: 78px;
+  flex: 1;
   height: 52px;
   border: none;
   border-radius: 70px;

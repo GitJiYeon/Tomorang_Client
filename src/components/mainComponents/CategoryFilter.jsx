@@ -15,9 +15,9 @@ const CATEGORIES = [
 ];
 
 const Wrapper = styled.div`
-  width: 391px;
+  width: min(var(--app-page-width), 100vw);
   background: #f3f4f3;
-  margin-left: -1px;
+  margin-left: 0;
   display: flex;
   flex-direction: column;
   padding-bottom: 20px;

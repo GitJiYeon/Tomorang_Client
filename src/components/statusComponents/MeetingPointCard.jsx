@@ -89,7 +89,7 @@ const SectionTitle = styled.div`
 `;
 
 const LockedBox = styled.div`
-  width: 348px;
+  width: var(--app-content-width);
   height: 185px;
   border-radius: 12px;
   background: #F3F4F3;
@@ -108,14 +108,14 @@ const LockedText = styled.div`
 `;
 
 const MapWrap = styled.div`
-  width: 348px;
+  width: var(--app-content-width);
   height: 140px;
   border-radius: 12px;
   overflow: hidden;
 `;
 
 const AddressCard = styled.div`
-  width: 348px;
+  width: var(--app-content-width);
   height: 65px;
   border-radius: 12px;
   background: #EDFCDF;

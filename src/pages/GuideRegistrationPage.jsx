@@ -648,7 +648,7 @@ const LeafletZFix = createGlobalStyle`
 `;
 
 const MeetingPageWrapper = styled.div`
-  max-width: 390px;
+  max-width: var(--app-page-width);
   min-height: 100vh;
   margin: 0 auto;
   background: #fff;
@@ -761,7 +761,7 @@ const SearchResultDetail = styled.span`
 
 const PageWrapper = styled.div`
   font-family: "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
-  max-width: 390px;
+  max-width: var(--app-page-width);
   margin: 0 auto;
   min-height: 100vh;
   background-color: #fff;

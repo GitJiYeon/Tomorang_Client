@@ -53,7 +53,7 @@ const Card = styled.div`
   border: 1px solid #F3F4F3;
   background: #fff;
   cursor: pointer;
-  width: 348px;
+  width: var(--app-content-width);
   box-sizing: border-box;
 `;
 const NextIcon = styled.img`

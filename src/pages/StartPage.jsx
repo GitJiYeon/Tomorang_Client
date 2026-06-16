@@ -18,7 +18,7 @@ export default StartPage;
 
 const Container = styled.div`
     background-color:#C5F598;
-    width: min(390px, 100vw);
+    width: min(var(--app-page-width), 100vw);
     height: 100dvh;
     min-height: 100dvh;
     max-height: 100dvh;

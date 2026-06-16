@@ -128,7 +128,7 @@ export default function MainMorePage() {
 }
 
 const PageWrapper = styled.div`
-  width: min(390px, 100vw);
+  width: min(var(--app-page-width), 100vw);
   min-height: 100vh;
   margin: 0 auto;
   background: #fff;

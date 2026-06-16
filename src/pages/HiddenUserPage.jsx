@@ -145,7 +145,7 @@ export default function HiddenUserPage() {
 }
 
 const PageWrapper = styled.div`
-  width: min(390px, 100vw);
+  width: min(var(--app-page-width), 100vw);
   height: 100dvh;
   max-height: 100dvh;
   margin: 0 auto;
@@ -172,7 +172,7 @@ const ListWrapper = styled.div`
 `;
 
 const HiddenCard = styled.div`
-  width: 348px;
+  width: var(--app-content-width);
   min-height: 176px;
   border-radius: 16px;
   border: 1px solid #dadada;

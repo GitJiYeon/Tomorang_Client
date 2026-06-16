@@ -212,7 +212,7 @@ export default function GuideProfilePage() {
 }
 
 const PageWrapper = styled.div`
-  width: min(390px, 100vw);
+  width: min(var(--app-page-width), 100vw);
   margin: 0 auto;
   background-color: #fff;
   display: flex;
@@ -249,7 +249,7 @@ const PlaceholderText = styled.div`
 `;
 
 const ErrorBox = styled.div`
-  width: min(390px, 100vw);
+  width: min(var(--app-page-width), 100vw);
   margin: 100px auto;
   text-align: center;
   line-height: 1.6;

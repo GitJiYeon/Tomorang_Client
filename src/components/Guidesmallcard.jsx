@@ -23,7 +23,7 @@ export default function GuideSmallCard({ guide, onClick }) {
 }
 
 const Card = styled.div`
-  width: 348px;
+  width: var(--app-content-width);
   height: 114px;
   border-radius: 12px;
   border: 1px solid #DADADA;

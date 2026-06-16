@@ -130,7 +130,7 @@ const PageBg = styled.div`
 `;
 
 const Card = styled.div`
-  width: 348px;
+  width: var(--app-content-width);
   border-radius: 12px;
   background: #fff;
   padding: 20px 16px;

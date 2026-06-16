@@ -213,8 +213,8 @@ const slideDown = keyframes`
 `;
 
 const PageContainer = styled.div`
-  width: 390px;
-  height: 844px;
+  width: var(--app-page-width);
+  height: var(--app-page-height);
   background-color: #C5F598;
   margin: 0 auto;
   display: flex;
@@ -257,7 +257,7 @@ const WhiteCard = styled.div`
 `;
 
 const FormContainer = styled.div`
-  width: 348px;
+  width: var(--app-content-width);
   height: 210px;
   padding: 0 21px;
   margin-top: 24px;
@@ -281,7 +281,7 @@ const InputGroup = styled.div`
   }
 
   input {
-    width: 348px;
+    width: var(--app-content-width);
     height: 56px;
     border: 1px solid #DADADA;
     border-radius: 12px;
@@ -328,7 +328,7 @@ const CustomCheckbox = styled.div`
 `;
 
 const ErrorText = styled.p`
-  width: 330px;
+  width: calc(var(--app-page-width) - 60px);
   margin: 8px auto 0;
   color: #d93025;
   font-family: Pretendard, sans-serif;
@@ -337,7 +337,7 @@ const ErrorText = styled.p`
 `;
 
 const LoginButton = styled.button`
-  width: 330px;
+  width: calc(var(--app-page-width) - 60px);
   height: 54px;
   background-color: ${({ disabled }) => (disabled ? "#4E4E4E" : "#121212")};
   color: #ffffff;
@@ -366,8 +366,8 @@ const Catchphrase = styled.p`
 
 const Logowrap = styled.div`
   background-color: #C5F598;
-  width: 390px;
-  height: 844px;
+  width: var(--app-page-width);
+  height: var(--app-page-height);
   display: flex;
   flex-direction: column;
   align-items: center;

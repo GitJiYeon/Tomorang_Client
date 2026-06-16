@@ -335,7 +335,7 @@ export default function ReviewWritePage() {
 /* ─── Styled Components ─── */
 
 const Wrapper = styled.div`
-  max-width: 390px;
+  max-width: var(--app-page-width);
   margin: 0 auto;
   min-height: 100vh;
   background: #fff;
@@ -564,7 +564,7 @@ const ReviewTextArea = styled.textarea`
 
 /* 등록 버튼 */
 const SubmitBtn = styled.button`
-  width: 348px;
+  width: var(--app-content-width);
   height: 56px;
   border-radius: 12px;
   background: ${({ $disabled }) => ($disabled ? "#EDFCDF" : "#C5F598")};

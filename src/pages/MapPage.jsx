@@ -411,7 +411,7 @@ const LeafletZFix = createGlobalStyle`
 `;
 
 const Wrapper = styled.div`
-  width: min(390px, 100vw);
+  width: min(var(--app-page-width), 100vw);
   margin: 0 auto;
   height: 100dvh;
   max-height: 100dvh;
@@ -452,7 +452,7 @@ const BottomSheet = styled.div`
   bottom: 0;
   left: 0;
   right: 0;
-  width: min(390px, 100vw);
+  width: min(var(--app-page-width), 100vw);
   height: ${({ $expanded }) => ($expanded ? "calc(100dvh - 96px)" : "330px")};
   background: #fff;
   border-top-left-radius: 24px;
@@ -592,7 +592,7 @@ const FloatingCard = styled.div`
   position: absolute;
   bottom: 144px;
   left: 21px;
-  width: 348px;
+  width: var(--app-content-width);
   height: 252px;
   border-radius: 16px;
   overflow: hidden;

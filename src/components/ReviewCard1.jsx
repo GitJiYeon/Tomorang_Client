@@ -126,7 +126,7 @@ export default function ReviewCard1({ review, variant = "default" }) {
 }
 
 const Card = styled.div`
-  width: min(348px, calc(100vw - 42px));
+  width: min(var(--app-content-width), calc(100vw - 42px));
   max-height: 346px;
   border-radius: 12px;
   background: #fff;
@@ -282,7 +282,7 @@ const ImagePreviewOverlay = styled.div`
 `;
 
 const PreviewImage = styled.img`
-  max-width: min(100%, 390px);
+  max-width: min(100%, var(--app-page-width));
   max-height: 82dvh;
   object-fit: contain;
   border-radius: 12px;

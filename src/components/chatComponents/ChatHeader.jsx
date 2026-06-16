@@ -30,7 +30,7 @@ export default function ChatHeader({ name, subtitle, onFlag }) {
 }
 
 const Header = styled.div`
-  width: 390px;
+  width: var(--app-page-width);
   display: flex;
   align-items: center;
   justify-content: space-between;

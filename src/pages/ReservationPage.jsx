@@ -317,7 +317,7 @@ export default function ReservationPage() {
 /* ─── Styled Components ─── */
 
 const Wrapper = styled.div`
-  max-width: 390px;
+  max-width: var(--app-page-width);
   margin: 0 auto;
   min-height: 100vh;
   background: #fff;
@@ -548,7 +548,7 @@ const EmptySlot = styled.div`
 
 /* 요청사항 */
 const RequestInput = styled.textarea`
-  width: 347px;
+  width: var(--app-content-width);
   height: 110px;
   border-radius: 12px;
   border: 1px solid #DADADA;
