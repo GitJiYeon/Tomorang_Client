@@ -44,6 +44,7 @@ export default function GuideSelectLanguage() {
 
   const handleSelect = ({ languageCode, level }) => {
     setSelections((prev) => ({ ...prev, [languageCode]: level }));
+    setOpenLanguage(null); // 숙련도 선택 시 드롭다운 자동 닫기
   };
 
   return (

@@ -22,15 +22,15 @@ function SelectLanguage() {
   const [selections, setSelections] = useState(
     Object.fromEntries(LANGUAGES.map((l) => [l.languageCode, null]))
   );
-  const [openCode, setOpenCode] = useState(null); // 추가
+  const [openCode, setOpenCode] = useState(null);
 
   const handleToggle = (languageCode) => {
-    setOpenCode((prev) => (prev === languageCode ? null : languageCode)); // 추가
+    setOpenCode((prev) => (prev === languageCode ? null : languageCode));
   };
 
   const handleSelect = ({ languageCode, level }) => {
     setSelections((prev) => ({ ...prev, [languageCode]: level }));
-    // setOpenCode 없음 → 선택해도 드롭다운 유지
+    setOpenCode(null); // 숙련도 선택 시 드롭다운 자동 닫기
   };
 
   const isValid = Object.values(selections).some(Boolean);
@@ -66,8 +66,8 @@ function SelectLanguage() {
             subtitle={lang.subtitle}
             languageCode={lang.languageCode}
             selectedLevel={selections[lang.languageCode]}
-            isOpen={openCode === lang.languageCode} // 추가
-            onToggle={handleToggle}                 // 추가
+            isOpen={openCode === lang.languageCode}
+            onToggle={handleToggle}
             onSelect={handleSelect}
           />
         ))}

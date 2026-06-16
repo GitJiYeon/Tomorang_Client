@@ -63,6 +63,7 @@ export default function LanguageEditPage() {
 
   const handleSelect = ({ languageCode, level }) => {
     setSelections((prev) => ({ ...prev, [languageCode]: level }));
+    setOpenCode(null); // 숙련도 선택 시 드롭다운 자동 닫기
   };
 
   const isValid = Object.values(selections).some(Boolean);

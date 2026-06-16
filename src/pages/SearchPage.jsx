@@ -111,13 +111,13 @@ export default function SearchPage() {
           {!expanded && (
             <FadeOverlay onClick={() => setExpanded(true)}>
               <ToggleBtn>
-                <img src={ChevronIcon} alt="expand" width={14} height={14} />
+                <img src={ChevronIcon} alt="expand" width={14} height={14} style={{ transform: "rotate(180deg)" }} />
               </ToggleBtn>
             </FadeOverlay>
           )}
           {expanded && (
             <CollapseBtn onClick={() => setExpanded(false)}>
-              <img src={ChevronIcon} alt="collapse" width={14} height={14} style={{ transform: "rotate(180deg)" }} />
+              <img src={ChevronIcon} alt="collapse" width={14} height={14} />
             </CollapseBtn>
           )}
         </TrendingWrapper>
