@@ -33,7 +33,7 @@ const StyledLabel = styled.label`
 `;
 
 const StyledInput = styled.input`
-  width: 348px;
+  width: var(--app-content-width);
   height: 56px;
   border: 1px solid #DADADA;
   border-radius: 12px;

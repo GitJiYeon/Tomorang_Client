@@ -137,7 +137,7 @@ export default function CourseDescription({ post }) {
 }
 
 const Card = styled.div`
-  width: 390px;
+  width: var(--app-page-width);
   margin: 0 auto;
   padding: 0 24px 24px 24px;
   background: #fff;
@@ -147,7 +147,7 @@ const Card = styled.div`
 
 const MainImageWrapper = styled.div`
   position: relative;
-  width: 345px;
+  width: calc(var(--app-page-width) - 45px);
   height: 220px;
   margin-bottom: 21px;
 `;

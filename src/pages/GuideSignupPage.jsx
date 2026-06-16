@@ -94,7 +94,7 @@ export default function GuideSignupPage() {
 }
 
 const Page = styled.div`
-  width: 390px;
+  width: var(--app-page-width);
   min-height: 100dvh;
   margin: 0 auto;
   padding: 24px 0 16px;

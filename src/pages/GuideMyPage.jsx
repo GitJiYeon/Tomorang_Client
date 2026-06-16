@@ -166,7 +166,7 @@ export default function GuideMyPage() {
 }
 
 const PageWrapper = styled.div`
-  width: min(390px, 100vw);
+  width: min(var(--app-page-width), 100vw);
   margin: 0 auto;
   display: flex;
   flex-direction: column;

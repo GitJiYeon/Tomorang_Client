@@ -25,7 +25,7 @@ export default function EmergingCard({ region, lang = "ko", onClick }) {  // ←
 }
 const Card = styled.div`
   position: relative;
-  width: 348px;
+  width: var(--app-content-width);
   height: 110px;
   border-radius: 12px;
   overflow: hidden;

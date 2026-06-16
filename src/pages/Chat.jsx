@@ -422,7 +422,7 @@ export default function Chat() {
 }
 
 const PageWrapper = styled.div`
-  width: 390px;
+  width: var(--app-page-width);
   height: 100dvh;
   margin: 0 auto;
   background-color: #fff;

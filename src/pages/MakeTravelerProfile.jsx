@@ -348,7 +348,7 @@ const Bottom = styled.div`
 `;
 
 const ErrorText = styled.p`
-  width: 348px;
+  width: var(--app-content-width);
   margin: 8px auto 0;
   color: #d93025;
   font-family: Pretendard, sans-serif;

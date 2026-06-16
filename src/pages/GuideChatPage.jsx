@@ -326,7 +326,7 @@ export default function GuideChatPage() {
 }
 
 const PageWrapper = styled.div`
-  width: min(390px, 100vw);
+  width: min(var(--app-page-width), 100vw);
   margin: 0 auto;
   background-color: #fff;
   height: 100dvh;
@@ -343,7 +343,7 @@ const CardList = styled.div`
   align-items: center;
   gap: 16px;
   padding: 16px 21px;
-  padding-bottom: calc(100px + env(safe-area-inset-bottom));
+  padding-bottom: var(--app-bottom-nav-reserved-space);
   background-color: #fff;
   flex: 1;
   min-height: 0;
@@ -383,7 +383,7 @@ const TabButton = styled.button`
 
 const ChatCard = styled.button`
   display: flex;
-  width: 348px;
+  width: var(--app-content-width);
   min-height: 122px;
   padding: 12px;
   align-items: center;

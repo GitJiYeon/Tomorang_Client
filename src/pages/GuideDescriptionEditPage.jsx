@@ -105,7 +105,7 @@ export default function GuideDescriptionEditPage() {
 
 const PageWrapper = styled.div`
   font-family: "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
-  width: min(390px, 100vw);
+  width: min(var(--app-page-width), 100vw);
   min-height: 100vh;
   margin: 0 auto;
   background: #fff;

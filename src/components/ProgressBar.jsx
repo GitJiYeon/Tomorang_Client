@@ -31,7 +31,7 @@ export default ProgressBar;
 
 
 const Container = styled.div`
-  width: 390px;
+  width: var(--app-page-width);
   height: 56px;
   display: flex;
   align-items: center;

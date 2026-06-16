@@ -90,7 +90,7 @@ const Wrap = styled.div`
     padding-bottom:24px;
 `
 const Form = styled.div`
-    width:348px;
+    width:var(--app-content-width);
     height:364px;
 `
 const Bottom = styled.div`

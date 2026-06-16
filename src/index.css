@@ -106,7 +106,16 @@ button {
 }
 
 .app-viewport {
-  width: min(390px, 100vw);
+  --app-page-width: 430px;
+  --app-page-height: 932px;
+  --app-content-width: min(calc(var(--app-page-width) - 42px), calc(100vw - 42px));
+  --app-bottom-nav-width: min(calc(var(--app-page-width) - 40px), calc(100vw - 40px));
+  --app-bottom-nav-height: 68px;
+  --app-bottom-nav-bottom: calc(16px + env(safe-area-inset-bottom));
+  --app-bottom-nav-reserved-space: calc(var(--app-bottom-nav-height) + 32px + env(safe-area-inset-bottom));
+  --app-bottom-action-padding: calc(var(--app-bottom-nav-height) + 36px + env(safe-area-inset-bottom));
+
+  width: min(var(--app-page-width), 100vw);
   height: 100vh;
   height: 100svh;
   height: var(--app-viewport-height, 100dvh);

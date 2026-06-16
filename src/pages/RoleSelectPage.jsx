@@ -92,7 +92,7 @@ const ButtonWrap = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 0 16px;
-  width: 390px;
+  width: var(--app-page-width);
   height: 56px;
 `
 const BackButton = styled.img`
@@ -128,7 +128,7 @@ const CardList = styled.div`
 `;
 
 const SelectCard = styled.div`
-  width:348px;
+  width:var(--app-content-width);
   height: 160px;
 
   background: ${({ $isSelected}) =>

@@ -132,7 +132,7 @@ export default function SearchResultPage() {
 
 const Wrapper = styled.div`
   min-height: 100vh;
-  max-width: 390px;
+  max-width: var(--app-page-width);
   margin: 0 auto;
   background: #fff;
   font-family: "Pretendard", sans-serif;

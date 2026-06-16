@@ -11,16 +11,16 @@ export default function LogoutButton({ onClick, disabled = false }) {
 }
 
 const ButtonWrapper = styled.div`
-  width: min(390px, 100%);
+  width: min(var(--app-page-width), 100%);
   max-width: 100vw;
   display: flex;
   justify-content: center;
-  padding: 20px 0 calc(104px + env(safe-area-inset-bottom));
+  padding: 20px 0 var(--app-bottom-action-padding);
   margin: 0 auto;
 `;
 
 const LogoutContainer = styled.button`
-  width: 348px;
+  width: var(--app-content-width);
   height: 56px;
   border: none;
   border-radius: 213px;

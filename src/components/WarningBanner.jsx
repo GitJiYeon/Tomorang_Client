@@ -21,7 +21,7 @@ export default function WarningBanner({ message, icon }) {
 }
 
 const Banner = styled.div`
-  width: 347px;
+  width: var(--app-content-width);
   height: 50px;
   border-radius: 42px;
   background: #FFF7EC;

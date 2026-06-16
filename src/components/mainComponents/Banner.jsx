@@ -1,13 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
 import { resolvePublicAsset } from "../../utils/publicAsset";
 
 const ArrowIcon = resolvePublicAsset("/assets/bannerImages/linkArrow.svg");
 
 const AUTO_PLAY_INTERVAL = 4000;
+const CARD_GAP = 12;
 
 export default function Banner({ bannerData }) {
   const [idx, setIdx] = useState(0);
+  const [cardStep, setCardStep] = useState(400);
+  const firstCardRef = useRef(null);
 
   const next = () => setIdx((prev) => (prev + 1) % bannerData.length);
 
@@ -16,40 +19,65 @@ export default function Banner({ bannerData }) {
     return () => clearInterval(timer);
   }, [bannerData.length]);
 
-  const handleClick = () => {
-    if (banner.link) window.open(banner.link, "_blank");
-  };
+  useEffect(() => {
+    const updateCardStep = () => {
+      const width = firstCardRef.current?.offsetWidth;
+      if (width) setCardStep(width + CARD_GAP);
+    };
+
+    updateCardStep();
+    window.addEventListener("resize", updateCardStep);
+    return () => window.removeEventListener("resize", updateCardStep);
+  }, []);
 
   return (
     <Wrapper>
       <Viewport>
         <Track
           style={{
-            transform: `translateX(calc(-${idx * 364}px + 50% - 170px))`
+            transform: `translateX(-${idx * cardStep}px)`
           }}
         >
-          {bannerData.map((banner, i) => (
-            <Card key={i} onClick={() => banner.link && window.open(banner.link, "_blank")}>
-              <SlideImg src={resolvePublicAsset(banner.image)} alt={banner.name} />
+          {bannerData.map((banner, i) => {
+            const isBannerOne = banner.image?.includes("banner1");
+            const lightText = !isBannerOne;
 
-              <CategoryTag>{banner.category}</CategoryTag>
-
-              <BottomContent>
-                <CityName>{banner.title}</CityName>
-                <Divider />
-                <Description>{banner.description}</Description>
-              </BottomContent>
-
-              <ArrowBtn
-                onClick={(e) => {
-                  e.stopPropagation();
-                  banner.link && window.open(banner.link, "_blank");
-                }}
+            return (
+              <Card
+                key={i}
+                ref={i === 0 ? firstCardRef : null}
+                onClick={() => banner.link && window.open(banner.link, "_blank")}
               >
-                <img src={ArrowIcon} alt="arrow" style={{ width: 38, height: 38 }} />
-              </ArrowBtn>
-            </Card>
-          ))}
+                <SlideImg
+                  src={resolvePublicAsset(banner.image)}
+                  alt={banner.name ?? banner.title ?? "banner"}
+                />
+
+                {banner.category?.trim() && (
+                  <CategoryTag $lightText={lightText}>{banner.category}</CategoryTag>
+                )}
+
+                {(banner.title?.trim() || banner.description?.trim()) && (
+                  <BottomContent>
+                    {banner.title?.trim() && <CityName $lightText={lightText}>{banner.title}</CityName>}
+                    {banner.title?.trim() && banner.description?.trim() && <Divider $lightText={lightText} />}
+                    {banner.description?.trim() && (
+                      <Description $lightText={lightText}>{banner.description}</Description>
+                    )}
+                  </BottomContent>
+                )}
+
+                <ArrowBtn
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    banner.link && window.open(banner.link, "_blank");
+                  }}
+                >
+                  <img src={ArrowIcon} alt="arrow" style={{ width: 38, height: 38 }} />
+                </ArrowBtn>
+              </Card>
+            );
+          })}
         </Track>
       </Viewport>
     </Wrapper>
@@ -58,14 +86,14 @@ export default function Banner({ bannerData }) {
 const Viewport = styled.div`
   width: 100%;
   overflow: hidden;
-  display: flex;
-  justify-content: center;
-  padding:10px;
+  padding: 10px 0;
+  box-sizing: border-box;
 `;
 
 const Track = styled.div`
   display: flex;
   gap: 12px;
+  padding: 0 calc((100% - var(--app-content-width)) / 2);
   transition: transform 0.6s ease;
 `;
 
@@ -78,8 +106,8 @@ const Wrapper = styled.div`
 
 const Card = styled.div`
   position: relative;
-  width: 348px;
-  height: 350px;
+  width: var(--app-content-width);
+  aspect-ratio: 348 / 350;
   border-radius: 12px;
   overflow: hidden;
   cursor: pointer;
@@ -93,6 +121,7 @@ const SlideImg = styled.img`
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
   display: block;
 `;
 
@@ -104,8 +133,8 @@ const CategoryTag = styled.span`
   width: 45px;
   height: 30px;
   border-radius: 60px;
-  border: 1px solid #111;
-  color: #111;
+  border: 1px solid ${({ $lightText }) => ($lightText ? "#fff" : "#111")};
+  color: ${({ $lightText }) => ($lightText ? "#fff" : "#111")};
   font-size: 12px;
   font-weight: 600;
   padding: 4px 12px;
@@ -126,7 +155,7 @@ const BottomContent = styled.div`
 const CityName = styled.div`
   font-size: 12px;
   font-weight: 500;
-  color: #111;
+  color: ${({ $lightText }) => ($lightText ? "#fff" : "#111")};
   letter-spacing: -0.1%;
   line-height: 100%;
   margin-bottom: 10px;
@@ -135,7 +164,7 @@ const CityName = styled.div`
 const Divider = styled.div`
   width: 30px;
   height: 1px;
-  background: #111;
+  background: ${({ $lightText }) => ($lightText ? "#fff" : "#111")};
   margin-bottom: 12px;
   opacity: 0.8;
 `;
@@ -143,7 +172,7 @@ const Divider = styled.div`
 const Description = styled.div`
   font-size: 21px;
   font-weight: 600;
-  color: #111;
+  color: ${({ $lightText }) => ($lightText ? "#fff" : "#111")};
   line-height: 26px;
   letter-spacing: 0.019em;
   white-space: pre-line;

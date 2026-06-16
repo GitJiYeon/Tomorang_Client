@@ -338,7 +338,7 @@ export default function ReservationStatusPage() {
 /* ─── Styled Components ─── */
 
 const Wrapper = styled.div`
-  max-width: 390px;
+  max-width: var(--app-page-width);
   margin: 0 auto;
   min-height: 100vh;
   background: #fff;
@@ -360,7 +360,7 @@ const Section = styled.div`
 `;
 
 const InfoCard = styled.div`
-  width: 348px;
+  width: var(--app-content-width);
   border-radius: 12px;
   border: 1px solid #DADADA;
   background: #FFF;
@@ -403,7 +403,7 @@ const InfoValue = styled.div`
 `;
 
 const RequestCard = styled.div`
-  width: 348px;
+  width: var(--app-content-width);
   height: 133px;
   border-radius: 12px;
   border: 1px solid #DADADA;
@@ -426,7 +426,7 @@ const RequestText = styled.div`
 `;
 
 const ErrorText = styled.p`
-  width: 348px;
+  width: var(--app-content-width);
   margin: 0 auto;
   color: #d93025;
   font-size: 13px;
@@ -435,7 +435,7 @@ const ErrorText = styled.p`
 
 /* 버튼 */
 const ActionBtn = styled.button`
-  width: 348px;
+  width: var(--app-content-width);
   height: 56px;
   border-radius: 12px;
   background: ${({ $disabled }) => ($disabled ? "#EDFCDF" : "#C5F598")};
@@ -457,7 +457,7 @@ const ActionBtn = styled.button`
 `;
 
 const ButtonRow = styled.div`
-  width: 348px;
+  width: var(--app-content-width);
   display: flex;
   gap: 12px;
   align-self: center;
@@ -500,7 +500,7 @@ const RejectBtn = styled.button`
 `;
 
 const ChatBtn = styled.button`
-  width: 348px;
+  width: var(--app-content-width);
   height: 56px;
   border-radius: 12px;
   background: #fff;

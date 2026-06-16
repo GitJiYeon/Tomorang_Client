@@ -35,7 +35,7 @@ export default function NotificationCard({ title, body, timeLabel, isUnread, ico
 }
 
 const Card = styled.div`
-  width: 348px;
+  width: var(--app-content-width);
   height: 120px;
   background: #fff;
   border-radius: 16px;

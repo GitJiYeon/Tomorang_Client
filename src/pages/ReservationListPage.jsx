@@ -143,7 +143,7 @@ export default function ReservationListPage() {
 }
 
 const PageWrapper = styled.div`
-  width: min(390px, 100vw);
+  width: min(var(--app-page-width), 100vw);
   margin: 0 auto;
   background-color: #fff;
   height: 100dvh;
@@ -160,7 +160,7 @@ const CardList = styled.div`
   align-items: center;
   gap: 12px;
   padding: 16px 20px;
-  padding-bottom: calc(100px + env(safe-area-inset-bottom));
+  padding-bottom: var(--app-bottom-nav-reserved-space);
   background-color: #fff;
   flex: 1;
   min-height: 0;

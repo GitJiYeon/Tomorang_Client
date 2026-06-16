@@ -26,9 +26,9 @@ export default function BottomNav({ activeIndex = 0, onNavChange }) {
       style={{
         position: "fixed",
         right: 0,
-        bottom: "calc(16px + env(safe-area-inset-bottom))",
+        bottom: "var(--app-bottom-nav-bottom)",
         left: 0,
-        width: "min(390px, 100vw)",
+        width: "min(var(--app-page-width), 100vw)",
         maxWidth: "100vw",
         margin: "0 auto",
         display: "flex",
@@ -39,8 +39,8 @@ export default function BottomNav({ activeIndex = 0, onNavChange }) {
     >
       <nav
         style={{
-          width: 350,
-          height: 68,
+          width: "var(--app-bottom-nav-width)",
+          height: "var(--app-bottom-nav-height)",
           background: "#222222",
           borderRadius: 70,
           display: "flex",
@@ -64,7 +64,7 @@ export default function BottomNav({ activeIndex = 0, onNavChange }) {
                 navigate(item.path);
               }}
               style={{
-                width: 66.8,
+                flex: 1,
                 height: 52,
                 borderRadius: 70,
                 background: isActive ? "#C5F598" : "transparent",

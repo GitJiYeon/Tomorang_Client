@@ -12,7 +12,7 @@ function OpenButton({ children, onClick, $isExpanded }) {
 
 const Button = styled.button`
   width: 100%;
-  max-width: 348px;
+  max-width: var(--app-content-width);
   height: 56px;
   border-radius: 12px;
   border: 1px solid #C5F598;

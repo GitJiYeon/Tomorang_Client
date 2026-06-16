@@ -37,7 +37,7 @@ const fadeUp = keyframes`
 `;
 
 const Wrapper = styled.div`
-  width: 390px;
+  width: var(--app-page-width);
   min-height: 100dvh;
   margin: 0 auto;
   background: #c5f598;
