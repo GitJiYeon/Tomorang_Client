@@ -1,4 +1,3 @@
-import { useState } from "react";
 import styled from "styled-components";
 
 const LEVELS = [
@@ -7,10 +6,8 @@ const LEVELS = [
   { key: "advanced",     label: "능숙", dots: 3 },
 ];
 
-function LanguageButton({ icon, title, subtitle, languageCode, selectedLevel, onSelect }) {
-  const [open, setOpen] = useState(false);
-
-  const handleToggle = () => setOpen((prev) => !prev);
+function LanguageButton({ icon, title, subtitle, languageCode, selectedLevel, isOpen, onToggle, onSelect }) {
+  const handleToggle = () => onToggle(languageCode);
 
   const handleSelect = (levelKey) => {
     const next = selectedLevel === levelKey ? null : levelKey;
@@ -18,8 +15,7 @@ function LanguageButton({ icon, title, subtitle, languageCode, selectedLevel, on
   };
 
   const isSelected = !!selectedLevel;
-  // 드롭다운 닫혀있고 선택된 상태일 때만 메인버튼 초록 + 스트로크
-  const showActive = isSelected && !open;
+  const showActive = isSelected && !isOpen;
 
   return (
     <Wrapper $active={showActive}>
@@ -31,7 +27,7 @@ function LanguageButton({ icon, title, subtitle, languageCode, selectedLevel, on
         </TextWrapper>
       </Button>
 
-      {open &&
+      {isOpen &&
         LEVELS.map(({ key, label, dots }) => (
           <StepWrapper key={key}>
             <Divider />

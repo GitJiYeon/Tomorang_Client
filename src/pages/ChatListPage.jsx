@@ -173,7 +173,7 @@ export default function ChatListPage() {
           <TabButton
             key={status}
             type="button"
-            $active={selectedStatus === status}
+            $isSelected={selectedStatus === status}
             onClick={() => setSelectedStatus(status)}
           >
             {status}
@@ -236,28 +236,54 @@ const Content = styled.div`
 `;
 
 const Tabs = styled.div`
-  height: 72px;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0 24px;
-  border-bottom: 1px solid #f3f4f3;
-  background: #fff;
-  box-sizing: border-box;
-  flex-shrink: 0;
+  padding: 10px 20px;
+  background-color: #fff;
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 `;
 
 const TabButton = styled.button`
-  height: 44px;
-  padding: 0 18px;
-  border-radius: 999px;
-  border: 1px solid ${({ $active }) => ($active ? "#c5f598" : "#dadada")};
-  background: ${({ $active }) => ($active ? "#c5f598" : "#fff")};
-  color: ${({ $active }) => ($active ? "#111" : "#4e4e4e")};
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
-  font-weight: 600;
+  display: flex;
+  flex-shrink: 0;
+  padding: 10px 14px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 60px;
+  font-family: "Pretendard", sans-serif;
+  font-size: 15px;
+  font-weight: 500;
   cursor: pointer;
+  transition: none;
+
+  border: 1px solid #dadada;
+  background: #ffffff;
+  gap: 6px;
+  color: #4e4e4e;
+
+  ${({ $isSelected }) =>
+    $isSelected &&
+    `
+    background: #C5F598;
+    color: #111111;
+    border: 1px solid #C5F598;
+  `}
+
+  &:focus {
+    outline: none;
+  }
+
+  &:hover,
+  &:active {
+    opacity: 1;
+    transform: none;
+  }
 `;
 
 const RoomButton = styled.button`

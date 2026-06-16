@@ -356,29 +356,57 @@ const CardList = styled.div`
 `;
 
 const Tabs = styled.div`
-  height: 82px;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0 24px;
-  border-bottom: 1px solid #f3f4f3;
-  background: #fff;
-  box-sizing: border-box;
-  flex-shrink: 0;
+  padding: 10px 20px;
+  background-color: #fff;
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 `;
 
 const TabButton = styled.button`
-  height: 52px;
-  padding: 0 18px;
-  border-radius: 999px;
-  border: 1px solid ${({ $active }) => ($active ? "#c5f598" : "#dadada")};
-  background: ${({ $active }) => ($active ? "#c5f598" : "#fff")};
-  color: ${({ $active }) => ($active ? "#111" : "#4e4e4e")};
-  font-family: Pretendard, sans-serif;
+  display: flex;
+  flex-shrink: 0;
+  padding: 10px 14px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 60px;
+  font-family: "Pretendard", sans-serif;
   font-size: 15px;
-  font-weight: 600;
-  line-height: 20px;
+  font-weight: 500;
   cursor: pointer;
+  transition: none;
+
+  /* 기본 상태 (Default) */
+  border: 1px solid #DADADA;
+  background: #ffffff;
+  gap: 6px;
+  color: #4E4E4E;
+
+  /* 선택된 상태 (Selected) */
+  ${({ $active }) =>
+    $active &&
+    `
+    background: #C5F598;
+    color: #111111;
+    gap: 6px;
+    border: 1px solid #C5F598;
+  `}
+
+  &:focus {
+    outline: none;
+  }
+
+  &:hover,
+  &:active {
+    opacity: 1;
+    transform: none;
+  }
 `;
 
 const ChatCard = styled.button`

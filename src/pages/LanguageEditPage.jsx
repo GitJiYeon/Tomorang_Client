@@ -42,7 +42,6 @@ export default function LanguageEditPage() {
   const savedProfile = JSON.parse(localStorage.getItem("profile") ?? "{}");
   const profileLanguages = (savedProfile.languages ?? []).map((language, index) => {
     if (typeof language === "object") return language;
-
     return {
       code: SERVER_TO_LANGUAGE[language] ?? language,
       level: SERVER_TO_LEVEL[savedProfile.levels?.[index]] ?? "beginner",
@@ -56,9 +55,15 @@ export default function LanguageEditPage() {
   const [selections, setSelections] = useState(
     Object.fromEntries(LANGUAGES.map((l) => [l.languageCode, savedMap[l.languageCode] ?? null]))
   );
+  const [openCode, setOpenCode] = useState(null);
+
+  const handleToggle = (languageCode) => {
+    setOpenCode((prev) => (prev === languageCode ? null : languageCode));
+  };
 
   const handleSelect = ({ languageCode, level }) => {
     setSelections((prev) => ({ ...prev, [languageCode]: level }));
+    setOpenCode(null); // 숙련도 선택 시 드롭다운 자동 닫기
   };
 
   const isValid = Object.values(selections).some(Boolean);
@@ -95,6 +100,8 @@ export default function LanguageEditPage() {
             subtitle={lang.subtitle}
             languageCode={lang.languageCode}
             selectedLevel={selections[lang.languageCode]}
+            isOpen={openCode === lang.languageCode}
+            onToggle={handleToggle}
             onSelect={handleSelect}
           />
         ))}
