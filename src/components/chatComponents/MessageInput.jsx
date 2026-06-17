@@ -46,8 +46,12 @@ const Wrapper = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px 24px;
+  width: 100%;
+  max-width: 100%;
+  padding: 8px 16px calc(16px + env(safe-area-inset-bottom, 0px));
   background: #fff;
+  box-sizing: border-box;
+  overflow: hidden;
 `;
 
 const CircleBtn = styled.button`
@@ -72,6 +76,7 @@ const HiddenInput = styled.input`
 
 const InputBox = styled.input`
   flex: 1;
+  min-width: 0;
   height: 42px;
   border-radius: 81px;
   border: 1px solid #DADADA;

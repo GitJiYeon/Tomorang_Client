@@ -14,6 +14,7 @@ import { createPost, getMypage, getPosts } from "../api/tomorang";
 import { hasValidAuthToken } from "../api/client";
 import { cacheLocalPost } from "../utils/localPostCache";
 import { normalizeRole } from "../utils/authRole";
+import { HIGH_RES_TILE_OPTIONS, HIGH_RES_TILE_URL } from "../utils/mapTiles";
 import {
   clearGuideRegistrationDraftFiles,
   getContentImageDrafts,
@@ -362,7 +363,7 @@ function MeetingPlacePicker({ onBack, onSelect }) {
       </AddressSearchPanel>
       <MeetingMapWrap>
         <MapContainer center={mapCenter} zoom={mapZoom} style={{ width: "100%", height: "100%", zIndex: 0 }} zoomControl={false}>
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="" />
+          <TileLayer url={HIGH_RES_TILE_URL} {...HIGH_RES_TILE_OPTIONS} />
           <MapCenterSync point={pickedPoint} center={mapCenter} zoom={mapZoom} />
           <MapClickHandler onPick={handlePick} />
           {pickedPoint && (

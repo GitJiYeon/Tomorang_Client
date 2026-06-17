@@ -17,6 +17,7 @@ import { addWishlist, getMyWishlists, getPosts, removeWishlist } from "../api/to
 import { getPostDescription, getPostImages } from "../utils/postDisplay";
 import { formatRating, getPostRatingAverage, getPostWishlistCount } from "../utils/postStats";
 import { isOwnPost } from "../utils/postOwner";
+import { HIGH_RES_TILE_OPTIONS, HIGH_RES_TILE_URL } from "../utils/mapTiles";
 import {
   getPostId,
   isPostLiked,
@@ -260,7 +261,7 @@ export default function MapPage() {
           doubleClickZoom={!selectedPost}
           touchZoom={!selectedPost}
         >
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="" />
+          <TileLayer url={HIGH_RES_TILE_URL} {...HIGH_RES_TILE_OPTIONS} />
           <FlyTo center={mapCenter} zoom={mapZoom} />
 
           {filteredPosts.map((post) => {

@@ -423,12 +423,13 @@ export default function Chat() {
 }
 
 const PageWrapper = styled.div`
-  width: var(--app-page-width);
+  width: min(var(--app-page-width), 100vw);
   height: 100dvh;
   margin: 0 auto;
   background-color: #fff;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 `;
 
 const MessageList = styled.div`
@@ -444,6 +445,7 @@ const MessageList = styled.div`
 
 const BottomArea = styled.div`
   background-color: #fff;
+  flex-shrink: 0;
 `;
 
 const Divider = styled.div`

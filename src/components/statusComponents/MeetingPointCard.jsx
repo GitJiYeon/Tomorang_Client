@@ -19,6 +19,7 @@ import MapPinIcon from "../../assets/mapMarker.svg";
 import MapIcon from "../../assets/bookStatusIcons/mapIcon.svg";
 import CopyIcon from "../../assets/bookStatusIcons/copyIcon.svg";
 import { useI18n } from "../../i18n/I18nProvider";
+import { HIGH_RES_TILE_OPTIONS, HIGH_RES_TILE_URL } from "../../utils/mapTiles";
 
 const pinIcon = L.icon({
   iconUrl: MapPinIcon,
@@ -58,7 +59,7 @@ export default function MeetingPointCard({ locked, address, meetingPoint, lat, l
               doubleClickZoom={false}
               touchZoom={false}
             >
-              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="" />
+              <TileLayer url={HIGH_RES_TILE_URL} {...HIGH_RES_TILE_OPTIONS} />
               <Marker position={[lat, lng]} icon={pinIcon} />
             </MapContainer>
           </MapWrap>
