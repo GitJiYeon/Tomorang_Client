@@ -9,7 +9,7 @@ import ChangeIcon from "../assets/chatimg/Change.svg";
 import { likeReview, translateText, unlikeReview } from "../api/tomorang";
 import { resolvePublicAsset } from "../utils/publicAsset";
 import { useI18n } from "../i18n/I18nProvider";
-import { getReviewCreatedAt } from "../utils/reviews";
+import { getReviewCreatedAt, parseReviewDate } from "../utils/reviews";
 
 const extractTranslation = (data) =>
   typeof data === "string"
@@ -36,8 +36,7 @@ export default function ReviewCard1({ review, variant = "default" }) {
   const [isTranslatingContent, setIsTranslatingContent] = useState(false);
   const isReceived = variant === "received";
   const reviewId = review.reviewId ?? review.id;
-  const parsedDate = new Date(getReviewCreatedAt(review) || Date.now());
-  const date = Number.isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
+  const date = parseReviewDate(getReviewCreatedAt(review)) ?? new Date();
   const postImages = (review.postImages ?? review.images ?? (review.postImage ? [review.postImage] : []))
     .map(resolvePublicAsset)
     .filter(Boolean);

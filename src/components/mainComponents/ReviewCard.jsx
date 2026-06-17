@@ -2,22 +2,7 @@ import styled from "styled-components";
 import StarIcon from "../../assets/star.svg";
 import { resolvePublicAsset } from "../../utils/publicAsset";
 import { useI18n } from "../../i18n/I18nProvider";
-
-function getTimeAgo(dateString, t) {
-  const now = new Date();
-  const past = new Date(dateString);
-  const pastTime = past.getTime();
-  if (!Number.isFinite(pastTime)) return t("방금 전");
-  const diffMs = Math.max(0, now.getTime() - pastTime);
-  const diffMin = Math.floor(diffMs / 1000 / 60);
-  const diffHour = Math.floor(diffMin / 60);
-  const diffDay = Math.floor(diffHour / 24);
-
-  if (diffMin < 1) return t("방금 전");
-  if (diffMin < 60) return `${diffMin}${t("분 전")}`;
-  if (diffHour < 24) return `${diffHour}${t("시간 전")}`;
-  return `${diffDay}${t("일 전")}`;
-}
+import { formatReviewTimeAgo, getReviewCreatedAt } from "../../utils/reviews";
 
 /**
  * 호출 방법:
@@ -45,7 +30,7 @@ export default function ReviewCard({ review, onClick }) {
               <RatingText>{review.rating}</RatingText>
             </RatingRow>
           </LeftInfo>
-          <TimeBadge>{getTimeAgo(review.createdAt, t)}</TimeBadge>
+          <TimeBadge>{formatReviewTimeAgo(getReviewCreatedAt(review), t)}</TimeBadge>
         </TopRow>
         <ReviewText>{review.content}</ReviewText>
       </ContentCard>

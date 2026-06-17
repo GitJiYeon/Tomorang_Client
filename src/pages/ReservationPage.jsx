@@ -16,10 +16,69 @@ import WarningBanner from "../components/WarningBanner";
 import Header from "../components/Header";
 import { bookReservation, getPostDetail } from "../api/tomorang";
 import { getPostImages } from "../utils/postDisplay";
-import { mergeLocalPostCache } from "../utils/localPostCache";
+import { cacheLocalPost, mergeLocalPostCache } from "../utils/localPostCache";
 import { STATUS } from "../utils/reservationFlow";
+import { useReservations } from "../components/context/ReservationContext";
 
 const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
+
+const toNumber = (value) => {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
+};
+
+const getSlotId = (slot) => slot?.id ?? slot?.slotId ?? slot?.slot_id;
+const getSlotTime = (slot) => slot?.time ?? slot?.slotTime ?? slot?.slot_time ?? slot?.startTime ?? slot?.start_time;
+
+const isReservableSlot = (slot) => {
+  const status = String(slot?.status ?? slot?.slotStatus ?? slot?.slot_status ?? "").toUpperCase();
+  const bookedCount = toNumber(
+    slot?.bookedCount ??
+      slot?.booked_count ??
+      slot?.reservationCount ??
+      slot?.reservation_count ??
+      slot?.currentCount ??
+      slot?.current_count
+  );
+
+  if (slot?.available === false || slot?.isAvailable === false || slot?.is_available === false) return false;
+  if (bookedCount > 0) return false;
+  if (!status) return true;
+  return ["OPEN", "AVAILABLE"].includes(status);
+};
+
+const getAvailableSchedules = (post) =>
+  (post?.availableSchedules ?? [])
+    .map((schedule) => ({
+      ...schedule,
+      timeSlots: (schedule.timeSlots ?? []).filter(isReservableSlot),
+    }))
+    .filter((schedule) => schedule.timeSlots.length > 0);
+
+const isSameSlot = (slot, targetSlot) => {
+  const slotId = getSlotId(slot);
+  const targetId = getSlotId(targetSlot);
+  if (slotId && targetId) return String(slotId) === String(targetId);
+  return String(getSlotTime(slot) ?? "") === String(getSlotTime(targetSlot) ?? "");
+};
+
+const removeReservedSlot = (post, reservedDate, reservedSlot) => {
+  const availableSchedules = (post?.availableSchedules ?? [])
+    .map((schedule) => {
+      if (schedule.date !== reservedDate) return schedule;
+      return {
+        ...schedule,
+        timeSlots: (schedule.timeSlots ?? []).filter((slot) => !isSameSlot(slot, reservedSlot)),
+      };
+    })
+    .filter((schedule) => (schedule.timeSlots ?? []).length > 0);
+
+  return {
+    ...post,
+    availableSchedules,
+    schedules: availableSchedules,
+  };
+};
 
 export default function ReservationPage() {
   const { state } = useLocation();
@@ -38,6 +97,7 @@ export default function ReservationPage() {
   const { postId } = useParams();
   const post = serverPost;
   const navigate = useNavigate();
+  const { upsertReservation } = useReservations();
 
   useEffect(() => {
     let alive = true;
@@ -78,13 +138,14 @@ export default function ReservationPage() {
     ? Math.round(rawPrice * (1 - post.discountRate / 100))
     : null;
 
+  const availableSchedules = getAvailableSchedules(post);
   const availableDates = [
-    ...new Set((post.availableSchedules ?? []).map((schedule) => schedule.date).filter(Boolean)),
+    ...new Set(availableSchedules.map((schedule) => schedule.date).filter(Boolean)),
   ];
 
   // 선택된 날짜의 timeSlots
   const currentSlots = selectedDate
-    ? (post.availableSchedules ?? [])
+    ? availableSchedules
         .filter((schedule) => schedule.date === selectedDate)
         .flatMap((schedule) => schedule.timeSlots ?? [])
     : [];
@@ -97,10 +158,10 @@ export default function ReservationPage() {
 
     try {
       const result = await bookReservation({
-        postId: post.postId,
-        slotId: selectedSlot.id,
+        postId: post.postId ?? post.post_id ?? post.id,
+        slotId: getSlotId(selectedSlot),
         slotDate: selectedDate,
-        slotTime: selectedSlot.time,
+        slotTime: getSlotTime(selectedSlot),
         adultCount: adults,
         childCount: children,
         request,
@@ -112,13 +173,13 @@ export default function ReservationPage() {
         reservationId,
         id: reservationId,
         requesterId,
-        postId: post.postId,
+        postId: post.postId ?? post.post_id ?? post.id,
         post,
-        slotId: selectedSlot.id,
+        slotId: getSlotId(selectedSlot),
         date: selectedDate,
-        time: selectedSlot.time,
+        time: getSlotTime(selectedSlot),
         slotDate: selectedDate,
-        slotTime: selectedSlot.time,
+        slotTime: getSlotTime(selectedSlot),
         adults,
         children,
         adultCount: adults,
@@ -163,8 +224,13 @@ export default function ReservationPage() {
           post.longitude,
         status: result.status ?? STATUS.PENDING,
       };
-      sessionStorage.setItem(`reservationStatus:${reservationId}`, JSON.stringify({ reservation, post }));
-      navigate(`/reservation-status/${reservationId}`, { state: { reservation, post } });
+      upsertReservation(reservation);
+      const nextPost = removeReservedSlot(post, selectedDate, selectedSlot);
+      setServerPost(nextPost);
+      cacheLocalPost(nextPost);
+      sessionStorage.setItem("currentCoursePost", JSON.stringify(nextPost));
+      sessionStorage.setItem(`reservationStatus:${reservationId}`, JSON.stringify({ reservation, post: nextPost }));
+      navigate(`/reservation-status/${reservationId}`, { state: { reservation, post: nextPost } });
     } catch (error) {
       setErrorMessage(error.message || "예약에 실패했습니다.");
     } finally {
@@ -244,16 +310,16 @@ export default function ReservationPage() {
               <EmptySlot>날짜를 먼저 선택해주세요</EmptySlot>
             ) : (
               currentSlots.map((slot, idx) => {
-                const isSelected = selectedSlot?.id === slot.id;
-                const isClosed = slot.status === "CLOSED";
+                const isSelected = selectedSlot ? isSameSlot(slot, selectedSlot) : false;
+                const isClosed = !isReservableSlot(slot);
                 return (
                   <TimeCard
-                    key={slot.id}
+                    key={getSlotId(slot) ?? `${selectedDate}-${getSlotTime(slot)}-${idx}`}
                     $selected={isSelected}
                     $closed={isClosed}
                     onClick={() => !isClosed && setSelectedSlot(slot)}
                   >
-                    <TimeText $selected={isSelected} $closed={isClosed}>{slot.time}</TimeText>
+                    <TimeText $selected={isSelected} $closed={isClosed}>{getSlotTime(slot)}</TimeText>
                     <TimeSession $selected={isSelected} $closed={isClosed}>{idx + 1}회차</TimeSession>
                   </TimeCard>
                 );
