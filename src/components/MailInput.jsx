@@ -70,6 +70,7 @@ const HalfInput = styled.input`
   border-radius: 12px;
   padding: 17px 20px;
   box-sizing: border-box;
+  color: #111111;
   font-size: 14px;
 
   &::placeholder {

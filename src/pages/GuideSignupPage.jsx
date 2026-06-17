@@ -122,10 +122,10 @@ export default function GuideSignupPage() {
 }
 
 const Page = styled.div`
-  width: var(--app-page-width);
-  min-height: 100dvh;
+  width: min(var(--app-page-width), 100vw);
+  min-height: var(--app-viewport-height, 100dvh);
   margin: 0 auto;
-  padding: 24px 0 16px;
+  padding: 24px 0 calc(16px + var(--app-keyboard-height, 0px));
   box-sizing: border-box;
   background: #fff;
   font-family: Pretendard, sans-serif;
@@ -203,7 +203,7 @@ const DomainSelect = styled.select`
   padding: 0 10px;
   border: 1px solid #dadada;
   border-radius: 10px;
-  color: #acacac;
+  color: #111;
   background: #fff;
   font-size: 13px;
   outline: none;

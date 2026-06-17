@@ -92,12 +92,13 @@ function TravelerSignupPage(){
 
 // styled-components 동일 유지
 const Container = styled.div`
-    min-height: 100vh;
+    min-height: var(--app-viewport-height, 100dvh);
     width: 100%;
     display: flex;
     flex-direction: column;
-    padding: 24px 0;
+    padding: 24px 0 calc(24px + var(--app-keyboard-height, 0px));
     box-sizing: border-box;
+    background: #fff;
 `
 const Header = styled.div`
     display: flex;

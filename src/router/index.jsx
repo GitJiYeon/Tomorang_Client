@@ -60,6 +60,7 @@ function RouteViewport() {
   const location = useLocation();
   const viewportRef = useRef(null);
   const viewportHeightRef = useRef(0);
+  const keyboardFocusedRef = useRef(false);
 
   useEffect(() => {
     const viewport = viewportRef.current;
@@ -71,15 +72,55 @@ function RouteViewport() {
       window.history.scrollRestoration = "manual";
     }
 
+    const isFormControl = (element) =>
+      element instanceof HTMLInputElement ||
+      element instanceof HTMLTextAreaElement ||
+      element instanceof HTMLSelectElement;
+
     const isFormControlFocused = () => {
       const element = document.activeElement;
-      return element instanceof HTMLInputElement ||
-        element instanceof HTMLTextAreaElement ||
-        element instanceof HTMLSelectElement;
+      return isFormControl(element);
+    };
+
+    const setKeyboardHeight = () => {
+      const viewport = window.visualViewport;
+      const baseHeight = viewportHeightRef.current || window.innerHeight;
+      const visualHeight = viewport?.height ?? window.innerHeight;
+      const offsetTop = viewport?.offsetTop ?? 0;
+      const keyboardHeight = keyboardFocusedRef.current
+        ? Math.max(0, baseHeight - visualHeight - offsetTop)
+        : 0;
+
+      document.documentElement.style.setProperty(
+        "--app-keyboard-height",
+        `${Math.round(keyboardHeight)}px`
+      );
+    };
+
+    const handleViewportResize = () => {
+      setViewportHeight();
+      setKeyboardHeight();
+    };
+
+    const handleFocusIn = (event) => {
+      if (!isFormControl(event.target)) return;
+      keyboardFocusedRef.current = true;
+      setKeyboardHeight();
+    };
+
+    const handleFocusOut = () => {
+      window.setTimeout(() => {
+        keyboardFocusedRef.current = isFormControlFocused();
+        setKeyboardHeight();
+        if (!keyboardFocusedRef.current) setViewportHeight();
+      }, 80);
     };
 
     const setViewportHeight = () => {
-      if (isFormControlFocused() && viewportHeightRef.current) return;
+      if ((keyboardFocusedRef.current || isFormControlFocused()) && viewportHeightRef.current) {
+        keyboardFocusedRef.current = true;
+        return;
+      }
 
       const height = window.innerHeight;
       viewportHeightRef.current = height;
@@ -89,19 +130,18 @@ function RouteViewport() {
       );
     };
 
-    const handleFocusOut = () => {
-      window.setTimeout(setViewportHeight, 80);
-    };
-
     setViewportHeight();
-    window.addEventListener("resize", setViewportHeight);
-    window.visualViewport?.addEventListener("resize", setViewportHeight);
-    window.addEventListener("focusout", handleFocusOut);
+    setKeyboardHeight();
+    window.addEventListener("resize", handleViewportResize);
+    window.visualViewport?.addEventListener("resize", handleViewportResize);
+    document.addEventListener("focusin", handleFocusIn);
+    document.addEventListener("focusout", handleFocusOut);
 
     return () => {
-      window.removeEventListener("resize", setViewportHeight);
-      window.visualViewport?.removeEventListener("resize", setViewportHeight);
-      window.removeEventListener("focusout", handleFocusOut);
+      window.removeEventListener("resize", handleViewportResize);
+      window.visualViewport?.removeEventListener("resize", handleViewportResize);
+      document.removeEventListener("focusin", handleFocusIn);
+      document.removeEventListener("focusout", handleFocusOut);
     };
   }, []);
 
