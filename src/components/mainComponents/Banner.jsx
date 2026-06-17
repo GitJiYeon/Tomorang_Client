@@ -7,19 +7,34 @@ const ArrowIcon = resolvePublicAsset("/assets/bannerImages/linkArrow.svg");
 
 const AUTO_PLAY_INTERVAL = 4000;
 const CARD_GAP = 12;
+const SWIPE_THRESHOLD = 40;
 
 export default function Banner({ bannerData }) {
   const [idx, setIdx] = useState(0);
   const [cardStep, setCardStep] = useState(400);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
   const firstCardRef = useRef(null);
+  const dragRef = useRef(null);
+  const didSwipeRef = useRef(false);
   const { t } = useI18n();
+  const bannerCount = bannerData.length;
 
-  const next = () => setIdx((prev) => (prev + 1) % bannerData.length);
+  const next = () => {
+    if (bannerCount <= 0) return;
+    setIdx((prev) => (prev + 1) % bannerCount);
+  };
+
+  const prev = () => {
+    if (bannerCount <= 0) return;
+    setIdx((current) => (current - 1 + bannerCount) % bannerCount);
+  };
 
   useEffect(() => {
+    if (bannerCount <= 1 || isDragging) return undefined;
     const timer = setInterval(next, AUTO_PLAY_INTERVAL);
     return () => clearInterval(timer);
-  }, [bannerData.length]);
+  }, [bannerCount, isDragging]);
 
   useEffect(() => {
     const updateCardStep = () => {
@@ -32,12 +47,64 @@ export default function Banner({ bannerData }) {
     return () => window.removeEventListener("resize", updateCardStep);
   }, []);
 
+  const handlePointerDown = (event) => {
+    if (bannerCount <= 1) return;
+    dragRef.current = {
+      startX: event.clientX,
+      pointerId: event.pointerId,
+    };
+    didSwipeRef.current = false;
+    setIsDragging(true);
+    setDragOffset(0);
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  };
+
+  const handlePointerMove = (event) => {
+    const drag = dragRef.current;
+    if (!drag) return;
+
+    const deltaX = event.clientX - drag.startX;
+    if (Math.abs(deltaX) > 4) didSwipeRef.current = true;
+    setDragOffset(deltaX);
+  };
+
+  const endDrag = (event) => {
+    const drag = dragRef.current;
+    if (!drag) return;
+
+    const deltaX = event.clientX - drag.startX;
+    if (event.currentTarget.hasPointerCapture?.(drag.pointerId)) {
+      event.currentTarget.releasePointerCapture(drag.pointerId);
+    }
+
+    dragRef.current = null;
+    setIsDragging(false);
+    setDragOffset(0);
+
+    if (deltaX <= -SWIPE_THRESHOLD) next();
+    if (deltaX >= SWIPE_THRESHOLD) prev();
+  };
+
+  const handleBannerClick = (banner) => {
+    if (didSwipeRef.current) {
+      didSwipeRef.current = false;
+      return;
+    }
+    if (banner.link) window.open(banner.link, "_blank");
+  };
+
   return (
     <Wrapper>
-      <Viewport>
+      <Viewport
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+      >
         <Track
+          $isDragging={isDragging}
           style={{
-            transform: `translateX(-${idx * cardStep}px)`
+            transform: `translateX(${dragOffset - idx * cardStep}px)`
           }}
         >
           {bannerData.map((banner, i) => {
@@ -48,7 +115,7 @@ export default function Banner({ bannerData }) {
               <Card
                 key={i}
                 ref={i === 0 ? firstCardRef : null}
-                onClick={() => banner.link && window.open(banner.link, "_blank")}
+                onClick={() => handleBannerClick(banner)}
               >
                 <SlideImg
                   src={resolvePublicAsset(banner.image)}
@@ -90,13 +157,15 @@ const Viewport = styled.div`
   overflow: hidden;
   padding: 10px 0;
   box-sizing: border-box;
+  touch-action: pan-y;
 `;
 
 const Track = styled.div`
   display: flex;
   gap: 12px;
   padding: 0 calc((100% - var(--app-content-width)) / 2);
-  transition: transform 0.6s ease;
+  transition: ${({ $isDragging }) => ($isDragging ? "none" : "transform 0.6s ease")};
+  will-change: transform;
 `;
 
 const Wrapper = styled.div`
@@ -115,6 +184,8 @@ const Card = styled.div`
   cursor: pointer;
   flex-shrink: 0;
   box-shadow: 0px 0px 7px 0px #C7C0AD99;
+  user-select: none;
+  -webkit-user-select: none;
 `;
 
 const SlideImg = styled.img`
@@ -197,4 +268,5 @@ const ArrowBtn = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
+  touch-action: manipulation;
 `;

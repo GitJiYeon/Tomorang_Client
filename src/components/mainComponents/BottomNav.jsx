@@ -4,6 +4,7 @@ import BookIcon from "../../assets/navIcons/book.svg";
 import MessageIcon from "../../assets/navIcons/message.svg";
 import MyPageIcon from "../../assets/navIcons/mypage.svg";
 import { useNavigate } from "react-router-dom";
+import styled from "styled-components";
 import { useI18n } from "../../i18n/I18nProvider";
 
 const NAV_ITEMS = [
@@ -24,76 +25,92 @@ export default function BottomNav({ activeIndex = 0, onNavChange }) {
   };
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        right: 0,
-        bottom: "var(--app-bottom-nav-bottom)",
-        left: 0,
-        width: "min(var(--app-page-width), 100vw)",
-        maxWidth: "100vw",
-        margin: "0 auto",
-        display: "flex",
-        justifyContent: "center",
-        zIndex: 1000,
-        pointerEvents: "none",
-      }}
-    >
-      <nav
-        style={{
-          width: "var(--app-bottom-nav-width)",
-          height: "var(--app-bottom-nav-height)",
-          background: "#222222",
-          borderRadius: 70,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 8px",
-          pointerEvents: "auto",
-          boxShadow: "0 4px 24px rgba(0,0,0,0.25)",
-        }}
-      >
+    <NavPosition>
+      <NavBar>
         {NAV_ITEMS.map((item, index) => {
           const isActive = activeIndex === index;
 
           return (
-            <button
+            <NavButton
               key={index}
               type="button"
+              $active={isActive}
               onClick={() => {
                 onNavChange?.(index);
                 resetViewportScroll();
                 navigate(item.path);
               }}
-              style={{
-                flex: 1,
-                height: 52,
-                borderRadius: 70,
-                background: isActive ? "#C5F598" : "transparent",
-                border: "none",
-                outline: "none",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-              }}
             >
-              <img
+              <NavIcon
                 src={item.iconSrc}
                 alt={t(item.labelKey)}
-                style={{
-                  width: 24,
-                  height: 24,
-                  filter: isActive
-                    ? "brightness(0)"
-                    : "brightness(0) invert(1)",
-                }}
+                $active={isActive}
               />
-            </button>
+            </NavButton>
           );
         })}
-      </nav>
-    </div>
+      </NavBar>
+    </NavPosition>
   );
 }
+
+const NavPosition = styled.div`
+  position: fixed;
+  right: 0;
+  bottom: var(--app-bottom-nav-bottom);
+  left: 0;
+  width: min(var(--app-page-width), 100vw);
+  max-width: 100vw;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  z-index: 1000;
+  pointer-events: none;
+`;
+
+const NavBar = styled.nav`
+  width: var(--app-bottom-nav-width);
+  height: var(--app-bottom-nav-height);
+  background: #222;
+  border-radius: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+  pointer-events: auto;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+`;
+
+const NavButton = styled.button`
+  flex: 1;
+  height: 52px;
+  border-radius: 70px;
+  background: ${({ $active }) => ($active ? "#c5f598" : "transparent")};
+  border: none;
+  color: ${({ $active }) => ($active ? "#111" : "#fff")};
+  appearance: none;
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+
+  &:focus,
+  &:focus-visible,
+  &:active {
+    outline: none;
+    color: ${({ $active }) => ($active ? "#111" : "#fff")};
+    background: ${({ $active }) => ($active ? "#c5f598" : "transparent")};
+  }
+`;
+
+const NavIcon = styled.img`
+  width: 24px;
+  height: 24px;
+  filter: ${({ $active }) => ($active ? "brightness(0)" : "brightness(0) invert(1)")};
+  pointer-events: none;
+`;

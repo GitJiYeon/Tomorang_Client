@@ -82,6 +82,10 @@ const NavButton = styled.button`
   border: none;
   border-radius: 70px;
   background: ${({ $active }) => ($active ? "#c5f598" : "transparent")};
+  color: ${({ $active }) => ($active ? "#111" : "#fff")};
+  appearance: none;
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -90,12 +94,21 @@ const NavButton = styled.button`
   padding: 0;
   outline: none;
   cursor: pointer;
+
+  &:focus,
+  &:focus-visible,
+  &:active {
+    outline: none;
+    color: ${({ $active }) => ($active ? "#111" : "#fff")};
+    background: ${({ $active }) => ($active ? "#c5f598" : "transparent")};
+  }
 `;
 
 const NavIcon = styled.img`
   width: 24px;
   height: 24px;
   filter: ${({ $active }) => ($active ? "brightness(0)" : "brightness(0) invert(1)")};
+  pointer-events: none;
 `;
 
 const NavLabel = styled.span`
@@ -106,4 +119,5 @@ const NavLabel = styled.span`
   line-height: 20px;
   white-space: nowrap;
   overflow: hidden;
+  pointer-events: none;
 `;

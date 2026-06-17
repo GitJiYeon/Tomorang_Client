@@ -52,6 +52,9 @@ const getPrice = (post) => {
 };
 
 const DEFAULT_CENTER = [35.5, 139.5];
+const DEFAULT_MAP_ZOOM = 13;
+const USER_LOCATION_ZOOM = 14;
+const SELECTED_POST_ZOOM = 12;
 
 const toRadians = (degree) => (degree * Math.PI) / 180;
 
@@ -71,11 +74,11 @@ const getDistanceKm = (from, to) => {
   return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
-function FlyTo({ center }) {
+function FlyTo({ center, zoom }) {
   const map = useMap();
   useEffect(() => {
-    if (center) map.flyTo(center, 12, { duration: 1 });
-  }, [center, map]);
+    if (center) map.flyTo(center, zoom, { duration: 1 });
+  }, [center, map, zoom]);
   return null;
 }
 
@@ -110,6 +113,7 @@ export default function MapPage() {
   const [posts, setPosts] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
   const [mapCenter, setMapCenter] = useState(DEFAULT_CENTER);
+  const [mapZoom, setMapZoom] = useState(DEFAULT_MAP_ZOOM);
   const [userLocation, setUserLocation] = useState(null);
   const [filter, setFilter] = useState({ sort: "", category: "" });
   const [likedVersion, setLikedVersion] = useState(0);
@@ -142,6 +146,7 @@ export default function MapPage() {
       (pos) => {
         const currentLocation = [pos.coords.latitude, pos.coords.longitude];
         setUserLocation(currentLocation);
+        setMapZoom(USER_LOCATION_ZOOM);
         setMapCenter(currentLocation);
       },
       () => {},
@@ -247,7 +252,7 @@ export default function MapPage() {
       <MapWrap>
         <MapContainer
           center={mapCenter}
-          zoom={11}
+          zoom={DEFAULT_MAP_ZOOM}
           style={{ width: "100%", height: "100%", zIndex: 0 }}
           zoomControl={false}
           dragging={!selectedPost}
@@ -256,7 +261,7 @@ export default function MapPage() {
           touchZoom={!selectedPost}
         >
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="" />
-          <FlyTo center={mapCenter} />
+          <FlyTo center={mapCenter} zoom={mapZoom} />
 
           {filteredPosts.map((post) => {
             const postId = getPostId(post);
@@ -274,6 +279,7 @@ export default function MapPage() {
                       setSelectedPost(null);
                     } else {
                       setSelectedPost(post);
+                      setMapZoom(SELECTED_POST_ZOOM);
                       setMapCenter(latLng);
                     }
                   },
