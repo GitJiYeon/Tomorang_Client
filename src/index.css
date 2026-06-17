@@ -106,8 +106,8 @@ button {
 }
 
 .app-viewport {
-  --app-page-width: 430px;
-  --app-page-height: 932px;
+  --app-page-width: 393px;
+  --app-page-height: 852px;
   --app-content-width: min(calc(var(--app-page-width) - 42px), calc(100vw - 42px));
   --app-bottom-nav-width: min(calc(var(--app-page-width) - 40px), calc(100vw - 40px));
   --app-bottom-nav-height: 68px;
