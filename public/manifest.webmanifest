@@ -1,0 +1,17 @@
+{
+  "name": "Tomorang",
+  "short_name": "Tomorang",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#C9F99D",
+  "icons": [
+    {
+      "src": "/assets/app-logo.svg",
+      "sizes": "180x180",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
