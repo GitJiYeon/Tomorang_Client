@@ -21,6 +21,8 @@ import { getPostOwnerId } from "../utils/postOwner";
 import { getPostRatingAverage } from "../utils/postStats";
 import { useI18n } from "../i18n/I18nProvider";
 import { sortReviewsByRecent } from "../utils/reviews";
+import { filterEmergingRegionsByPosts } from "../utils/emergingRegions";
+import { resolvePublicAsset } from "../utils/publicAsset";
 
 const SCROLL_ROW = {
   display: "flex",
@@ -146,6 +148,10 @@ export default function MainPage() {
 
   const trendingPosts = serverPosts;
   const salePosts = serverPosts.filter((post) => Number(post.discountRate ?? post.discount_rate ?? 0) > 0);
+  const emergingRegions = useMemo(
+    () => filterEmergingRegionsByPosts(regionData, serverPosts),
+    [serverPosts]
+  );
   const popularGuides = useMemo(
     () =>
       serverGuides
@@ -191,6 +197,17 @@ export default function MainPage() {
     navigate("/search-result", { state: { category } });
   };
 
+  const openEmergingRegion = (region) => {
+    navigate("/destination", {
+      state: {
+        region,
+        image: resolvePublicAsset(region.risingimg),
+        cityName: region.translations,
+        tags: region.tags,
+      },
+    });
+  };
+
   return (
     <PageWrapper>
       <MainHeader />
@@ -211,8 +228,13 @@ export default function MainPage() {
 
       <Section title="떠오르는 여행지" path="/emergingDestination">
         <div style={SCROLL_ROW}>
-          {regionData.map((region) => (
-            <RegionCard key={region.regionId} region={region} lang={lang} />
+          {emergingRegions.map((region) => (
+            <RegionCard
+              key={region.regionId}
+              region={region}
+              lang={lang}
+              onClick={() => openEmergingRegion(region)}
+            />
           ))}
         </div>
       </Section>

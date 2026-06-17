@@ -7,6 +7,7 @@ import PostCardList from "../components/PostCardList";
 import { getPosts } from "../api/tomorang";
 import { getPostRatingAverage, getPostWishlistCount } from "../utils/postStats";
 import { useI18n } from "../i18n/I18nProvider";
+import { filterPostsByEmergingRegion } from "../utils/emergingRegions";
 
 export default function DestinationListPage() {
   const { state } = useLocation();
@@ -21,13 +22,15 @@ export default function DestinationListPage() {
   const cityName = state?.cityName?.[lang]?.cityName ?? "여행지";
   const tags = state?.tags?.[lang] ?? [];
   const image = state?.image ?? "";
+  const region = state?.region;
 
   useEffect(() => {
     let alive = true;
 
-    getPosts(cityName === "여행지" ? {} : { city: cityName })
+    getPosts(region || cityName === "여행지" ? {} : { city: cityName })
       .then((items) => {
-        if (alive) setPosts(items);
+        if (!alive) return;
+        setPosts(region ? filterPostsByEmergingRegion(items, region) : items);
       })
       .catch((error) => {
         console.error("여행지 코스 조회 실패", error);
@@ -37,7 +40,7 @@ export default function DestinationListPage() {
     return () => {
       alive = false;
     };
-  }, [cityName]);
+  }, [cityName, region]);
 
   const filteredPosts = useMemo(() => {
     const filtered = filter.category

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import styled from "styled-components";
 import Header from "../components/Header";
@@ -7,7 +7,7 @@ import GuideTabMenu from "../components/GuideTabMenu";
 import PostCardList from "../components/PostCardList";
 import ReviewCard from "../components/ReviewCard1";
 import { getPopularGuides, getPostReviews, getPosts } from "../api/tomorang";
-import { getPostRatingAverage, getPostWishlistCount } from "../utils/postStats";
+import { getPostRatingAverage, getPostWishlistCount, getReviewRatingAverage } from "../utils/postStats";
 import { sortReviewsByRecent } from "../utils/reviews";
 
 const TAB = {
@@ -127,9 +127,22 @@ export default function GuideProfilePage() {
     };
   }, [id]);
 
-  const guide =
+  const baseGuide =
     serverGuide ??
     (state?.guide ? normalizeGuide(state.guide) : null);
+  const guide = useMemo(() => {
+    if (!baseGuide) return null;
+    if (guideReviews.length === 0) return baseGuide;
+
+    const reviewAverage = getReviewRatingAverage(guideReviews);
+    return {
+      ...baseGuide,
+      rating: reviewAverage,
+      avgRating: reviewAverage,
+      reviewCount: guideReviews.length,
+      totalReviews: guideReviews.length,
+    };
+  }, [baseGuide, guideReviews]);
 
   if (isLoading && !guide) {
     return (

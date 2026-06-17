@@ -6,12 +6,12 @@ import { resolvePublicAsset } from "../../utils/publicAsset";
  * <RegionCard region={region} lang="ko" />
  * lang: "ko" | "ja" | "en" (기본값 "ko")
  */
-export default function RegionCard({ region, lang = "ko" }) {
+export default function RegionCard({ region, lang = "ko", onClick }) {
   const cityName = region.translations[lang]?.cityName ?? region.translations.ko.cityName;
   const tags = region.tags[lang] ?? region.tags.ko;
 
   return (
-    <Card>
+    <Card onClick={onClick}>
       <BgImg
         src={resolvePublicAsset(region.image)}
         alt={cityName}
