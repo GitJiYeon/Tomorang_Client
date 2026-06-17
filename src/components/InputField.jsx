@@ -42,7 +42,7 @@ const StyledInput = styled.input`
   border-radius: 12px;
   padding: 17px 20px;
   box-sizing: border-box;
-  color: #ACACAC;
+  color: #111111;
   font-family: Pretendard;
   font-size: 14px;
 

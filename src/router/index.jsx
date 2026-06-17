@@ -59,6 +59,7 @@ function RoleAwareMainPage() {
 function RouteViewport() {
   const location = useLocation();
   const viewportRef = useRef(null);
+  const viewportHeightRef = useRef(0);
 
   useEffect(() => {
     const viewport = viewportRef.current;
@@ -70,21 +71,37 @@ function RouteViewport() {
       window.history.scrollRestoration = "manual";
     }
 
+    const isFormControlFocused = () => {
+      const element = document.activeElement;
+      return element instanceof HTMLInputElement ||
+        element instanceof HTMLTextAreaElement ||
+        element instanceof HTMLSelectElement;
+    };
+
     const setViewportHeight = () => {
-      const height = window.visualViewport?.height ?? window.innerHeight;
+      if (isFormControlFocused() && viewportHeightRef.current) return;
+
+      const height = window.innerHeight;
+      viewportHeightRef.current = height;
       document.documentElement.style.setProperty(
         "--app-viewport-height",
         `${height}px`
       );
     };
 
+    const handleFocusOut = () => {
+      window.setTimeout(setViewportHeight, 80);
+    };
+
     setViewportHeight();
     window.addEventListener("resize", setViewportHeight);
     window.visualViewport?.addEventListener("resize", setViewportHeight);
+    window.addEventListener("focusout", handleFocusOut);
 
     return () => {
       window.removeEventListener("resize", setViewportHeight);
       window.visualViewport?.removeEventListener("resize", setViewportHeight);
+      window.removeEventListener("focusout", handleFocusOut);
     };
   }, []);
 

@@ -104,7 +104,15 @@ button {
 #root input,
 #root textarea,
 #root select {
+  color: #111111;
   font-size: 16px;
+  -webkit-text-fill-color: #111111;
+}
+
+#root input::placeholder,
+#root textarea::placeholder {
+  color: #BCBCBC;
+  -webkit-text-fill-color: #BCBCBC;
 }
 
 #root {
