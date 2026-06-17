@@ -68,6 +68,96 @@ function RouteViewport() {
   }, [location.pathname]);
 
   useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return undefined;
+
+    const state = {
+      startX: 0,
+      startY: 0,
+      currentX: 0,
+      currentY: 0,
+      tracking: false,
+    };
+    const threshold = 86;
+
+    const isFormControl = (element) =>
+      element instanceof HTMLInputElement ||
+      element instanceof HTMLTextAreaElement ||
+      element instanceof HTMLSelectElement;
+
+    const canPullFromTarget = (target) => {
+      const startElement = target instanceof Element ? target : target?.parentElement;
+      if (!startElement || viewport.scrollTop > 0) return false;
+
+      let element = startElement;
+      while (element && element !== viewport) {
+        if (element instanceof HTMLElement) {
+          const style = window.getComputedStyle(element);
+          const scrollableY =
+            /(auto|scroll)/.test(style.overflowY) &&
+            element.scrollHeight > element.clientHeight + 1;
+
+          if (scrollableY && element.scrollTop > 0) return false;
+        }
+        element = element.parentElement;
+      }
+
+      return viewport.scrollTop <= 0;
+    };
+
+    const reset = () => {
+      state.tracking = false;
+    };
+
+    const handleTouchStart = (event) => {
+      if (event.touches.length !== 1) return;
+      if (isFormControl(event.target)) return;
+      if (!canPullFromTarget(event.target)) return;
+
+      const touch = event.touches[0];
+      state.startX = touch.clientX;
+      state.startY = touch.clientY;
+      state.currentX = touch.clientX;
+      state.currentY = touch.clientY;
+      state.tracking = true;
+    };
+
+    const handleTouchMove = (event) => {
+      if (!state.tracking || event.touches.length !== 1) return;
+
+      const touch = event.touches[0];
+      state.currentX = touch.clientX;
+      state.currentY = touch.clientY;
+
+      if (state.currentY < state.startY) reset();
+    };
+
+    const handleTouchEnd = () => {
+      if (!state.tracking) return;
+
+      const deltaX = state.currentX - state.startX;
+      const deltaY = state.currentY - state.startY;
+      reset();
+
+      if (deltaY >= threshold && Math.abs(deltaX) < deltaY * 0.7 && viewport.scrollTop <= 0) {
+        window.location.reload();
+      }
+    };
+
+    viewport.addEventListener("touchstart", handleTouchStart, { passive: true });
+    viewport.addEventListener("touchmove", handleTouchMove, { passive: true });
+    viewport.addEventListener("touchend", handleTouchEnd, { passive: true });
+    viewport.addEventListener("touchcancel", reset, { passive: true });
+
+    return () => {
+      viewport.removeEventListener("touchstart", handleTouchStart);
+      viewport.removeEventListener("touchmove", handleTouchMove);
+      viewport.removeEventListener("touchend", handleTouchEnd);
+      viewport.removeEventListener("touchcancel", reset);
+    };
+  }, []);
+
+  useEffect(() => {
     if ("scrollRestoration" in window.history) {
       window.history.scrollRestoration = "manual";
     }

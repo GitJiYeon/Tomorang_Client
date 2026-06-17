@@ -50,6 +50,7 @@ function translateElementAttributes(root, language) {
 
   elements.forEach((element) => {
     if (!(element instanceof HTMLElement) && !(element instanceof SVGElement)) return;
+    if (element.closest?.("[data-i18n-skip='true']")) return;
 
     ["placeholder", "alt", "title", "aria-label"].forEach((attr) => {
       if (!element.hasAttribute(attr)) return;
@@ -65,6 +66,9 @@ function translateTextNodes(root, language) {
     acceptNode(node) {
       const parent = node.parentElement;
       if (!parent) return NodeFilter.FILTER_REJECT;
+      if (parent.closest("[data-i18n-skip='true']")) {
+        return NodeFilter.FILTER_REJECT;
+      }
       if (["SCRIPT", "STYLE", "TEXTAREA"].includes(parent.tagName)) {
         return NodeFilter.FILTER_REJECT;
       }

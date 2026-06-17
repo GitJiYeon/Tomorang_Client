@@ -26,7 +26,7 @@ export default function OtherBubble({
     <Wrapper>
       <Row>
         <BubbleCol>
-          <Bubble $imageOnly={!!imageUrl}>
+          <Bubble $imageOnly={!!imageUrl} data-i18n-skip="true">
             {imageUrl ? (
               <Image src={imageUrl} alt="받은 사진" />
             ) : (

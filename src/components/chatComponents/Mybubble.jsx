@@ -7,7 +7,7 @@ export default function MyBubble({ message, imageUrl, time }) {
   return (
     <Row>
       {time && <Time>{time}</Time>}
-      <Bubble $imageOnly={!!imageUrl}>
+      <Bubble $imageOnly={!!imageUrl} data-i18n-skip="true">
         {imageUrl ? <Image src={imageUrl} alt="전송한 사진" /> : message}
       </Bubble>
     </Row>

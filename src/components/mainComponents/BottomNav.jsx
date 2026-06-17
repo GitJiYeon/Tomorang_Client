@@ -88,6 +88,7 @@ const NavButton = styled.button`
   background: ${({ $active }) => ($active ? "#c5f598" : "transparent")};
   border: none;
   color: ${({ $active }) => ($active ? "#111" : "#fff")};
+  -webkit-text-fill-color: ${({ $active }) => ($active ? "#111" : "#fff")};
   appearance: none;
   -webkit-appearance: none;
   -webkit-tap-highlight-color: transparent;
@@ -98,13 +99,24 @@ const NavButton = styled.button`
   justify-content: center;
   flex-shrink: 0;
   padding: 0;
+  text-decoration: none;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
 
+  &:hover,
   &:focus,
   &:focus-visible,
   &:active {
     outline: none;
     color: ${({ $active }) => ($active ? "#111" : "#fff")};
+    -webkit-text-fill-color: ${({ $active }) => ($active ? "#111" : "#fff")};
     background: ${({ $active }) => ($active ? "#c5f598" : "transparent")};
+  }
+
+  & * {
+    color: inherit;
+    -webkit-text-fill-color: currentColor;
   }
 `;
 

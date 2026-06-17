@@ -25,6 +25,7 @@ import {
   publishChatMessage,
 } from "../api/chatSocket";
 import { getEffectiveReservationStatus, STATUS } from "../utils/reservationFlow";
+import { useI18n } from "../i18n/I18nProvider";
 
 const parseChatTime = (value) => {
   if (!value) return new Date();
@@ -50,19 +51,7 @@ const normalizeId = (value) => String(value ?? "").trim();
 const isImageContent = (content) =>
   /^data:image\//.test(content) || /^https?:\/\/.+\.(png|jpe?g|gif|webp|bmp|svg)(\?.*)?$/i.test(content);
 
-const getTargetLang = () => {
-  try {
-    const profile = JSON.parse(localStorage.getItem("profile") || "{}");
-    const firstLanguage = Array.isArray(profile.languages) ? profile.languages[0] : "";
-    const code = typeof firstLanguage === "object" ? firstLanguage.code ?? firstLanguage.language : firstLanguage;
-    const normalized = String(code || "").toUpperCase();
-    if (["JA", "JP", "JAPANESE"].includes(normalized)) return "JA";
-    if (["EN", "ENGLISH"].includes(normalized)) return "EN";
-  } catch {
-    // Keep Korean as the default app language.
-  }
-  return "KO";
-};
+const getTargetLang = (language) => (language === "ja" ? "JA" : "KO");
 
 const extractTranslation = (data) =>
   typeof data === "string"
@@ -90,6 +79,7 @@ const toChatMessage = (message, currentUserId, index = 0) => {
     message: imageUrl ? "" : content,
     imageUrl,
     translation: message.translation ?? message.translatedText ?? "",
+    translationLang: message.translationLang ?? message.translation_lang ?? "",
     time: formatTime(timestamp),
   };
 };
@@ -117,6 +107,7 @@ const upsertMessage = (messages, nextMessage) => {
 };
 
 export default function Chat() {
+  const { language } = useI18n();
   const { postId } = useParams();
   const { state } = useLocation();
   const routeId = postId;
@@ -249,17 +240,23 @@ export default function Chat() {
 
   const handleTranslate = async (messageId) => {
     const targetMessage = messages.find((message) => String(message.id) === String(messageId));
-    if (!targetMessage?.message || targetMessage.translation) return;
+    const targetLang = getTargetLang(language);
+    if (
+      !targetMessage?.message ||
+      (targetMessage.translation && targetMessage.translationLang === targetLang)
+    ) {
+      return;
+    }
 
     setTranslatingIds((prev) => new Set(prev).add(String(messageId)));
     try {
-      const data = await translateText(targetMessage.message, getTargetLang());
+      const data = await translateText(targetMessage.message, targetLang);
       const translation = extractTranslation(data);
       if (!translation) return;
       setMessages((prev) =>
         prev.map((message) =>
           String(message.id) === String(messageId)
-            ? { ...message, translation }
+            ? { ...message, translation, translationLang: targetLang }
             : message
         )
       );
@@ -364,22 +361,26 @@ export default function Chat() {
       <MessageList>
         {errorMessage && <ErrorText>{errorMessage}</ErrorText>}
         {!currentUserId && <ErrorText>로그인 후 채팅을 사용할 수 있습니다.</ErrorText>}
-        {messages.map((msg) =>
-          msg.type === "me" ? (
+        {messages.map((msg) => {
+          const targetLang = getTargetLang(language);
+          const translation =
+            msg.translation && msg.translationLang === targetLang ? msg.translation : "";
+
+          return msg.type === "me" ? (
             <Mybubble key={msg.id} message={msg.message} imageUrl={msg.imageUrl} time={msg.time} />
           ) : (
             <Otherbubble
               key={msg.id}
               message={msg.message}
-              translation={msg.translation}
+              translation={translation}
               imageUrl={msg.imageUrl}
               time={msg.time}
               changeIcon={ChangeIcon}
               onTranslate={() => handleTranslate(msg.id)}
               isTranslating={translatingIds.has(String(msg.id))}
             />
-          )
-        )}
+          );
+        })}
         {messages.length === 0 && !errorMessage && (
           <EmptyText>아직 메시지가 없습니다.</EmptyText>
         )}
