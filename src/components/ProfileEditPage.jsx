@@ -4,6 +4,142 @@ import styled from "styled-components";
 import Header from "../components/Header";
 import DefaultProfileIcon from "../assets/defaultProfile.svg";
 import ImageIcon from "../assets/imageIcon.svg";
+import { updateMember } from "../api/member";
+import { getMypage } from "../api/tomorang";
+
+const LANGUAGE_TO_SERVER = {
+  KR: "KOREAN",
+  JP: "JAPANESE",
+  EN: "ENGLISH",
+  ko: "KOREAN",
+  ja: "JAPANESE",
+  en: "ENGLISH",
+};
+
+const LEVEL_TO_SERVER = {
+  beginner: 1,
+  intermediate: 2,
+  advanced: 3,
+};
+
+const compactObject = (object) =>
+  Object.fromEntries(
+    Object.entries(object).filter(([, value]) => {
+      if (Array.isArray(value)) return value.length > 0;
+      return value !== undefined && value !== null && value !== "";
+    })
+  );
+
+const safeJsonParse = (value, fallback) => {
+  try {
+    return JSON.parse(value ?? "");
+  } catch {
+    return fallback;
+  }
+};
+
+const pickImageUrl = (...sources) => {
+  for (const source of sources) {
+    if (!source) continue;
+    if (typeof source === "string") return source;
+
+    const value =
+      source.profileImage ??
+      source.profile_image ??
+      source.image ??
+      source.imageUrl ??
+      source.image_url ??
+      source.fileUrl ??
+      source.file_url ??
+      source.url ??
+      source.data?.profileImage ??
+      source.data?.profile_image ??
+      source.data?.image ??
+      source.data?.imageUrl;
+
+    if (value) return value;
+  }
+  return "";
+};
+
+const normalizeLanguageCode = (language) => {
+  const value =
+    typeof language === "object" && language !== null
+      ? language.language ?? language.code ?? language.languageCode
+      : language;
+  return LANGUAGE_TO_SERVER[value] ?? value;
+};
+
+const normalizeLanguageLevel = (language, fallbackLevel) => {
+  const value =
+    typeof language === "object" && language !== null
+      ? language.level ?? fallbackLevel
+      : fallbackLevel;
+  return LEVEL_TO_SERVER[value] ?? value;
+};
+
+const getLanguagePayload = (profile) => {
+  const localLanguages = safeJsonParse(localStorage.getItem("languages"), []);
+  const sourceLanguages =
+    Array.isArray(profile.languages) && profile.languages.length > 0
+      ? profile.languages
+      : localLanguages;
+  const serverLanguages =
+    Array.isArray(profile.serverLanguages) && profile.serverLanguages.length > 0
+      ? profile.serverLanguages
+      : sourceLanguages.map(normalizeLanguageCode).filter(Boolean);
+  const levels =
+    Array.isArray(profile.levels) && profile.levels.length > 0
+      ? profile.levels
+      : sourceLanguages
+          .map((language, index) => normalizeLanguageLevel(language, profile.levels?.[index]))
+          .filter(Boolean);
+
+  return { languages: serverLanguages, levels };
+};
+
+const getInterestText = (profile) => {
+  if (Array.isArray(profile.interests)) return profile.interests.join(", ");
+  return profile.interest;
+};
+
+const getProfileId = (profile) =>
+  profile.id ??
+  profile.userId ??
+  profile.user_id ??
+  profile.memberId ??
+  profile.member_id ??
+  localStorage.getItem("userId");
+
+const normalizeProfileCache = (source, fallback) => {
+  const nickname =
+    source?.nickname ??
+    source?.nickName ??
+    source?.nick_name ??
+    source?.name ??
+    fallback.nickName ??
+    fallback.nickname;
+  const bio =
+    source?.oneWord ??
+    source?.one_word ??
+    source?.bio ??
+    source?.introduction ??
+    fallback.oneWord ??
+    fallback.bio;
+  const image = pickImageUrl(source, fallback.profileImage, fallback.image);
+
+  return {
+    ...fallback,
+    ...(source && typeof source === "object" ? source : {}),
+    id: getProfileId(source ?? fallback),
+    profileImage: image,
+    image,
+    nickname,
+    nickName: nickname,
+    bio,
+    oneWord: bio,
+  };
+};
 
 export default function ProfileEditPage() {
   const navigate = useNavigate();
@@ -14,30 +150,73 @@ export default function ProfileEditPage() {
   const [profileImage, setProfileImage] = useState(saved.profileImage ?? saved.image ?? null);
   const [nickname, setNickname] = useState(saved.nickname ?? saved.nickName ?? "");
   const [bio, setBio] = useState(saved.bio ?? saved.oneWord ?? "");
+  const [profileFile, setProfileFile] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const fileInputRef = useRef(null);
 
   const handleImageClick = () => fileInputRef.current?.click();
 
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
+    setProfileFile(file);
     setProfileImage(URL.createObjectURL(file));
   };
 
-  const handleComplete = () => {
-    const languages = JSON.parse(localStorage.getItem("languages") ?? "[]");
-    localStorage.setItem("profile", JSON.stringify({
+  const handleComplete = async () => {
+    if (isSubmitting) return;
+
+    const latestProfile = {
       ...saved,
-      profileImage,
-      image: profileImage,
-      nickname,
-      nickName: nickname,
-      bio,
-      oneWord: bio,
+      ...safeJsonParse(localStorage.getItem("profile"), {}),
+    };
+    const { languages, levels } = getLanguagePayload(latestProfile);
+    const nextNickname = nickname.trim();
+    const nextBio = bio.trim();
+    const updateDto = compactObject({
+      id: getProfileId(latestProfile),
+      role: latestProfile.role ?? localStorage.getItem("role"),
+      email: latestProfile.email,
+      interest: getInterestText(latestProfile),
+      nickName: nextNickname,
+      oneWord: nextBio,
+      nationality: latestProfile.nationality,
+      defaultLanguage: latestProfile.defaultLanguage,
       languages,
-    }));
-    navigate(-1);
+      levels,
+    });
+
+    setIsSubmitting(true);
+    setErrorMessage("");
+
+    try {
+      const updateResponse = await updateMember(updateDto, profileFile);
+      const mypage = await getMypage().catch(() => null);
+      const optimisticProfile = {
+        ...latestProfile,
+        ...updateDto,
+        profileImage,
+        image: profileImage,
+        nickname: nextNickname,
+        nickName: nextNickname,
+        bio: nextBio,
+        oneWord: nextBio,
+        languages: latestProfile.languages ?? languages,
+        levels,
+      };
+      const nextProfile = normalizeProfileCache(mypage ?? updateResponse, optimisticProfile);
+
+      localStorage.setItem("profile", JSON.stringify(nextProfile));
+      if (nextProfile.id) localStorage.setItem("userId", nextProfile.id);
+      navigate(-1);
+    } catch (error) {
+      console.error("프로필 수정 실패", error);
+      setErrorMessage(error.message || "프로필 수정에 실패했습니다.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -85,6 +264,8 @@ export default function ProfileEditPage() {
           maxLength={50}
         />
 
+        {errorMessage && <ErrorText>{errorMessage}</ErrorText>}
+
         {/* 관심사 */}
         <FieldLabel>관심사</FieldLabel>
         <ResetButton onClick={() => navigate("/edit-interest")}>
@@ -99,7 +280,9 @@ export default function ProfileEditPage() {
       </Content>
 
       <Bottom>
-        <CompleteButton onClick={handleComplete}>수정 완료</CompleteButton>
+        <CompleteButton onClick={handleComplete} disabled={isSubmitting}>
+          {isSubmitting ? "저장 중..." : "수정 완료"}
+        </CompleteButton>
       </Bottom>
     </Wrapper>
   );
@@ -216,6 +399,14 @@ const ResetText = styled.span`
   line-height: normal;
 `;
 
+const ErrorText = styled.p`
+  margin: 10px 1rem 0;
+  color: #ff4d4f;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  line-height: 1.4;
+`;
+
 const Bottom = styled.div`
   padding: 1.5rem 1.3125rem 2rem;
 `;
@@ -231,4 +422,9 @@ const CompleteButton = styled.button`
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
 `;

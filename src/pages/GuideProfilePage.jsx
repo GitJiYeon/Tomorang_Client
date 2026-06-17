@@ -24,7 +24,84 @@ function getPostId(post) {
   return post?.postId ?? post?.post_id ?? post?.id;
 }
 
+const firstValue = (...values) =>
+  values.find((value) => value !== undefined && value !== null && String(value).trim() !== "");
+
+const formatJoinedDate = (value) => {
+  const text = String(value ?? "").trim();
+  if (!text) return "";
+
+  const match = text.match(/^(\d{4})[-./](\d{1,2})[-./](\d{1,2})/);
+  if (match) {
+    const [, year, month, day] = match;
+    return `${year}.${month.padStart(2, "0")}.${day.padStart(2, "0")}`;
+  }
+
+  const date = new Date(text);
+  if (!Number.isNaN(date.getTime())) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}.${month}.${day}`;
+  }
+
+  return text;
+};
+
+const formatNationality = (value) => {
+  const text = String(value ?? "").trim();
+  if (!text) return "";
+
+  const normalized = text.toLowerCase();
+  if (["japan", "jp", "ja", "japanese", "일본", "日本"].includes(normalized) || text === "일본" || text === "日本") {
+    return "일본";
+  }
+  if (["korea", "kr", "ko", "korean", "south korea", "대한민국", "한국"].includes(normalized) || text === "한국" || text === "대한민국") {
+    return "한국";
+  }
+
+  return text;
+};
+
 function normalizeGuide(guide) {
+  const member = guide.member ?? guide.user ?? guide.profile ?? guide.memberInfo ?? guide.member_info ?? {};
+  const joinedAt = formatJoinedDate(firstValue(
+    guide.joinedAt,
+    guide.joined_at,
+    guide.joinDate,
+    guide.join_date,
+    guide.createdAt,
+    guide.created_at,
+    guide.createdDate,
+    guide.created_date,
+    guide.registeredAt,
+    guide.registered_at,
+    guide.signupDate,
+    guide.signup_date,
+    member.joinedAt,
+    member.joined_at,
+    member.joinDate,
+    member.join_date,
+    member.createdAt,
+    member.created_at,
+    member.createdDate,
+    member.created_date,
+    member.registeredAt,
+    member.registered_at
+  ));
+  const nationality = formatNationality(firstValue(
+    guide.nationality,
+    guide.country,
+    guide.nation,
+    guide.countryName,
+    guide.country_name,
+    member.nationality,
+    member.country,
+    member.nation,
+    member.countryName,
+    member.country_name
+  ));
+
   return {
     ...guide,
     profileImage: guide.profileImage ?? guide.image,
@@ -40,6 +117,8 @@ function normalizeGuide(guide) {
       guide.response_time,
     rating: guide.rating ?? guide.avgRating ?? 0,
     likeCount: guide.likeCount ?? guide.totalLikes ?? 0,
+    joinedAt,
+    nationality,
   };
 }
 
@@ -167,8 +246,8 @@ export default function GuideProfilePage() {
     guide.oneWord ??
     guide.bio ??
     "\uB4F1\uB85D\uB41C \uAC00\uC774\uB4DC \uC124\uBA85\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.";
-  const joinedAt = guide.joinedAt ?? guide.createdAt ?? "-";
-  const nationality = guide.nationality ?? guide.country ?? "-";
+  const joinedAt = guide.joinedAt || "-";
+  const nationality = guide.nationality || "-";
   const headerTitle =
     state?.courseTitle ??
     state?.title ??
