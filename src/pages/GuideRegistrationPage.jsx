@@ -25,6 +25,8 @@ const REGISTRATION_CATEGORY_ROWS = [
   ["탐방", "사진", "액티비티", "애니메이션"],
 ];
 
+const AVAILABLE_TIME_OPTIONS = Array.from({ length: 24 }, (_, hour) => `${hour}:00`);
+
 const initialFormData = {
   location: "",
   category: "",
@@ -357,6 +359,27 @@ export default function GuideRegistrationPage() {
     }));
   };
 
+  const handleTimeSelect = (event) => {
+    const time = event.target.value;
+    if (!time) return;
+    setFormData((prev) => {
+      const currentTimes = splitCommaList(prev.startTime);
+      if (currentTimes.includes(time)) return prev;
+      const nextTimes = [...currentTimes, time].sort(
+        (a, b) => AVAILABLE_TIME_OPTIONS.indexOf(a) - AVAILABLE_TIME_OPTIONS.indexOf(b)
+      );
+      return { ...prev, startTime: nextTimes.join(", ") };
+    });
+    event.target.value = "";
+  };
+
+  const handleTimeRemove = (time) => {
+    setFormData((prev) => ({
+      ...prev,
+      startTime: splitCommaList(prev.startTime).filter((item) => item !== time).join(", "),
+    }));
+  };
+
   const handleImageAdd = (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -517,6 +540,11 @@ export default function GuideRegistrationPage() {
                   {row.map((category) => {
                     const selected = selectedCategories.includes(category);
                     const label = t(category);
+                    const compactCategory =
+                      label.includes("액티비티") ||
+                      label.includes("애니메이션") ||
+                      label.includes("アクティビティ") ||
+                      label.includes("アニメ");
                     return (
                       <CategoryChip
                         key={category}
@@ -524,6 +552,7 @@ export default function GuideRegistrationPage() {
                         $selected={selected}
                         $labelLength={label.length}
                         $language={language}
+                        $compactCategory={compactCategory}
                         onClick={() => handleCategoryToggle(category)}
                       >
                         {label}
@@ -557,8 +586,23 @@ export default function GuideRegistrationPage() {
             </FormGroup>
           </DoubleFormGroup>
           <FormGroup>
-            <Label>{t("가능 시간대(쉼표로 구분)")}</Label>
-            <Input name="startTime" placeholder="10:00,14:00..." value={formData.startTime} onChange={handleInputChange} />
+            <Label>{t("가능 시간대")}</Label>
+            <SelectInput value="" onChange={handleTimeSelect}>
+              <option value="">{t("시간을 선택하세요")}</option>
+              {AVAILABLE_TIME_OPTIONS.map((time) => (
+                <option key={time} value={time}>
+                  {time}
+                </option>
+              ))}
+            </SelectInput>
+            <DateChipRow>
+              {splitCommaList(formData.startTime).map((time) => (
+                <DateChip key={time} type="button" onClick={() => handleTimeRemove(time)}>
+                  {time}
+                  <DateChipRemove aria-hidden="true">×</DateChipRemove>
+                </DateChip>
+              ))}
+            </DateChipRow>
           </FormGroup>
         </FormSection>
         <FormSection>
@@ -814,7 +858,10 @@ const FormTitle = styled.h3`
   color: #111;
   margin: 0 0 16px;
 `;
-const FormGroup = styled.div`margin-bottom: 18px;`;
+const FormGroup = styled.div`
+  min-width: 0;
+  margin-bottom: 18px;
+`;
 const DoubleFormGroup = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -831,6 +878,8 @@ const Label = styled.label`
 `;
 const Input = styled.input`
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   height: 56px;
   padding: 12px 14px;
   border: 1px solid #e8e8e8;
@@ -849,6 +898,8 @@ const Input = styled.input`
 `;
 const TextArea = styled.textarea`
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   min-height: 112px;
   padding: 14px;
   border: 1px solid #e8e8e8;
@@ -884,7 +935,18 @@ const CategoryChipRow = styled.div`
 `;
 const CategoryChip = styled.button`
   height: 34px;
-  width: ${({ $language, $labelLength }) => {
+  width: ${({ $language, $labelLength, $compactCategory }) => {
+    if ($compactCategory) {
+      if ($language === "ja") {
+        if ($labelLength >= 6) return "82px";
+        if ($labelLength >= 5) return "72px";
+        if ($labelLength >= 4) return "64px";
+        return "56px";
+      }
+      if ($labelLength >= 5) return "92px";
+      if ($labelLength >= 4) return "76px";
+      return "58px";
+    }
     if ($language === "ja") {
       if ($labelLength >= 6) return "88px";
       if ($labelLength >= 5) return "76px";
@@ -896,7 +958,7 @@ const CategoryChip = styled.button`
     if ($labelLength >= 4) return "96px";
     return "58px";
   }};
-  padding: 0 ${({ $language }) => ($language === "ja" ? "8px" : "12px")};
+  padding: 0 ${({ $language, $compactCategory }) => ($compactCategory ? "6px" : $language === "ja" ? "8px" : "12px")};
   border: ${({ $selected }) => ($selected ? "1px solid #c5f598" : "1px solid #dadada")};
   border-radius: 60px;
   background: ${({ $selected }) => ($selected ? "#c5f598" : "#fff")};
@@ -910,15 +972,42 @@ const CategoryChip = styled.button`
 `;
 const DateInput = styled(Input)`
   cursor: pointer;
+  display: block;
+  appearance: none;
+  -webkit-appearance: none;
+`;
+const SelectInput = styled.select`
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: 56px;
+  padding: 0 14px;
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+  background: #fff;
+  color: #111;
+  font-family: "Noto Sans KR", sans-serif;
+  font-size: 13px;
+  box-sizing: border-box;
+  outline: none;
+  cursor: pointer;
+  &:focus {
+    border-color: #c5f598;
+    background-color: #fafafa;
+  }
 `;
 const DateChipRow = styled.div`
+  width: 100%;
+  max-width: 100%;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 10px;
   min-height: 32px;
+  overflow: hidden;
 `;
 const DateChip = styled.button`
+  max-width: 100%;
   height: 32px;
   padding: 0 10px 0 12px;
   border: 1px solid #c5f598;
