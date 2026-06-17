@@ -1,4 +1,3 @@
-import { useState } from "react";
 import styled from "styled-components";
 import { useI18n } from "../i18n/I18nProvider";
 
@@ -12,7 +11,7 @@ function LanguageButton({ icon, title, subtitle, languageCode, selectedLevel, on
   const [open, setOpen] = useState(false);
   const { t } = useI18n();
 
-  const handleToggle = () => setOpen((prev) => !prev);
+  const handleToggle = () => setOpen((prev) => !prev)
 
   const handleSelect = (levelKey) => {
     const next = selectedLevel === levelKey ? null : levelKey;
@@ -20,8 +19,7 @@ function LanguageButton({ icon, title, subtitle, languageCode, selectedLevel, on
   };
 
   const isSelected = !!selectedLevel;
-  // 드롭다운 닫혀있고 선택된 상태일 때만 메인버튼 초록 + 스트로크
-  const showActive = isSelected && !open;
+  const showActive = isSelected && !isOpen;
 
   return (
     <Wrapper $active={showActive}>
@@ -33,7 +31,7 @@ function LanguageButton({ icon, title, subtitle, languageCode, selectedLevel, on
         </TextWrapper>
       </Button>
 
-      {open &&
+      {isOpen &&
         LEVELS.map(({ key, label, dots }) => (
           <StepWrapper key={key}>
             <Divider />

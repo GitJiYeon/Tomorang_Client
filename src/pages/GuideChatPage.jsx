@@ -389,6 +389,33 @@ const TabButton = styled.button`
   font-weight: 500;
   gap: 6px;
   cursor: pointer;
+  transition: none;
+
+  /* 기본 상태 (Default) */
+  border: 1px solid #DADADA;
+  background: #ffffff;
+  gap: 6px;
+  color: #4E4E4E;
+
+  /* 선택된 상태 (Selected) */
+  ${({ $active }) =>
+    $active &&
+    `
+    background: #C5F598;
+    color: #111111;
+    gap: 6px;
+    border: 1px solid #C5F598;
+  `}
+
+  &:focus {
+    outline: none;
+  }
+
+  &:hover,
+  &:active {
+    opacity: 1;
+    transform: none;
+  }
 `;
 
 const ChatCard = styled.button`
