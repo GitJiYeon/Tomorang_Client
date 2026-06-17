@@ -108,6 +108,8 @@ const DropdownTrigger = styled.button`
   color: #ffffff;
   font-size: 14px;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: none;
 
   &:focus {
     outline: none;
@@ -116,7 +118,7 @@ const DropdownTrigger = styled.button`
 
 const Arrow = styled.img`
   width: 10px;
-  transition: transform 0.2s;
+  transition: none;
   transform: ${({ open }) => (open ? "rotate(180deg)" : "rotate(0deg)")};
   filter: brightness(0) invert(1); 
 `;
@@ -140,6 +142,8 @@ const DropdownItem = styled.div`
   font-weight: ${({ selected }) => (selected ? "600" : "400")};
   background: ${({ selected }) => (selected ? "#f5fdf0" : "#fff")};
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: none;
 
   &:hover {
     background: #f8f8f8;
@@ -172,7 +176,8 @@ const TagChip = styled.button`
   cursor: pointer;
 
   /* order: -1 속성을 삭제하여 순서가 바뀌지 않도록 설정했습니다. */
-  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  transition: none;
 
   &:focus {
     outline: none;

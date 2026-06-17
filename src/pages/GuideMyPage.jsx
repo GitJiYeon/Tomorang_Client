@@ -6,9 +6,11 @@ import GuideBottomNav from "../components/mainComponents/GuideBottomNav";
 import LogoutButton from "../components/LogoutButton";
 import GuideProfileCard from "../components/GuideProfileCard";
 import ActivitySection from "../components/ActivitySection";
+import ExhibitionNotice from "../components/ExhibitionNotice";
 import { getMypage, getPosts, logoutMember, switchMemberRole } from "../api/tomorang";
 import { clearAuthStorage } from "../api/client";
 import { getPostRatingAverage, getPostWishlistCount } from "../utils/postStats";
+import { useI18n } from "../i18n/I18nProvider";
 
 const toNumber = (value) => {
   const number = Number(value);
@@ -44,7 +46,9 @@ function getGuidePostStats(posts = []) {
 
 export default function GuideMyPage() {
   const navigate = useNavigate();
+  const { languageLabel, t, toggleLanguage } = useI18n();
   const [isBusy, setIsBusy] = useState(false);
+  const [noticeMessage, setNoticeMessage] = useState("");
 
   const raw = localStorage.getItem("profile");
   const [profile, setProfile] = useState(() => (raw ? JSON.parse(raw) : null));
@@ -102,64 +106,75 @@ export default function GuideMyPage() {
     };
   }, [currentGuideId, profile?.guideId, profile?.id]);
 
+  const showExhibitionNotice = () => {
+    setNoticeMessage("현재 로그아웃/역할전환은 전시중에 지원하지 않습니다.");
+  };
+
   const handleSwitchToDiscoverer = async () => {
     if (isBusy) return;
-    setIsBusy(true);
-    try {
-      await switchMemberRole("DISCOVERER");
-      const mypage = await getMypage().catch(() => null);
-      localStorage.setItem("profile", JSON.stringify({ ...profile, ...mypage, role: "DISCOVERER" }));
-      navigate("/main", { replace: true });
-    } catch (error) {
-      alert(error.message || "발견자로 전환하지 못했습니다.");
-    } finally {
-      setIsBusy(false);
-    }
+    showExhibitionNotice();
+
+    // 전시 이후 실제 역할 전환이 필요하면 아래 코드를 다시 사용합니다.
+    // setIsBusy(true);
+    // try {
+    //   await switchMemberRole("DISCOVERER");
+    //   const mypage = await getMypage().catch(() => null);
+    //   localStorage.setItem("profile", JSON.stringify({ ...profile, ...mypage, role: "DISCOVERER" }));
+    //   navigate("/main", { replace: true });
+    // } catch (error) {
+    //   alert(error.message || "발견자로 전환하지 못했습니다.");
+    // } finally {
+    //   setIsBusy(false);
+    // }
   };
 
   const handleLogout = async () => {
     if (isBusy) return;
-    setIsBusy(true);
-    try {
-      await logoutMember().catch(() => null);
-      clearAuthStorage();
-      navigate("/", { replace: true });
-    } finally {
-      setIsBusy(false);
-    }
+    showExhibitionNotice();
+
+    // 전시 이후 실제 로그아웃이 필요하면 아래 코드를 다시 사용합니다.
+    // setIsBusy(true);
+    // try {
+    //   await logoutMember().catch(() => null);
+    //   clearAuthStorage();
+    //   navigate("/", { replace: true });
+    // } finally {
+    //   setIsBusy(false);
+    // }
   };
 
   const activityItems = [
-    { label: "나의 코스", onClick: () => navigate("/my-course", { state: { mode: "guide" } }) },
+    { label: t("나의 코스"), onClick: () => navigate("/my-course", { state: { mode: "guide" } }) },
     {
-      label: "내가 받은 리뷰",
+      label: t("내가 받은 리뷰"),
       onClick: () => navigate("/my-reviews", { state: { mode: "received", guideId: currentGuideId } }),
     },
-    { label: "숨긴 발견자", onClick: () => navigate("/hidden") },
+    { label: t("숨긴 발견자"), onClick: () => navigate("/hidden") },
   ];
 
   const roleItems = [
-    { label: "발견자로 전환", onClick: handleSwitchToDiscoverer },
+    { label: t("발견자로 전환"), onClick: handleSwitchToDiscoverer },
   ];
 
   const langItems = [
-    { label: "앱 언어", value: "한국어", onClick: () => navigate("/edit-language") },
+    { label: t("앱 언어"), value: languageLabel, onClick: toggleLanguage },
   ];
 
   return (
     <PageWrapper>
-      <Header coment="프로필" />
+      <Header coment={t("프로필")} />
       <GuideProfileCard
         profile={profile}
         onEditPress={() => navigate("/edit-profile")}
       />
       <Divider />
       <SectionsArea>
-        <ActivitySection title="활동" items={activityItems} />
-        <ActivitySection title="역할 전환" items={roleItems} />
-        <ActivitySection title="언어 설정" items={langItems} />
+        <ActivitySection title={t("활동")} items={activityItems} />
+        <ActivitySection title={t("역할 전환")} items={roleItems} />
+        <ActivitySection title={t("언어 설정")} items={langItems} />
       </SectionsArea>
       <LogoutButton onClick={handleLogout} disabled={isBusy} />
+      <ExhibitionNotice message={noticeMessage} onClose={() => setNoticeMessage("")} />
       <GuideBottomNav activeIndex={3} />
     </PageWrapper>
   );

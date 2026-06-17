@@ -1,13 +1,16 @@
 import React from "react";
 import styled from "styled-components";
+import { useI18n } from "../i18n/I18nProvider";
 
 function InputField({ label, type = "text", placeholder, value, onChange }) {
+  const { t } = useI18n();
+
   return (
     <Wrapper>
-      <StyledLabel>{label}</StyledLabel>
+      <StyledLabel>{t(label)}</StyledLabel>
       <StyledInput
         type={type}
-        placeholder={placeholder}
+        placeholder={t(placeholder)}
         value={value}
         onChange={onChange}
       />

@@ -1,8 +1,10 @@
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
+import { useI18n } from "../../i18n/I18nProvider";
 
 export default function Section({ title, children, showMore = true, onMore, path }) {
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   const handleMoreClick = () => {
     if (onMore) {
@@ -15,9 +17,9 @@ export default function Section({ title, children, showMore = true, onMore, path
   return (
     <Wrapper>
       <Header>
-        <Title>{title}</Title>
+        <Title>{t(title)}</Title>
         {showMore && (
-          <MoreBtn type="button" onClick={handleMoreClick}>더보기</MoreBtn>
+          <MoreBtn type="button" onClick={handleMoreClick}>{t("더보기")}</MoreBtn>
         )}
       </Header>
       {children}

@@ -5,9 +5,11 @@ import LogoText from "../../assets/logoText.svg";
 import BellIcon from "../../assets/bellIcon.svg";
 import SearchIcon from "../../assets/searchIcon.svg";
 import { getUnreadNotificationCount } from "../../api/tomorang";
+import { useI18n } from "../../i18n/I18nProvider";
 
 export default function MainHeader({ searchIcon = SearchIcon, searchAlt = "검색", onSearchClick }) {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -39,7 +41,7 @@ export default function MainHeader({ searchIcon = SearchIcon, searchAlt = "검�
       <Icons>
         {/* 2. onClick에 화살표 함수 사용 (즉시 실행 방지) */}
         <BellBtn onClick={() => navigate("/notifications") }>
-          <img src={BellIcon} alt="알림" style={{ width: 14.5, height: 18 }} />
+          <img src={BellIcon} alt={t("알림")} style={{ width: 14.5, height: 18 }} />
           {unreadCount > 0 && <UnreadDot aria-hidden="true" />}
         </BellBtn>
         <SearchBtn onClick={() => {
@@ -49,7 +51,7 @@ export default function MainHeader({ searchIcon = SearchIcon, searchAlt = "검�
             navigate("/search");
           }
         }}>
-          <img src={searchIcon} alt={searchAlt} style={{ width: 16, height: 16.62 }} />
+          <img src={searchIcon} alt={t(searchAlt)} style={{ width: 16, height: 16.62 }} />
         </SearchBtn>
       </Icons>
     </Wrapper>

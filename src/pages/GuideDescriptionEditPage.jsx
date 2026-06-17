@@ -5,6 +5,7 @@ import BackArrow from "../assets/backarrow.svg";
 import ImageIcon from "../assets/imageIcon.svg";
 import MarkdownContent from "../components/MarkdownContent";
 import { addContentImageDraft, getContentImageDrafts } from "../utils/guideRegistrationDraft";
+import { useI18n } from "../i18n/I18nProvider";
 
 const DRAFT_KEY = "guideRegistrationDraft";
 
@@ -32,6 +33,7 @@ function updateDraftDescription(description) {
 export default function GuideDescriptionEditPage() {
   const navigate = useNavigate();
   const { state } = useLocation();
+  const { t } = useI18n();
   const fileInputRef = useRef(null);
   const initialDescription = useMemo(() => loadDraftDescription(state?.description), [state?.description]);
   const [description, setDescription] = useState(initialDescription);
@@ -58,28 +60,28 @@ export default function GuideDescriptionEditPage() {
     <PageWrapper>
       <TopBar>
         <BackButton type="button" onClick={goBackWithSave}>
-          <img src={BackArrow} alt="뒤로가기" />
+          <img src={BackArrow} alt={t("뒤로가기")} />
         </BackButton>
-        <HeaderTitle>상세 설명</HeaderTitle>
+        <HeaderTitle>{t("상세 설명")}</HeaderTitle>
         <SaveButton type="button" onClick={goBackWithSave}>
-          저장
+          {t("저장")}
         </SaveButton>
       </TopBar>
 
       <EditorShell>
-        <EditorHeading>코스 상세 설명</EditorHeading>
+        <EditorHeading>{t("코스 상세 설명")}</EditorHeading>
         <TitleLine />
         <ModeRow>
           <ModeButton type="button" $active={mode === "write"} onClick={() => setMode("write")}>
-            작성
+            {t("작성")}
           </ModeButton>
           <ModeButton type="button" $active={mode === "preview"} onClick={() => setMode("preview")}>
-            미리보기
+            {t("미리보기")}
           </ModeButton>
         </ModeRow>
         <ImageInsertButton type="button" onClick={() => fileInputRef.current?.click()}>
           <img src={ImageIcon} alt="" />
-          이미지 삽입
+          {t("이미지 삽입")}
         </ImageInsertButton>
         <HiddenFileInput ref={fileInputRef} type="file" accept="image/*" onChange={handleImageInsert} />
 
@@ -87,14 +89,14 @@ export default function GuideDescriptionEditPage() {
           <TextEditor
             value={description}
             onChange={(event) => setDescription(event.target.value)}
-            placeholder={"아키하바라 레트로 피규어 쇼핑\n\n애니메이션과 게임의 성지, 아키하바라에서 진짜 보물 같은 굿즈를 찾고 싶다면?\n\n## 방문 포인트\n- 레트로 피규어 매장\n- 중고 굿즈 숍\n- 숨은 포토 스팟"}
+            placeholder={t("아키하바라 레트로 피규어 쇼핑\n\n애니메이션과 게임의 성지, 아키하바라에서 진짜 보물 같은 굿즈를 찾고 싶다면?\n\n## 방문 포인트\n- 레트로 피규어 매장\n- 중고 굿즈 숍\n- 숨은 포토 스팟")}
           />
         ) : (
           <PreviewBox>
             {description ? (
               <MarkdownContent value={description} imageMap={contentImagePreviews} />
             ) : (
-              <EmptyText>작성한 내용이 여기에 미리보기로 표시됩니다.</EmptyText>
+              <EmptyText>{t("작성한 내용이 여기에 미리보기로 표시됩니다.")}</EmptyText>
             )}
           </PreviewBox>
         )}

@@ -5,25 +5,49 @@ import Greenstar from "../assets/greenstar.svg";
 import Graystar from "../assets/graystar.svg";
 import DefaultProfileIcon from "../assets/defaultProfile.svg";
 import LikeIcon from "../assets/likeIcon.svg";
-import { likeReview, unlikeReview } from "../api/tomorang";
+import ChangeIcon from "../assets/chatimg/Change.svg";
+import { likeReview, translateText, unlikeReview } from "../api/tomorang";
 import { resolvePublicAsset } from "../utils/publicAsset";
+import { useI18n } from "../i18n/I18nProvider";
+import { getReviewCreatedAt } from "../utils/reviews";
+
+const extractTranslation = (data) =>
+  typeof data === "string"
+    ? data
+    : data?.translatedText ?? data?.translation ?? data?.text ?? data?.result ?? "";
+
+const detectContentLanguage = (text) => {
+  const value = String(text ?? "");
+  if (/[ぁ-ゟ゠-ヿ]/.test(value)) return "JA";
+  if (/[가-힣]/.test(value)) return "KO";
+  return "KO";
+};
+
+const getTargetLangForApp = (language) => (language === "ja" ? "JA" : "KO");
 
 export default function ReviewCard1({ review, variant = "default" }) {
+  const { language, t } = useI18n();
   const [previewImage, setPreviewImage] = useState("");
   const [liked, setLiked] = useState(Boolean(review.liked));
   const [likeCount, setLikeCount] = useState(Number(review.likeCount ?? 0) || 0);
   const [isLikeBusy, setIsLikeBusy] = useState(false);
+  const [translatedContent, setTranslatedContent] = useState("");
+  const [showOriginalContent, setShowOriginalContent] = useState(true);
+  const [isTranslatingContent, setIsTranslatingContent] = useState(false);
   const isReceived = variant === "received";
   const reviewId = review.reviewId ?? review.id;
-  const date = new Date(review.createdAt ?? Date.now());
+  const parsedDate = new Date(getReviewCreatedAt(review) || Date.now());
+  const date = Number.isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
   const postImages = (review.postImages ?? review.images ?? (review.postImage ? [review.postImage] : []))
     .map(resolvePublicAsset)
     .filter(Boolean);
   const rating = Number(review.rating ?? 0);
-  const nickname = review.nickname ?? review.memberNickName ?? review.memberId ?? "사용자";
+  const nickname = review.nickname ?? review.memberNickName ?? review.memberId ?? t("사용자");
   const profile = resolvePublicAsset(review.profile ?? review.memberImage) || DefaultProfileIcon;
   const dateStr = `${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
   const yearStr = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
+  const content = review.content ?? "";
+  const displayContent = showOriginalContent ? content : translatedContent || content;
 
   const renderStars = (value) => {
     const filledCount = Math.floor(value);
@@ -48,9 +72,31 @@ export default function ReviewCard1({ review, variant = "default" }) {
         setLikeCount((prev) => prev + 1);
       }
     } catch (error) {
-      alert(error.message || "리뷰 좋아요 처리에 실패했습니다.");
+      alert(error.message || t("리뷰 좋아요 처리에 실패했습니다."));
     } finally {
       setIsLikeBusy(false);
+    }
+  };
+
+  const handleTranslateClick = async (event) => {
+    event.stopPropagation();
+    if (!content.trim() || isTranslatingContent) return;
+
+    if (translatedContent) {
+      setShowOriginalContent((prev) => !prev);
+      return;
+    }
+
+    setIsTranslatingContent(true);
+    try {
+      const targetLang = getTargetLangForApp(language);
+      const translated = await translateText(content, targetLang, detectContentLanguage(content)).then(extractTranslation);
+      setTranslatedContent(translated || content);
+      setShowOriginalContent(false);
+    } catch {
+      alert(t("번역에 실패했습니다."));
+    } finally {
+      setIsTranslatingContent(false);
     }
   };
 
@@ -92,7 +138,21 @@ export default function ReviewCard1({ review, variant = "default" }) {
         </ImageRow>
       )}
 
-      <ContentText>{review.content}</ContentText>
+      <ContentText>{displayContent}</ContentText>
+      {content.trim() && (
+        <TranslateButton
+          type="button"
+          onClick={handleTranslateClick}
+          disabled={isTranslatingContent}
+        >
+          <img src={ChangeIcon} alt="" width={24} height={24} />
+          {isTranslatingContent
+            ? t("번역중")
+            : showOriginalContent
+              ? t("번역보기")
+              : t("원문보기")}
+        </TranslateButton>
+      )}
 
       <LikeRow>
         <LikeButton
@@ -118,7 +178,7 @@ export default function ReviewCard1({ review, variant = "default" }) {
             if (event.key === "Escape" || event.key === "Enter") setPreviewImage("");
           }}
         >
-          <PreviewImage src={previewImage} alt="review preview" />
+      <PreviewImage src={previewImage} alt={t("리뷰 이미지 미리보기")} />
         </ImagePreviewOverlay>
       )}
     </Card>
@@ -302,6 +362,26 @@ const ContentText = styled.p`
   display: -webkit-box;
   -webkit-line-clamp: 6;
   -webkit-box-orient: vertical;
+`;
+
+const TranslateButton = styled.button`
+  width: fit-content;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: Pretendard;
+  font-size: 12px;
+  color: #ACACAC;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.65;
+  }
 `;
 
 const LikeRow = styled.div`

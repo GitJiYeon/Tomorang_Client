@@ -2,8 +2,11 @@
 import styled from 'styled-components';
 import BackArrow from "../assets/backarrow.svg";
 import { useNavigate } from "react-router-dom";
+import { useI18n } from "../i18n/I18nProvider";
+
 function Header({coment, path, onBack}) {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const handleBack = () => {
     if (onBack) {
       onBack();
@@ -20,11 +23,11 @@ function Header({coment, path, onBack}) {
           onClick={handleBack}
           type="button"
         >
-          <img src={BackArrow} alt="뒤로가기" />
+          <img src={BackArrow} alt={t("뒤로가기")} />
         </BackButton>
 
         <TitleWrapper>
-          <span dangerouslySetInnerHTML={{ __html: coment }} />
+          <TitleText dangerouslySetInnerHTML={{ __html: coment }} />
         </TitleWrapper>
         <Spacer />
       </Container>
@@ -70,6 +73,7 @@ const BackButton = styled.button`
 const TitleWrapper = styled.div`
   display: flex;
   flex: 1; 
+  min-width: 0;
   justify-content: center;
   gap: 3px; 
   margin: 0 47px;
@@ -81,6 +85,15 @@ const TitleWrapper = styled.div`
   font-style: normal;
   font-weight: 600;
   line-height: 22px; /* 137.5% */
+`;
+
+const TitleText = styled.span`
+  min-width: 0;
+  max-width: 100%;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 const Spacer = styled.div`

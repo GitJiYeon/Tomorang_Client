@@ -6,15 +6,25 @@ import Graystar from "../assets/graystar.svg";
 import Flag from "../assets/flag.svg";
 import Heart from "../assets/heart.svg";
 import Filledheart from "../assets/fillheart.svg";
+import ChangeIcon from "../assets/chatimg/Change.svg";
 import ReportSystem from "../components/ReportModal";
 import { addWishlist, removeWishlist } from "../api/tomorang";
 import { getHiddenGuideFromPost } from "../utils/hiddenGuides";
 import { formatRating, getPostRatingAverage } from "../utils/postStats";
 import { isOwnPost } from "../utils/postOwner";
 import { getPostId, isPostLiked, setPostLiked, subscribeWishlistChanges } from "../utils/wishlist";
+import { useI18n } from "../i18n/I18nProvider";
 
-export default function CourseDescription({ post }) {
+export default function CourseDescription({
+  post,
+  displayTitle,
+  displaySubtitle,
+  showOriginalText = true,
+  isTranslatingText = false,
+  onTranslateToggle,
+}) {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const postId = getPostId(post);
   const canWishlist = !isOwnPost(post);
   const canReport = !isOwnPost(post);
@@ -40,7 +50,7 @@ export default function CourseDescription({ post }) {
       setLiked(nextLiked);
     } catch (error) {
       console.error("찜 변경 실패", error);
-      alert(error.message || "찜 변경에 실패했습니다.");
+      alert(error.message || t("찜 변경에 실패했습니다."));
     }
   };
 
@@ -65,17 +75,25 @@ export default function CourseDescription({ post }) {
     ));
   };
 
+  const titleText = displayTitle ?? post.title ?? "";
+  const subtitleText = displaySubtitle ?? post.subtitle ?? "";
+  const canTranslatePostText = Boolean(
+    (post.title ?? "").trim() ||
+      (post.subtitle ?? "").trim() ||
+      (post.contentBlocks ?? []).some((block) => String(block?.type ?? "text").toLowerCase() !== "image")
+  );
+
   return (
     <Card>
       <MainImageWrapper>
         {images[0] ? (
           <MainImage src={images[0]} alt={post.title} />
         ) : (
-          <ImagePlaceholder>이미지 없음</ImagePlaceholder>
+          <ImagePlaceholder>{t("이미지 없음")}</ImagePlaceholder>
         )}
         {canReport && (
           <FlagButton onClick={() => setIsReportOpen(true)}>
-            <FlagIcon src={Flag} alt="report" />
+            <FlagIcon src={Flag} alt={t("신고")} />
           </FlagButton>
         )}
       </MainImageWrapper>
@@ -83,13 +101,29 @@ export default function CourseDescription({ post }) {
       <Body>
         <TitleRow>
           <TitleGroup>
-            <Title>{post.title}</Title>
-            <Subtitle>{post.subtitle}</Subtitle>
+            <TitleLine>
+              <Title>{titleText}</Title>
+              {canTranslatePostText && (
+                <TranslateButton
+                  type="button"
+                  onClick={onTranslateToggle}
+                  disabled={isTranslatingText}
+                >
+                  <img src={ChangeIcon} alt="" width={24} height={24} />
+                  {isTranslatingText
+                    ? t("번역중")
+                    : showOriginalText
+                      ? t("번역보기")
+                      : t("원문보기")}
+                </TranslateButton>
+              )}
+            </TitleLine>
+            <Subtitle>{subtitleText}</Subtitle>
           </TitleGroup>
           {canWishlist && (
             <SaveButton onClick={toggleLike}>
               <HeartIcon src={liked ? Filledheart : Heart} alt="heart" />
-              <SaveText>저장</SaveText>
+              <SaveText>{t("저장")}</SaveText>
             </SaveButton>
           )}
         </TitleRow>
@@ -97,11 +131,11 @@ export default function CourseDescription({ post }) {
         <PriceRatingRow>
           <PriceGroup>
             {discountRate > 0 && (
-              <OriginalPrice>{originalPriceNum.toLocaleString()}원</OriginalPrice>
+              <OriginalPrice>{originalPriceNum.toLocaleString()}{t("원")}</OriginalPrice>
             )}
             <CurrentPriceArea>
               {discountRate > 0 && <SaleLabel>SALE</SaleLabel>}
-              <CurrentPrice>{discountedPrice.toLocaleString()}원</CurrentPrice>
+              <CurrentPrice>{discountedPrice.toLocaleString()}{t("원")}</CurrentPrice>
             </CurrentPriceArea>
           </PriceGroup>
 
@@ -200,13 +234,23 @@ const TitleRow = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  gap: 12px;
   margin-bottom: 8px;
 `;
 
 const TitleGroup = styled.div`
+  min-width: 0;
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 2px;
+`;
+
+const TitleLine = styled.div`
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 `;
 
 const Title = styled.h2`
@@ -214,6 +258,10 @@ const Title = styled.h2`
   font-size: 19px;
   font-weight: 700;
   margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 const Subtitle = styled.p`
@@ -221,10 +269,31 @@ const Subtitle = styled.p`
   font-size: 13px;
   font-weight: 400;
   margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const TranslateButton = styled.button`
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  color: #ACACAC;
+  font-family: Pretendard;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: ${({ disabled }) => (disabled ? "default" : "pointer")};
+  opacity: ${({ disabled }) => (disabled ? 0.65 : 1)};
 `;
 
 const SaveButton = styled.button`
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 8px;
   background: #fff;

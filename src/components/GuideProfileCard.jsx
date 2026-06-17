@@ -2,6 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import DefaultProfileIcon from "../assets/defaultProfile.svg";
 import { formatRating } from "../utils/postStats";
+import { useI18n } from "../i18n/I18nProvider";
 
 const LEVEL_MAP = {
   beginner: 1,
@@ -61,17 +62,33 @@ function normalizeLanguages(profile) {
   });
 }
 
+function getAnswerTime(profile) {
+  return (
+    profile?.answertime ??
+    profile?.answerTime ??
+    profile?.avgAnswerTime ??
+    profile?.averageAnswerTime ??
+    profile?.average_answer_time ??
+    profile?.responseTime ??
+    profile?.response_time ??
+    "평균 12분 내로 응답"
+  );
+}
+
 export default function GuideProfileCard({ profile, onEditPress }) {
+  const { t } = useI18n();
+
   if (!profile) return null;
 
-  const nickname = profile.nickname ?? profile.nickName ?? profile.id ?? "가이드";
-  const bio = profile.oneWord ?? profile.bio ?? "소개가 아직 없습니다.";
+  const nickname = profile.nickname ?? profile.nickName ?? profile.id ?? t("가이드");
+  const bio = profile.oneWord ?? profile.bio ?? t("소개가 아직 없습니다.");
   const profileImage = profile.profileImage ?? profile.image ?? DefaultProfileIcon;
   const interests = normalizeInterests(profile);
   const languages = normalizeLanguages(profile);
   const likeCount = profile.likeCount ?? profile.totalLikes ?? 0;
   const postCount = profile.postCount ?? profile.postIds?.length ?? 0;
   const rating = Number(profile.rating ?? profile.avgRating ?? 0);
+  const answerTime = getAnswerTime(profile);
 
   return (
     <PageBg>
@@ -80,9 +97,9 @@ export default function GuideProfileCard({ profile, onEditPress }) {
           <InfoGroup>
             <Name>{nickname}</Name>
             <Bio>{bio}</Bio>
-            <AnswerTime>평균 12분 내로 응답</AnswerTime>
+            <AnswerTime>{t(answerTime)}</AnswerTime>
             <EditButton type="button" onClick={onEditPress}>
-              <EditButtonText>정보 수정하기</EditButtonText>
+              <EditButtonText>{t("정보 수정하기")}</EditButtonText>
             </EditButton>
           </InfoGroup>
           <Avatar src={profileImage} alt="profile" />
@@ -107,18 +124,18 @@ export default function GuideProfileCard({ profile, onEditPress }) {
 
         <StatsRow>
           <StatItem>
-            <StatNum>{likeCount}개</StatNum>
-            <StatLabel>좋아요</StatLabel>
+            <StatNum>{likeCount}{t("개")}</StatNum>
+            <StatLabel>{t("좋아요")}</StatLabel>
           </StatItem>
           <VerticalLine />
           <StatItem>
-            <StatNum>{postCount}개</StatNum>
-            <StatLabel>코스</StatLabel>
+            <StatNum>{postCount}{t("개")}</StatNum>
+            <StatLabel>{t("코스")}</StatLabel>
           </StatItem>
           <VerticalLine />
           <StatItem>
-            <StatNum>{formatRating(rating)}점</StatNum>
-            <StatLabel>리뷰</StatLabel>
+            <StatNum>{formatRating(rating)}{t("점")}</StatNum>
+            <StatLabel>{t("리뷰")}</StatLabel>
           </StatItem>
         </StatsRow>
       </Card>

@@ -2,15 +2,18 @@ import React, {useState,useEffect} from "react";
 import logo from "../assets/logo.svg";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
+import { useI18n } from "../i18n/I18nProvider";
 
 function StartPage(){
     const navigate = useNavigate();
+    const { t } = useI18n();
+
     return(
         <Container>
-            <Logo src={logo} alt="로고"></Logo>
-            <Catchphrase>나의 첫 번째 로컬 친구, 토모랑</Catchphrase>
-            <LoginButton onClick={() => navigate("/login")}>로그인</LoginButton>
-            <SignupButton onClick={() => navigate("/role")}>회원가입</SignupButton>
+            <Logo src={logo} alt={t("로고")}></Logo>
+            <Catchphrase>{t("나의 첫 번째 로컬 친구, 토모랑")}</Catchphrase>
+            <LoginButton onClick={() => navigate("/login")}>{t("로그인")}</LoginButton>
+            <SignupButton onClick={() => navigate("/role")}>{t("회원가입")}</SignupButton>
         </Container>
     )
 }

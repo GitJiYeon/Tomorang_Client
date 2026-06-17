@@ -5,6 +5,7 @@ import FoodIcon from "../../assets/categoryIcons/food.svg";
 import PhotoIcon from "../../assets/categoryIcons/photo.svg";
 import ShopingIcon from "../../assets/categoryIcons/shoping.svg";
 import ViewIcon from "../../assets/categoryIcons/view.svg";
+import { useI18n } from "../../i18n/I18nProvider";
 
 const CATEGORIES = [
   { icon: AnimeIcon, label: "애니메이션", id: "anime", category: "애니메이션" },
@@ -78,6 +79,7 @@ const Label = styled.span`
 
 export default function CategoryFilter({ onSelect }) {
   const [selected, setSelected] = useState(null);
+  const { t } = useI18n();
 
   const handleSelect = (category) => {
     setSelected(category.id);
@@ -86,16 +88,16 @@ export default function CategoryFilter({ onSelect }) {
 
   return (
     <Wrapper>
-      <Title>취향에 맞춰 찾아볼까요</Title>
+      <Title>{t("취향에 맞춰 찾아볼까요")}</Title>
       <IconRow>
         {CATEGORIES.map((cat) => {
           const isActive = selected === cat.id;
           return (
             <Item key={cat.id} onClick={() => handleSelect(cat)}>
               <Circle $active={isActive}>
-                <IconImg src={cat.icon} alt={cat.label} />
+                <IconImg src={cat.icon} alt={t(cat.label)} />
               </Circle>
-              <Label $active={isActive}>{cat.label}</Label>
+              <Label $active={isActive}>{t(cat.label)}</Label>
             </Item>
           );
         })}

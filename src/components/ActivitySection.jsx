@@ -1,17 +1,20 @@
 import React from "react";
 import styled from "styled-components";
 import ArrowIcon from "../assets/graynextarrow.svg";
+import { useI18n } from "../i18n/I18nProvider";
 
 export default function ActivitySection({ title = "활동", items = [] }) {
+  const { t } = useI18n();
+
   return (
     <Wrapper>
-      <SectionTitle>{title}</SectionTitle>
+      <SectionTitle>{t(title)}</SectionTitle>
       <ItemList>
         {items.map((item, index) => (
           <Row key={`${item.label}-${index}`} onClick={item.onClick}>
-            <Label>{item.label}</Label>
+            <Label>{t(item.label)}</Label>
             <RightGroup>
-              {item.value && <ValueText>{item.value}</ValueText>}
+              {item.value && <ValueText>{t(item.value)}</ValueText>}
               <ArrowImg src={ArrowIcon} alt="" />
             </RightGroup>
           </Row>

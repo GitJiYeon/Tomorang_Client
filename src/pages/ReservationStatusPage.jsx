@@ -16,6 +16,7 @@ import MyReviewCard from "../components/statusComponents/MyReviewCard";
 import Header from "../components/Header";
 import ChatIcon from "../assets/navIcons/message.svg";
 import ChatIcon2 from "../assets/navIcons/messageBlack.svg";
+import { useI18n } from "../i18n/I18nProvider";
 
 const firstText = (...values) =>
   values.find((value) => typeof value === "string" && value.trim())?.trim() ?? "";
@@ -39,6 +40,7 @@ export default function ReservationStatusPage() {
   const { reservationId } = useParams();
   const { state } = useLocation();
   const navigate = useNavigate();
+  const { language, t } = useI18n();
   const { reservations, isLoading, upsertReservation } = useReservations();
   const savedState = (() => {
     try {
@@ -111,7 +113,7 @@ export default function ReservationStatusPage() {
     return (
       <Wrapper>
         <div style={{ padding: 40, color: "#ACACAC" }}>
-          {isLoading ? "예약 정보를 불러오는 중입니다." : "예약 정보를 찾을 수 없습니다."}
+          {isLoading ? t("예약 정보를 불러오는 중입니다.") : t("예약 정보를 찾을 수 없습니다.")}
         </div>
       </Wrapper>
     );
@@ -159,7 +161,7 @@ export default function ReservationStatusPage() {
           .catch(() => {});
       }
     } catch (error) {
-      setActionError(error.message || "예약 상태 변경에 실패했습니다.");
+      setActionError(error.message || t("예약 상태 변경에 실패했습니다."));
     } finally {
       setIsActionBusy(false);
     }
@@ -227,12 +229,14 @@ export default function ReservationStatusPage() {
 
   const formatDate = (d) => {
     const obj = new Date(d);
-    return `${obj.getFullYear()}년 ${obj.getMonth() + 1}월 ${obj.getDate()}일`;
+    return language === "ja"
+      ? `${obj.getFullYear()}年 ${obj.getMonth() + 1}月 ${obj.getDate()}日`
+      : `${obj.getFullYear()}년 ${obj.getMonth() + 1}월 ${obj.getDate()}일`;
   };
 
   return (
     <Wrapper>
-      <Header coment="예약 현황" path={isGuideView ? "/guide-reservations" : "/main"}/>
+      <Header coment={t("예약 현황")} path={isGuideView ? "/guide-reservations" : "/main"}/>
       <Content>
 
         {/* 상태 헤더 */}
@@ -252,18 +256,18 @@ export default function ReservationStatusPage() {
         {/* 예약 신청 정보 */}
         <Section>
           <InfoCard>
-            <InfoTitle>예약신청 정보</InfoTitle>
+            <InfoTitle>{t("예약신청 정보")}</InfoTitle>
             <InfoRow>
-              <InfoLabel>날짜</InfoLabel>
+              <InfoLabel>{t("날짜")}</InfoLabel>
               <InfoValue>{formatDate(date)}</InfoValue>
             </InfoRow>
             <InfoRow>
-              <InfoLabel>시간</InfoLabel>
+              <InfoLabel>{t("시간")}</InfoLabel>
               <InfoValue>{time}</InfoValue>
             </InfoRow>
             <InfoRow>
-              <InfoLabel>인원 수</InfoLabel>
-              <InfoValue>어른 {adults}명 / 어린이 {children}명</InfoValue>
+              <InfoLabel>{t("인원 수")}</InfoLabel>
+              <InfoValue>{t("어른")} {adults}{t("명")} / {t("어린이")} {children}{t("명")}</InfoValue>
             </InfoRow>
           </InfoCard>
         </Section>
@@ -271,7 +275,7 @@ export default function ReservationStatusPage() {
         {/* 요청사항 */}
         <Section>
           <RequestCard>
-            <InfoTitle>요청사항</InfoTitle>
+            <InfoTitle>{t("요청사항")}</InfoTitle>
             <RequestText>{request}</RequestText>
           </RequestCard>
         </Section>
@@ -279,7 +283,7 @@ export default function ReservationStatusPage() {
         {/* 후기 (COMPLETED + 작성된 경우) */}
         {status === "COMPLETED" && myReview && (
           <Section>
-            <InfoTitle>{isGuideView ? "발견자의 후기" : "나의 후기"}</InfoTitle>
+            <InfoTitle>{isGuideView ? t("발견자의 후기") : t("나의 후기")}</InfoTitle>
             <MyReviewCard review={myReview} time={time} onClick={openPostReview} />
           </Section>
         )}
@@ -289,24 +293,24 @@ export default function ReservationStatusPage() {
         {status === "PENDING" && isGuideView && (
           <ButtonRow>
             <RejectBtn type="button" disabled={isActionBusy} onClick={() => handleStatusChange(STATUS.REJECTED)}>
-              {isActionBusy ? "처리중..." : "거절하기"}
+              {isActionBusy ? t("처리중...") : t("거절하기")}
             </RejectBtn>
             <AcceptBtn type="button" disabled={isActionBusy} onClick={() => handleStatusChange(STATUS.CONFIRMED)}>
-              {isActionBusy ? "처리중..." : "수락하기"}
+              {isActionBusy ? t("처리중...") : t("수락하기")}
             </AcceptBtn>
           </ButtonRow>
         )}
         {status === "PENDING" && !isGuideView && (
           <ActionBtn $disabled>
             <img src={ChatIcon} alt="chat" width={21} height={20}/>
-            채팅하기
+            {t("채팅하기")}
           </ActionBtn>
         )}
         {status === "CONFIRMED" && (
           <>
             {!isGuideView && (
               <ActionBtn onClick={() => navigate(`/review-write/${reservationId}`)}>
-                투어 완료하기
+                {t("투어 완료하기")}
               </ActionBtn>
             )}
             <ChatBtn
@@ -317,16 +321,16 @@ export default function ReservationStatusPage() {
               }
             >
               <img src={ChatIcon2} alt="chat" width={19} height={15} />
-              채팅하기
+              {t("채팅하기")}
             </ChatBtn>
           </>
         )}
         {status === "REJECTED" && !isGuideView && (
-          <ActionBtn onClick={() => navigate("/main")}>다른 코스 찾아보기</ActionBtn>
+          <ActionBtn onClick={() => navigate("/main")}>{t("다른 코스 찾아보기")}</ActionBtn>
         )}
         {status === "COMPLETED" && !myReview && !isGuideView && (
           <ActionBtn onClick={() => navigate(`/review-write/${reservationId}`)}>
-            후기 등록하기
+            {t("후기 등록하기")}
           </ActionBtn>
         )}
 

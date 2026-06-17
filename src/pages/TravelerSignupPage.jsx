@@ -6,19 +6,33 @@ import InputField from "../components/InputField";
 import NextButton from "../components/NextButton1";
 import StartComent from "../components/StartComent";
 import MailInput from "../components/MailInput";
+import NationalitySelector from "../components/NationalitySelector";
+import { useI18n } from "../i18n/I18nProvider";
 
 function TravelerSignupPage(){
     const navigate = useNavigate();
+    const { setLanguage } = useI18n();
     
     const [formData, setFormData] = useState({
         userId: "",
         password: "",
         passwordConfirm: "",
         email: "",
+        nationality: "",
+        defaultLanguage: "",
     });
 
     const handleChange = (field) => (e) => {
         setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+    };
+
+    const handleNationalityChange = (option) => {
+        setFormData((prev) => ({
+            ...prev,
+            nationality: option.value,
+            defaultLanguage: option.language,
+        }));
+        setLanguage(option.language);
     };
 
     // 모든 필드가 채워져 있고 비밀번호가 일치할 때만 활성화
@@ -64,6 +78,10 @@ function TravelerSignupPage(){
                     label="이메일"
                     onChange={handleChange("email")}
                 />
+                <NationalitySelector
+                    value={formData.nationality}
+                    onChange={handleNationalityChange}
+                />
             </Form>
             <Bottom>
                 <NextButton isValid={isValid} onClick={handleNext} /> 
@@ -91,10 +109,10 @@ const Wrap = styled.div`
 `
 const Form = styled.div`
     width:var(--app-content-width);
-    height:364px;
+    min-height:364px;
 `
 const Bottom = styled.div`
-    margin-top:121px;
+    margin-top:48px;
     display:flex;
     justify-content: center;
 `

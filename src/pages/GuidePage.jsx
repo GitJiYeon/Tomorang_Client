@@ -8,6 +8,7 @@ import PlusIcon from "../assets/plusIcon.svg";
 import GuideEmptyLogo from "../assets/guideEmptyLogo.svg";
 import { getPostDetail, getPosts } from "../api/tomorang";
 import { getPostOwnerId } from "../utils/postOwner";
+import { useI18n } from "../i18n/I18nProvider";
 
 const getPostId = (post) => post?.postId ?? post?.post_id ?? post?.id;
 
@@ -38,6 +39,7 @@ const getPostTime = (post) => {
 
 export default function GuidePage() {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const profile = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem("profile") || "{}");
@@ -55,7 +57,7 @@ export default function GuidePage() {
   const [myPosts, setMyPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(!!currentUserId);
   const [errorMessage, setErrorMessage] = useState(
-    currentUserId ? "" : "로그인 후 내 코스를 확인할 수 있어요."
+    currentUserId ? "" : t("로그인 후 내 코스를 확인할 수 있어요.")
   );
 
   const loadMyPosts = useCallback(async () => {
@@ -101,7 +103,7 @@ export default function GuidePage() {
       .catch((error) => {
         if (ignore) return;
         console.error("[Tomorang] 가이드 메인 게시물 조회 실패:", error);
-        setErrorMessage(error.message || "내 코스를 불러오지 못했습니다.");
+        setErrorMessage(error.message || t("내 코스를 불러오지 못했습니다."));
         setMyPosts([]);
       })
       .finally(() => {
@@ -154,7 +156,7 @@ export default function GuidePage() {
 
       {isLoading ? (
         <StateArea>
-          <StateText>내 코스를 불러오는 중...</StateText>
+          <StateText>{t("내 코스를 불러오는 중...")}</StateText>
         </StateArea>
       ) : hasContent ? (
         <ContentArea>
@@ -171,7 +173,7 @@ export default function GuidePage() {
         </ContentArea>
       ) : (
         <EmptyArea>
-          <EmptyLogo src={GuideEmptyLogo} alt="등록한 코스가 없습니다" />
+          <EmptyLogo src={GuideEmptyLogo} alt={t("등록한 코스가 없습니다")} />
           {errorMessage && <StateText>{errorMessage}</StateText>}
         </EmptyArea>
       )}

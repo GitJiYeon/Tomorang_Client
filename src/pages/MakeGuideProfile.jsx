@@ -82,6 +82,8 @@ export default function MakeGuideProfile() {
         interest: tags.join(", "),
         nickName: nickname.trim(),
         oneWord: bio.trim() || city.trim(),
+        nationality: signupForm.nationality,
+        defaultLanguage: signupForm.defaultLanguage,
         languages,
         levels,
       };
@@ -119,6 +121,8 @@ export default function MakeGuideProfile() {
           interest: dto.interest,
           nickName: dto.nickName,
           oneWord: dto.oneWord,
+          nationality: dto.nationality,
+          defaultLanguage: dto.defaultLanguage,
           city: city.trim(),
           image,
           profileImage: image,

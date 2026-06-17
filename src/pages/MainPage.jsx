@@ -19,6 +19,8 @@ import { getMyWishlists, getPopularGuides, getPostReviews, getPosts } from "../a
 import { syncLikedPostsFromWishlists } from "../utils/wishlist";
 import { getPostOwnerId } from "../utils/postOwner";
 import { getPostRatingAverage } from "../utils/postStats";
+import { useI18n } from "../i18n/I18nProvider";
+import { sortReviewsByRecent } from "../utils/reviews";
 
 const SCROLL_ROW = {
   display: "flex",
@@ -83,7 +85,7 @@ const buildGuideStats = (posts, reviewsByPostId) => {
 
 export default function MainPage() {
   const navigate = useNavigate();
-  const lang = "ko";
+  const { language: lang } = useI18n();
   const [activeNav, setActiveNav] = useState(0);
   const [serverPosts, setServerPosts] = useState([]);
   const [serverGuides, setServerGuides] = useState([]);
@@ -93,29 +95,36 @@ export default function MainPage() {
   useEffect(() => {
     let alive = true;
 
-    getPosts()
-      .then((posts) => {
-        if (!alive) return null;
-        setServerPosts(posts);
-        return Promise.all(
-          posts.map((post) =>
-            getPostReviews(getPostId(post))
-              .then((reviews) => [String(getPostId(post)), reviews])
-              .catch(() => [String(getPostId(post)), []])
-          )
-        ).then((entries) => ({ posts, entries }));
-      })
-      .then((result) => {
-        if (!alive || !result) return;
-        const reviewsByPostId = Object.fromEntries(result.entries);
-        setGuideStats(buildGuideStats(result.posts, reviewsByPostId));
-        setRealtimeReviews(
-          result.entries
-            .flatMap(([, reviews]) => reviews)
-            .filter((review) => review.postImages?.length > 0)
-        );
-      })
-      .catch((error) => console.error("게시물 목록 조회 실패", error));
+    const loadPostsAndReviews = () => {
+      getPosts()
+        .then((posts) => {
+          if (!alive) return null;
+          setServerPosts(posts);
+          return Promise.all(
+            posts.map((post) =>
+              getPostReviews(getPostId(post))
+                .then((reviews) => [String(getPostId(post)), reviews])
+                .catch(() => [String(getPostId(post)), []])
+            )
+          ).then((entries) => ({ posts, entries }));
+        })
+        .then((result) => {
+          if (!alive || !result) return;
+          const reviewsByPostId = Object.fromEntries(result.entries);
+          setGuideStats(buildGuideStats(result.posts, reviewsByPostId));
+          setRealtimeReviews(
+            sortReviewsByRecent(
+              result.entries
+                .flatMap(([, reviews]) => reviews)
+                .filter((review) => review.postImages?.length > 0)
+            )
+          );
+        })
+        .catch((error) => console.error("게시물 목록 조회 실패", error));
+    };
+
+    loadPostsAndReviews();
+    const reviewsTimer = window.setInterval(loadPostsAndReviews, 15000);
 
     getPopularGuides()
       .then((guides) => {
@@ -131,6 +140,7 @@ export default function MainPage() {
 
     return () => {
       alive = false;
+      window.clearInterval(reviewsTimer);
     };
   }, []);
 

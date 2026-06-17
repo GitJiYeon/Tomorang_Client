@@ -6,12 +6,16 @@ import BottomNav from "../components/mainComponents/BottomNav";
 import LogoutButton from "../components/LogoutButton";
 import ProfileCard from "../components/ProfileCard";
 import ActivitySection from "../components/ActivitySection";
+import ExhibitionNotice from "../components/ExhibitionNotice";
 import { getMypage, logoutMember } from "../api/tomorang";
 import { clearAuthStorage } from "../api/client";
+import { useI18n } from "../i18n/I18nProvider";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
+  const { languageLabel, t, toggleLanguage } = useI18n();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [noticeMessage, setNoticeMessage] = useState("");
 
   const raw = localStorage.getItem("profile");
   const [profile, setProfile] = useState(() => (raw ? JSON.parse(raw) : null));
@@ -36,48 +40,63 @@ export default function ProfilePage() {
   }, []);
 
   const activityItems = [
-    { label: "찜한 코스",     onClick: () => navigate("/my-course") },
-    { label: "내가 쓴 리뷰", onClick: () => navigate("/my-reviews", { state: { mode: "written" } }) },
-    { label: "숨긴 안내자",   onClick: () => navigate("/hidden") },
+    { label: t("찜한 코스"), onClick: () => navigate("/my-course") },
+    { label: t("내가 쓴 리뷰"), onClick: () => navigate("/my-reviews", { state: { mode: "written" } }) },
+    { label: t("숨긴 안내자"), onClick: () => navigate("/hidden") },
   ];
+
+  const showExhibitionNotice = () => {
+    setNoticeMessage("현재 로그아웃/역할전환은 전시중에 지원하지 않습니다.");
+  };
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
 
-    setIsLoggingOut(true);
-    try {
-      await logoutMember();
-    } catch (error) {
-      console.error("로그아웃 요청 실패", error);
-    } finally {
-      clearAuthStorage();
-      setIsLoggingOut(false);
-      navigate("/", { replace: true });
-    }
+    showExhibitionNotice();
+
+    // 전시 이후 실제 로그아웃이 필요하면 아래 코드를 다시 사용합니다.
+    // setIsLoggingOut(true);
+    // try {
+    //   await logoutMember();
+    // } catch (error) {
+    //   console.error("로그아웃 요청 실패", error);
+    // } finally {
+    //   clearAuthStorage();
+    //   setIsLoggingOut(false);
+    //   navigate("/", { replace: true });
+    // }
   };
 
   const roleItems = [
-    { label: "가이드로 전환", onClick: () => navigate("/guidesignup", { state: { mode: "switch" } }) },
+    {
+      label: t("가이드로 전환"),
+      onClick: () => {
+        showExhibitionNotice();
+        // 전시 이후 역할 전환이 필요하면 아래 코드를 다시 사용합니다.
+        // navigate("/guidesignup", { state: { mode: "switch" } });
+      },
+    },
   ];
 
   const langItems = [
-    { label: "앱 언어", value: "한국어", onClick: () => navigate("/edit-language") },
+    { label: t("앱 언어"), value: languageLabel, onClick: toggleLanguage },
   ];
 
   return (
     <PageWrapper>
-      <Header coment={"프로필"} />
+      <Header coment={t("프로필")} />
       <ProfileCard
         profile={profile}
         onEditPress={() => navigate("/edit-profile")}
       />
       <Divider />
       <SectionsArea>
-        <ActivitySection title="활동" items={activityItems} />
-        <ActivitySection title="역할 전환" items={roleItems} />
-        <ActivitySection title="언어 설정" items={langItems} />
+        <ActivitySection title={t("활동")} items={activityItems} />
+        <ActivitySection title={t("역할 전환")} items={roleItems} />
+        <ActivitySection title={t("언어 설정")} items={langItems} />
       </SectionsArea>
       <LogoutButton onClick={handleLogout} disabled={isLoggingOut} />
+      <ExhibitionNotice message={noticeMessage} onClose={() => setNoticeMessage("")} />
       <BottomNav activeIndex={4} />
     </PageWrapper>
   );

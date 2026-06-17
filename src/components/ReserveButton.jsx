@@ -7,11 +7,14 @@
 
 /* <ReserveButton isValid={true} onClick={handleNext} /> */
 import styled from "styled-components";
+import { useI18n } from "../i18n/I18nProvider";
 
 function ReserveButton({ isValid, onClick, label = "예약하기" }) {
+  const { t } = useI18n();
+
   return (
     <Button disabled={!isValid} onClick={isValid ? onClick : undefined}>
-      {label}
+      {t(label)}
     </Button>
   );
 }

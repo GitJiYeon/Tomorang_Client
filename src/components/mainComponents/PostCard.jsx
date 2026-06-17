@@ -10,6 +10,7 @@ import { getPostDescription, getPostImages } from "../../utils/postDisplay";
 import { formatRating, getPostRatingAverage, getPostWishlistCount } from "../../utils/postStats";
 import { isOwnPost } from "../../utils/postOwner";
 import { isPostLiked, setPostLiked, subscribeWishlistChanges } from "../../utils/wishlist";
+import { useI18n } from "../../i18n/I18nProvider";
 
 export default function PostCard({
   post,
@@ -19,6 +20,7 @@ export default function PostCard({
   fullWidth = false,
 }) {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const postId = post.postId ?? post.post_id ?? post.id;
   const [liked, setLiked] = useState(() => isPostLiked(postId));
   const [initialLiked, setInitialLiked] = useState(() => isPostLiked(postId));
@@ -82,7 +84,7 @@ export default function PostCard({
             }}
           />
         ) : (
-          <ImagePlaceholder>이미지 없음</ImagePlaceholder>
+          <ImagePlaceholder>{t("이미지 없음")}</ImagePlaceholder>
         )}
         {isSale && <SaleBadge>SALE</SaleBadge>}
         {canWishlist && (
@@ -109,9 +111,9 @@ export default function PostCard({
         )}
         <PriceArea>
           {isSale && discountRate > 0 && (
-            <OriginalPrice>{rawPrice.toLocaleString()}원</OriginalPrice>
+            <OriginalPrice>{rawPrice.toLocaleString()}{t("원")}</OriginalPrice>
           )}
-          <Price>{discountedPrice.toLocaleString()}원</Price>
+          <Price>{discountedPrice.toLocaleString()}{t("원")}</Price>
         </PriceArea>
       </Info>
     </Card>

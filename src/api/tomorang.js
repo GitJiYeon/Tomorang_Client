@@ -3,6 +3,7 @@ import { mergeLocalPostCache } from "../utils/localPostCache";
 import { filterVisibleGuides, filterVisiblePosts } from "../utils/hiddenGuides";
 import { getPostRatingAverage, getPostWishlistCount } from "../utils/postStats";
 import { resolvePublicAsset } from "../utils/publicAsset";
+import { getReviewCreatedAt, sortReviewsByRecent } from "../utils/reviews";
 
 const toPriceText = (value) => String(value ?? 0);
 
@@ -250,7 +251,15 @@ export function normalizeHiddenUser(user) {
     userId: user.userId ?? user.user_id ?? id,
     nickname: user.nickname ?? user.nickName ?? user.name ?? id,
     bio: user.bio ?? user.oneWord ?? user.introduction ?? "",
-    answertime: user.answertime ?? user.answerTime ?? "",
+    answertime:
+      user.answertime ??
+      user.answerTime ??
+      user.avgAnswerTime ??
+      user.averageAnswerTime ??
+      user.average_answer_time ??
+      user.responseTime ??
+      user.response_time ??
+      "",
     profileImage: normalizeImageValue(
       user.profileImage ??
         user.image ??
@@ -276,10 +285,10 @@ export function normalizeReview(review) {
     nickname: review.nickname ?? review.memberNickName ?? review.memberId ?? "사용자",
     profile: normalizeImageValue(review.profile ?? review.memberImage),
     images,
-    postImages: asArray(review.postImages ?? images).map(normalizeImageValue).filter(Boolean),
+    postImages: asArray(review.postImages ?? review.post_images ?? images).map(normalizeImageValue).filter(Boolean),
     likeCount: review.likeCount ?? review.like_count ?? review.likesCount ?? likeArray.length ?? 0,
     liked: Boolean(review.liked ?? review.isLiked ?? review.is_liked ?? false),
-    createdAt: review.createdAt ?? new Date().toISOString(),
+    createdAt: getReviewCreatedAt(review) || new Date().toISOString(),
   };
 }
 
@@ -445,7 +454,7 @@ export async function unhideUser(hiddenUserId) {
 
 export async function getPostReviews(postId) {
   const data = await apiFetch(`/api/review/post/${postId}`, { auth: !!localStorage.getItem("accessToken") });
-  return pickList(data).map(normalizeReview);
+  return sortReviewsByRecent(pickList(data).map(normalizeReview));
 }
 
 export async function likeReview(reviewId) {

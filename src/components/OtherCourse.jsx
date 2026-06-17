@@ -2,17 +2,19 @@ import React from "react";
 import styled from "styled-components";
 import Nextarrow from "../assets/nextarrow.svg";
 import Graynextarrow from "../assets/graynextarrow.svg"
+import { useI18n } from "../i18n/I18nProvider";
 
 export default function OtherCourse({ otherPosts }) {
+  const { t } = useI18n();
   // 데이터가 없으면 영역 자체를 렌더링하지 않음
   if (!otherPosts || otherPosts.length === 0) return null;
 
   return (
     <Container>
       <Header>
-        <Title>이 가이드의 다른코스</Title>
+        <Title>{t("이 가이드의 다른코스")}</Title>
         <MoreBtn>
-          더보기 <Chevron src={Graynextarrow} alt="next" />
+          {t("더보기")} <Chevron src={Graynextarrow} alt="next" />
         </MoreBtn>
       </Header>
 

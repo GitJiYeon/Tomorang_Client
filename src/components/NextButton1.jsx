@@ -7,11 +7,14 @@
 
 /* <NextButton isValid={true} onClick={handleNext} /> */
 import styled from "styled-components";
+import { useI18n } from "../i18n/I18nProvider";
 
 function NextButton({ isValid, onClick }) {
+  const { t } = useI18n();
+
   return (
     <Button disabled={!isValid} onClick={isValid ? onClick : undefined}>
-      다음
+      {t("다음")}
     </Button>
   );
 }

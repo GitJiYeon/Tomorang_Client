@@ -6,6 +6,8 @@ import GuideCard from "../components/mainComponents/GuideCard";
 import ReviewCard from "../components/mainComponents/ReviewCard";
 import PostCardList from "../components/PostCardList";
 import { getPopularGuides, getPostReviews, getPosts } from "../api/tomorang";
+import { useI18n } from "../i18n/I18nProvider";
+import { sortReviewsByRecent } from "../utils/reviews";
 
 const PAGE_META = {
   "trending-courses": { title: "떠오르는 코스", kind: "posts" },
@@ -27,6 +29,7 @@ const normalizeGuide = (guide) => ({
 export default function MainMorePage() {
   const { type } = useParams();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const meta = PAGE_META[type] ?? PAGE_META["trending-courses"];
   const [posts, setPosts] = useState([]);
   const [guides, setGuides] = useState([]);
@@ -35,16 +38,23 @@ export default function MainMorePage() {
   useEffect(() => {
     let alive = true;
 
-    getPosts()
-      .then((items) => {
-        if (!alive) return null;
-        setPosts(items);
-        return Promise.all(items.map((post) => getPostReviews(getPostId(post)).catch(() => [])));
-      })
-      .then((reviewGroups) => {
-        if (alive && reviewGroups) setReviews(reviewGroups.flat().filter((review) => review.postImages?.length > 0));
-      })
-      .catch((error) => console.error("게시물 목록 조회 실패", error));
+    const loadPostsAndReviews = () => {
+      getPosts()
+        .then((items) => {
+          if (!alive) return null;
+          setPosts(items);
+          return Promise.all(items.map((post) => getPostReviews(getPostId(post)).catch(() => [])));
+        })
+        .then((reviewGroups) => {
+          if (alive && reviewGroups) {
+            setReviews(sortReviewsByRecent(reviewGroups.flat().filter((review) => review.postImages?.length > 0)));
+          }
+        })
+        .catch((error) => console.error("게시물 목록 조회 실패", error));
+    };
+
+    loadPostsAndReviews();
+    const reviewsTimer = type === "realtime-reviews" ? window.setInterval(loadPostsAndReviews, 15000) : null;
 
     getPopularGuides()
       .then((items) => {
@@ -54,8 +64,9 @@ export default function MainMorePage() {
 
     return () => {
       alive = false;
+      if (reviewsTimer) window.clearInterval(reviewsTimer);
     };
-  }, []);
+  }, [type]);
 
   const visiblePosts = useMemo(() => {
     if (type === "sale-courses") {
@@ -80,7 +91,7 @@ export default function MainMorePage() {
 
   return (
     <PageWrapper>
-      <Header coment={meta.title} />
+      <Header coment={t(meta.title)} />
 
       {meta.kind === "posts" && (
         <PostList>
@@ -89,7 +100,7 @@ export default function MainMorePage() {
               <PostCardList key={getPostId(post) ?? `${post.title}-${index}`} post={post} />
             ))
           ) : (
-            <EmptyText>표시할 코스가 없습니다.</EmptyText>
+            <EmptyText>{t("표시할 코스가 없습니다.")}</EmptyText>
           )}
         </PostList>
       )}
@@ -105,7 +116,7 @@ export default function MainMorePage() {
               />
             ))
           ) : (
-            <EmptyText>표시할 가이드가 없습니다.</EmptyText>
+            <EmptyText>{t("표시할 가이드가 없습니다.")}</EmptyText>
           )}
         </GuideGrid>
       )}
@@ -119,7 +130,7 @@ export default function MainMorePage() {
               </ReviewClickArea>
             ))
           ) : (
-            <EmptyText>표시할 리뷰가 없습니다.</EmptyText>
+            <EmptyText>{t("표시할 리뷰가 없습니다.")}</EmptyText>
           )}
         </ReviewList>
       )}

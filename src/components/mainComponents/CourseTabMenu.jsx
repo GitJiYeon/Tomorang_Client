@@ -1,5 +1,6 @@
 import React from "react";
 import styled from "styled-components";
+import { useI18n } from "../../i18n/I18nProvider";
 
 const tabs = [
   { key: "course", label: "코스설명" },
@@ -8,6 +9,8 @@ const tabs = [
 ];
 
 export default function CourseTabMenu({ activeTab, onTabChange }) {
+  const { t } = useI18n();
+
   return (
     <MenuContainer>
       {tabs.map((tab) => (
@@ -16,7 +19,7 @@ export default function CourseTabMenu({ activeTab, onTabChange }) {
           $isActive={activeTab === tab.key}
           onClick={() => onTabChange(tab.key)}
         >
-          {tab.label}
+          {t(tab.label)}
         </TabButton>
       ))}
     </MenuContainer>

@@ -1,10 +1,13 @@
 import styled from "styled-components";
+import { useI18n } from "../i18n/I18nProvider";
 
 export default function LogoutButton({ onClick, disabled = false }) {
+  const { t } = useI18n();
+
   return (
     <ButtonWrapper>
       <LogoutContainer type="button" onClick={onClick} disabled={disabled}>
-        <LogoutText>{disabled ? "로그아웃 중..." : "로그아웃"}</LogoutText>
+        <LogoutText>{disabled ? t("로그아웃 중...") : t("로그아웃")}</LogoutText>
       </LogoutContainer>
     </ButtonWrapper>
   );

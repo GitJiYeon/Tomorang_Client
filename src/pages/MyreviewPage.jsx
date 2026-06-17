@@ -4,6 +4,7 @@ import styled from "styled-components";
 import Header from "../components/Header";
 import ReviewCard1 from "../components/ReviewCard1";
 import { getMypage, getPostReviews, getPosts } from "../api/tomorang";
+import { sortReviewsByRecent } from "../utils/reviews";
 
 const getPostId = (post) => post?.postId ?? post?.post_id ?? post?.id;
 
@@ -76,14 +77,16 @@ export default function MyreviewPage() {
           profile?.nickname ?? profile?.nickName ?? profile?.name ?? currentUserId ?? "사용자";
         const myProfile = profile?.profileImage ?? profile?.image ?? profile?.profile;
         setReviews(
-          serverReviews.map((review) =>
-            mode === "written"
-              ? {
-                  ...review,
-                  nickname: review.nickname ?? review.memberNickName ?? myNickname,
-                  profile: review.profile ?? review.memberImage ?? myProfile,
-                }
-              : review
+          sortReviewsByRecent(
+            serverReviews.map((review) =>
+              mode === "written"
+                ? {
+                    ...review,
+                    nickname: review.nickname ?? review.memberNickName ?? myNickname,
+                    profile: review.profile ?? review.memberImage ?? myProfile,
+                  }
+                : review
+            )
           )
         );
       })

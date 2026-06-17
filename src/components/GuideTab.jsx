@@ -2,6 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import DefaultProfileIcon from "../assets/defaultProfile.svg";
 import { formatRating } from "../utils/postStats";
+import { useI18n } from "../i18n/I18nProvider";
 
 const LEVEL_MAP = {
   beginner: 1,
@@ -62,11 +63,21 @@ function normalizeLanguages(guide) {
 }
 
 export default function GuideTab({ guide }) {
+  const { t } = useI18n();
+
   if (!guide) return null;
 
-  const nickname = guide.nickname ?? guide.nickName ?? guide.id ?? "가이드";
-  const bio = guide.bio ?? guide.oneWord ?? "소개가 아직 없습니다.";
-  const answerTime = guide.answertime ?? guide.answerTime ?? "평균 12분 내로 응답";
+  const nickname = guide.nickname ?? guide.nickName ?? guide.id ?? t("가이드");
+  const bio = guide.bio ?? guide.oneWord ?? t("소개가 아직 없습니다.");
+  const answerTime =
+    guide.answertime ??
+    guide.answerTime ??
+    guide.avgAnswerTime ??
+    guide.averageAnswerTime ??
+    guide.average_answer_time ??
+    guide.responseTime ??
+    guide.response_time ??
+    "평균 12분 내로 응답";
   const profileImage = guide.profileImage ?? guide.image ?? DefaultProfileIcon;
   const interests = normalizeInterests(guide);
   const languages = normalizeLanguages(guide);
@@ -81,7 +92,7 @@ export default function GuideTab({ guide }) {
           <InfoGroup>
             <Name>{nickname}</Name>
             <Bio>{bio}</Bio>
-            <AnswerTime>{answerTime}</AnswerTime>
+            <AnswerTime>{t(answerTime)}</AnswerTime>
           </InfoGroup>
           <Avatar src={profileImage} alt="profile" />
         </TopRow>
@@ -105,18 +116,18 @@ export default function GuideTab({ guide }) {
 
         <StatsRow>
           <StatItem>
-            <StatNum>{likeCount}개</StatNum>
-            <StatLabel>좋아요</StatLabel>
+            <StatNum>{likeCount}{t("개")}</StatNum>
+            <StatLabel>{t("좋아요")}</StatLabel>
           </StatItem>
           <VerticalLine />
           <StatItem>
-            <StatNum>{postCount}개</StatNum>
-            <StatLabel>코스</StatLabel>
+            <StatNum>{postCount}{t("개")}</StatNum>
+            <StatLabel>{t("코스")}</StatLabel>
           </StatItem>
           <VerticalLine />
           <StatItem>
-            <StatNum>{formatRating(rating)}점</StatNum>
-            <StatLabel>리뷰</StatLabel>
+            <StatNum>{formatRating(rating)}{t("점")}</StatNum>
+            <StatLabel>{t("리뷰")}</StatLabel>
           </StatItem>
         </StatsRow>
       </Card>

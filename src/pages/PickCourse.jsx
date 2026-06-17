@@ -7,6 +7,7 @@ import { deletePost, getMyWishlists, getPosts, updatePost } from "../api/tomoran
 import { getPostDescription } from "../utils/postDisplay";
 import { getPostOwnerId } from "../utils/postOwner";
 import { getPostId, syncLikedPostsFromWishlists } from "../utils/wishlist";
+import { useI18n } from "../i18n/I18nProvider";
 
 const sameId = (a, b) => String(a ?? "") === String(b ?? "");
 
@@ -35,6 +36,7 @@ const getPostTime = (post) => {
 
 export default function PickCourse() {
   const { state } = useLocation();
+  const { t } = useI18n();
   const profile = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem("profile") || "{}");
@@ -104,7 +106,7 @@ export default function PickCourse() {
     const postId = getPostId(post);
     if (!postId || deletingId) return;
 
-    const ok = window.confirm("이 코스를 삭제할까요?");
+    const ok = window.confirm(t("이 코스를 삭제할까요?"));
     if (!ok) return;
 
     setDeletingId(String(postId));
@@ -113,7 +115,7 @@ export default function PickCourse() {
       setPosts((items) => items.filter((item) => !sameId(getPostId(item), postId)));
     } catch (error) {
       console.error("코스 삭제 실패", error);
-      alert(error.message || "코스 삭제에 실패했어요.");
+      alert(error.message || t("코스 삭제에 실패했어요."));
     } finally {
       setDeletingId("");
     }
@@ -123,24 +125,24 @@ export default function PickCourse() {
     const postId = getPostId(post);
     if (!postId || editingId) return;
 
-    const nextTitle = window.prompt("제목", post.title ?? "");
+    const nextTitle = window.prompt(t("제목"), post.title ?? "");
     if (nextTitle === null) return;
 
-    const nextDescription = window.prompt("한 줄 설명", post.subtitle ?? getPostDescription(post) ?? "");
+    const nextDescription = window.prompt(t("한 줄 설명"), post.subtitle ?? getPostDescription(post) ?? "");
     if (nextDescription === null) return;
 
-    const nextPriceText = window.prompt("가격", String(post.price ?? "").replace(/,/g, ""));
+    const nextPriceText = window.prompt(t("가격"), String(post.price ?? "").replace(/,/g, ""));
     if (nextPriceText === null) return;
 
-    const nextCityName = window.prompt("지역", post.cityName ?? post.city_name ?? "");
+    const nextCityName = window.prompt(t("지역"), post.cityName ?? post.city_name ?? "");
     if (nextCityName === null) return;
 
-    const nextDuration = window.prompt("소요시간", post.duration ?? "");
+    const nextDuration = window.prompt(t("소요시간"), post.duration ?? "");
     if (nextDuration === null) return;
 
     const nextPrice = Number(String(nextPriceText).replace(/,/g, ""));
     if (Number.isNaN(nextPrice)) {
-      alert("가격은 숫자로 입력해주세요.");
+      alert(t("가격은 숫자로 입력해주세요."));
       return;
     }
 
@@ -167,20 +169,20 @@ export default function PickCourse() {
       );
     } catch (error) {
       console.error("코스 수정 실패", error);
-      alert(error.message || "코스 수정에 실패했어요.");
+      alert(error.message || t("코스 수정에 실패했어요."));
     } finally {
       setEditingId("");
     }
   };
 
   const guideActions = [
-    { label: editingId ? "수정 중" : "수정", icon: "edit", onClick: handleEdit },
-    { label: deletingId ? "삭제 중" : "삭제", icon: "delete", onClick: handleDelete },
+    { label: editingId ? t("수정 중") : t("수정"), icon: "edit", onClick: handleEdit },
+    { label: deletingId ? t("삭제 중") : t("삭제"), icon: "delete", onClick: handleDelete },
   ];
 
   return (
     <>
-      <Header coment={isGuideMode ? "내 코스 보기" : "찜한 코스"} />
+      <Header coment={isGuideMode ? t("내 코스 보기") : t("찜한 코스")} />
       <ListWrapper>
         {visiblePosts.length > 0 ? (
           visiblePosts.map((post, index) => (
@@ -195,7 +197,7 @@ export default function PickCourse() {
             />
           ))
         ) : (
-          <EmptyText>{isGuideMode ? "등록한 코스가 없어요." : "찜한 코스가 없어요."}</EmptyText>
+          <EmptyText>{isGuideMode ? t("등록한 코스가 없어요.") : t("찜한 코스가 없어요.")}</EmptyText>
         )}
       </ListWrapper>
     </>

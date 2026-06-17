@@ -8,6 +8,7 @@ import PostCardList from "../components/PostCardList";
 import ReviewCard from "../components/ReviewCard1";
 import { getPopularGuides, getPostReviews, getPosts } from "../api/tomorang";
 import { getPostRatingAverage, getPostWishlistCount } from "../utils/postStats";
+import { sortReviewsByRecent } from "../utils/reviews";
 
 const TAB = {
   COURSE: "\uCF54\uC2A4",
@@ -29,6 +30,14 @@ function normalizeGuide(guide) {
     profileImage: guide.profileImage ?? guide.image,
     nickname: guide.nickname ?? guide.nickName ?? guide.id,
     bio: guide.bio ?? guide.oneWord,
+    answertime:
+      guide.answertime ??
+      guide.answerTime ??
+      guide.avgAnswerTime ??
+      guide.averageAnswerTime ??
+      guide.average_answer_time ??
+      guide.responseTime ??
+      guide.response_time,
     rating: guide.rating ?? guide.avgRating ?? 0,
     likeCount: guide.likeCount ?? guide.totalLikes ?? 0,
   };
@@ -106,7 +115,7 @@ export default function GuideProfilePage() {
         return Promise.all(posts.map((post) => getPostReviews(getPostId(post)).catch(() => [])));
       })
       .then((reviewGroups) => {
-        if (alive && reviewGroups) setGuideReviews(reviewGroups.flat());
+        if (alive && reviewGroups) setGuideReviews(sortReviewsByRecent(reviewGroups.flat()));
       })
       .catch((error) => console.error("\uAC00\uC774\uB4DC \uC815\uBCF4 \uC870\uD68C \uC2E4\uD328", error))
       .finally(() => {

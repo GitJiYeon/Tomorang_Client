@@ -96,6 +96,8 @@ function MakeTravelerProfile() {
         interest: tags.join(", "),
         nickName: nickname.trim(),
         oneWord: bio.trim(),
+        nationality: formData.nationality,
+        defaultLanguage: formData.defaultLanguage,
         languages,
         levels,
       };
@@ -124,6 +126,8 @@ function MakeTravelerProfile() {
           interest: dto.interest,
           nickName: dto.nickName,
           oneWord: dto.oneWord,
+          nationality: dto.nationality,
+          defaultLanguage: dto.defaultLanguage,
           image,
           profileImage: image,
           languages,

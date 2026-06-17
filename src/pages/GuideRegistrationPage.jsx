@@ -18,6 +18,7 @@ import {
   GUIDE_REGISTRATION_DRAFT_KEY,
   setRepresentativeImageDraft,
 } from "../utils/guideRegistrationDraft";
+import { useI18n } from "../i18n/I18nProvider";
 
 const REGISTRATION_CATEGORY_ROWS = [
   ["체험", "힐링", "풍경", "쇼핑", "맛집"],
@@ -33,6 +34,7 @@ const initialFormData = {
   startTime: "",
   title: "",
   description: "",
+  courseAdditionalDescription: "",
   meetingAddress: "",
   meetingPlace: undefined,
 };
@@ -105,10 +107,12 @@ const formatShortAddress = (place, fallback = "") => {
     .join(" ");
 };
 
-function buildContentBlocks(markdown, meetingAddress, imageMap = {}) {
+function buildContentBlocks(markdown, meetingAddress, imageMap = {}, labels = {}) {
+  const detailTitle = labels.detailTitle ?? "코스 상세 설명";
+  const meetingTitle = labels.meetingTitle ?? "만남 장소";
   const value = meetingAddress
-    ? `${markdown || "코스 상세 설명"}\n\n### 만남 장소\n${meetingAddress}`
-    : markdown || "코스 상세 설명";
+    ? `${markdown || detailTitle}\n\n### ${meetingTitle}\n${meetingAddress}`
+    : markdown || detailTitle;
   const blocks = [];
   const imagePattern = /!\[[^\]]*]\(tomorang-content-image:\/\/[^)\s]+\)/g;
   let lastIndex = 0;
@@ -132,14 +136,14 @@ function buildContentBlocks(markdown, meetingAddress, imageMap = {}) {
   return blocks.length > 0 ? blocks : [{ type: "text", value, sequence: 0 }];
 }
 
-const createMeetingBubbleIcon = (address) =>
+const createMeetingBubbleIcon = (address, actionLabel) =>
   L.divIcon({
     className: "meeting-bubble-marker",
     iconSize: [212, 78],
     iconAnchor: [106, 78],
     html: `
       <div class="meeting-bubble">
-        <strong>이 위치로 설정하기</strong>
+        <strong>${escapeHtml(actionLabel)}</strong>
         <span>${escapeHtml(address)}</span>
       </div>
     `,
@@ -161,25 +165,29 @@ function MapCenterSync({ point }) {
 }
 
 function MeetingPlacePicker({ onBack, onSelect }) {
+  const { language, t } = useI18n();
   const [pickedPoint, setPickedPoint] = useState(null);
-  const [pickedAddress, setPickedAddress] = useState("지도를 클릭해 위치를 선택하세요");
+  const [pickedAddress, setPickedAddress] = useState(t("지도를 클릭해 위치를 선택하세요"));
   const [addressInput, setAddressInput] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const initialCenter = [35.3191, 139.5467];
 
   const handlePick = async (latlng) => {
-    const fallbackAddress = `위도 ${latlng.lat.toFixed(4)}, 경도 ${latlng.lng.toFixed(4)}`;
+    const fallbackAddress =
+      language === "ja"
+        ? `緯度 ${latlng.lat.toFixed(4)}, 経度 ${latlng.lng.toFixed(4)}`
+        : `위도 ${latlng.lat.toFixed(4)}, 경도 ${latlng.lng.toFixed(4)}`;
     setPickedPoint(latlng);
     setSearchResults([]);
-    setPickedAddress("주소 불러오는 중...");
+    setPickedAddress(t("주소 불러오는 중..."));
     try {
       const params = new URLSearchParams({
         format: "jsonv2",
         lat: String(latlng.lat),
         lon: String(latlng.lng),
         addressdetails: "1",
-        "accept-language": "ko",
+        "accept-language": language,
       });
       const response = await fetch(`https://nominatim.openstreetmap.org/reverse?${params}`);
       const data = await response.json();
@@ -202,7 +210,7 @@ function MeetingPlacePicker({ onBack, onSelect }) {
         q: query,
         limit: "5",
         addressdetails: "1",
-        "accept-language": "ko",
+        "accept-language": language,
       });
       const response = await fetch(`https://nominatim.openstreetmap.org/search?${params}`);
       const data = await response.json();
@@ -210,13 +218,13 @@ function MeetingPlacePicker({ onBack, onSelect }) {
       setSearchResults(results);
       if (results.length === 0) {
         setPickedPoint(null);
-        setPickedAddress("검색 결과가 없어요.");
+        setPickedAddress(t("검색 결과가 없어요."));
         return;
       }
     } catch {
       setPickedPoint(null);
       setSearchResults([]);
-      setPickedAddress("주소 검색에 실패했어요.");
+      setPickedAddress(t("주소 검색에 실패했어요."));
     } finally {
       setIsSearching(false);
     }
@@ -241,18 +249,18 @@ function MeetingPlacePicker({ onBack, onSelect }) {
   return (
     <MeetingPageWrapper>
       <LeafletZFix />
-      <Header coment="만남 장소" onBack={onBack} />
+      <Header coment={t("만남 장소")} onBack={onBack} />
       <AddressSearchPanel>
         <AddressInput
           value={addressInput}
           onChange={(event) => setAddressInput(event.target.value)}
-          placeholder="주소나 장소명을 입력하세요"
+          placeholder={t("주소나 장소명을 입력하세요")}
           onKeyDown={(event) => {
             if (event.key === "Enter") handleAddressSearch();
           }}
         />
         <AddressButton type="button" onClick={handleAddressSearch} disabled={isSearching}>
-          {isSearching ? "검색 중" : "검색"}
+          {isSearching ? t("검색 중") : t("검색")}
         </AddressButton>
         <SelectedAddress>{pickedAddress}</SelectedAddress>
         {searchResults.length > 0 && (
@@ -270,7 +278,7 @@ function MeetingPlacePicker({ onBack, onSelect }) {
           </SearchResultList>
         )}
         <AddressButton type="button" onClick={selectDirectAddress} disabled={!pickedPoint}>
-          이 주소로 설정
+          {t("이 주소로 설정")}
         </AddressButton>
       </AddressSearchPanel>
       <MeetingMapWrap>
@@ -281,7 +289,7 @@ function MeetingPlacePicker({ onBack, onSelect }) {
           {pickedPoint && (
             <Marker
               position={pickedPoint}
-              icon={createMeetingBubbleIcon(pickedAddress)}
+              icon={createMeetingBubbleIcon(pickedAddress, t("이 위치로 설정하기"))}
               eventHandlers={{
                 click: () => onSelect({ lat: pickedPoint.lat, lng: pickedPoint.lng, label: pickedAddress }),
               }}
@@ -295,6 +303,7 @@ function MeetingPlacePicker({ onBack, onSelect }) {
 
 export default function GuideRegistrationPage() {
   const navigate = useNavigate();
+  const { language, t } = useI18n();
   const fileInputRef = useRef(null);
   const [showMeetingPicker, setShowMeetingPicker] = useState(false);
   const [formData, setFormData] = useState(loadDraft);
@@ -385,16 +394,16 @@ export default function GuideRegistrationPage() {
   const handleRegister = async () => {
     if (isSubmitting) return;
     if (!isFormComplete) {
-      setErrorMessage("모든 항목을 작성해주세요.");
+      setErrorMessage(t("모든 항목을 작성해주세요."));
       return;
     }
     const userId = localStorage.getItem("userId");
     if (!userId || !hasValidAuthToken()) {
-      setErrorMessage("로그인 후 코스를 등록해주세요.");
+      setErrorMessage(t("로그인 후 코스를 등록해주세요."));
       return;
     }
     if (!representativeImage.file) {
-      setErrorMessage("코스 사진을 최소 1장 등록해주세요.");
+      setErrorMessage(t("코스 사진을 최소 1장 등록해주세요."));
       return;
     }
 
@@ -404,15 +413,15 @@ export default function GuideRegistrationPage() {
       const dates = Array.isArray(formData.scheduleDates) ? formData.scheduleDates : [];
       const times = splitCommaList(formData.startTime);
       if (dates.length === 0) {
-        setErrorMessage("예약 가능한 날짜를 선택해주세요.");
+        setErrorMessage(t("예약 가능한 날짜를 선택해주세요."));
         return;
       }
       if (times.length === 0) {
-        setErrorMessage("예약 가능한 시간을 1개 이상 입력해주세요.");
+        setErrorMessage(t("예약 가능한 시간을 1개 이상 입력해주세요."));
         return;
       }
       if (!hasMeetingPoint(formData.meetingPlace)) {
-        setErrorMessage("만남 장소는 지도에서 위치를 선택해 주세요.");
+        setErrorMessage(t("만남 장소는 지도에서 위치를 선택해 주세요."));
         return;
       }
       const { files: contentImages } = getContentImageDrafts();
@@ -435,7 +444,11 @@ export default function GuideRegistrationPage() {
         meetingPointAddress: formData.meetingAddress,
         meetingPointLat: formData.meetingPlace?.lat,
         meetingPointLng: formData.meetingPlace?.lng,
-        contentBlocks: buildContentBlocks(formData.description, formData.meetingAddress),
+        courseAdditionalDescription: formData.courseAdditionalDescription.trim(),
+        contentBlocks: buildContentBlocks(formData.description, formData.meetingAddress, {}, {
+          detailTitle: t("코스 상세 설명"),
+          meetingTitle: t("만남 장소"),
+        }),
         tags: selectedCategories.map((tagName) => ({ langCode: "ko", tagName })),
         schedules: dates.map((date, dateIndex) => ({
           date,
@@ -471,7 +484,7 @@ export default function GuideRegistrationPage() {
       clearGuideRegistrationDraftFiles();
       navigate("/guide", { replace: true });
     } catch (error) {
-      setErrorMessage(error.message || "코스 등록에 실패했습니다.");
+      setErrorMessage(error.message || t("코스 등록에 실패했습니다."));
     } finally {
       setIsSubmitting(false);
     }
@@ -483,35 +496,37 @@ export default function GuideRegistrationPage() {
 
   return (
     <PageWrapper>
-      <Header coment="코스등록" />
+      <Header coment={t("코스등록")} />
       <FormContainer>
         <Section>
-          <SectionTitle>발견자에게 안내할</SectionTitle>
-          <SectionTitle>코스를 등록해주세요</SectionTitle>
-          <SectionDescription>등록한 코스는 메인에서 확인해 볼 수 있어요.</SectionDescription>
+          <SectionTitle>{t("발견자에게 안내할")}</SectionTitle>
+          <SectionTitle>{t("코스를 등록해주세요")}</SectionTitle>
+          <SectionDescription>{t("등록한 코스는 메인에서 확인해 볼 수 있어요.")}</SectionDescription>
         </Section>
         <FormSection>
-          <FormTitle>기본 정보</FormTitle>
+          <FormTitle>{t("기본 정보")}</FormTitle>
           <FormGroup>
-            <Label>활동 도시</Label>
-            <Input name="location" placeholder="도쿄, 아이치, 나고야..." value={formData.location} onChange={handleInputChange} />
+            <Label>{t("활동 도시")}</Label>
+            <Input name="location" placeholder={t("도쿄, 아이치, 나고야...")} value={formData.location} onChange={handleInputChange} />
           </FormGroup>
           <FormGroup>
-            <Label>카테고리</Label>
+            <Label>{t("카테고리")}</Label>
             <CategoryChipGroup>
               {REGISTRATION_CATEGORY_ROWS.map((row) => (
                 <CategoryChipRow key={row.join("-")}>
                   {row.map((category) => {
                     const selected = selectedCategories.includes(category);
+                    const label = t(category);
                     return (
                       <CategoryChip
                         key={category}
                         type="button"
                         $selected={selected}
-                        $length={category.length}
+                        $labelLength={label.length}
+                        $language={language}
                         onClick={() => handleCategoryToggle(category)}
                       >
-                        {category}
+                        {label}
                       </CategoryChip>
                     );
                   })}
@@ -520,7 +535,7 @@ export default function GuideRegistrationPage() {
             </CategoryChipGroup>
           </FormGroup>
           <FormGroup>
-            <Label>예약 가능 날짜</Label>
+            <Label>{t("예약 가능 날짜")}</Label>
             <DateInput type="date" onChange={handleDateToggle} />
             <DateChipRow>
               {(formData.scheduleDates ?? []).map((date) => (
@@ -533,59 +548,68 @@ export default function GuideRegistrationPage() {
           </FormGroup>
           <DoubleFormGroup>
             <FormGroup>
-              <Label>참가비(¥)</Label>
+              <Label>{t("참가비(원)")}</Label>
               <Input name="price" value={formData.price} onChange={handleInputChange} />
             </FormGroup>
             <FormGroup>
-              <Label>소요시간(시간)</Label>
+              <Label>{t("소요시간(시간)")}</Label>
               <Input name="duration" value={formData.duration} onChange={handleInputChange} />
             </FormGroup>
           </DoubleFormGroup>
           <FormGroup>
-            <Label>가능 시간대(쉼표로 구분)</Label>
+            <Label>{t("가능 시간대(쉼표로 구분)")}</Label>
             <Input name="startTime" placeholder="10:00,14:00..." value={formData.startTime} onChange={handleInputChange} />
           </FormGroup>
         </FormSection>
         <FormSection>
-          <FormTitle>코스 정보</FormTitle>
+          <FormTitle>{t("코스 정보")}</FormTitle>
           <FormGroup>
-            <Label>코스 제목</Label>
-            <Input name="title" placeholder="코스 제목을 입력해주세요" value={formData.title} onChange={handleInputChange} />
+            <Label>{t("코스 제목")}</Label>
+            <Input name="title" placeholder={t("코스 제목을 입력해주세요")} value={formData.title} onChange={handleInputChange} />
           </FormGroup>
           <FormGroup>
-            <Label>대표 사진</Label>
+            <Label>{t("대표 사진")}</Label>
             <PhotoBox>
               <PhotoMainButton type="button" onClick={() => fileInputRef.current?.click()} $hasImage={!!representativeImage.preview}>
                 {representativeImage.preview ? (
-                  <MainPreview src={representativeImage.preview} alt="대표 사진" />
+                  <MainPreview src={representativeImage.preview} alt={t("대표 사진")} />
                 ) : (
                   <PhotoGuide>
                     <img src={ImageIcon} alt="" />
-                    <span>대표 사진을 등록해주세요</span>
+                    <span>{t("대표 사진을 등록해주세요")}</span>
                   </PhotoGuide>
                 )}
               </PhotoMainButton>
               <HiddenFileInput ref={fileInputRef} type="file" accept="image/*" onChange={handleImageAdd} />
-              <PhotoHint>대표 사진 1장을 등록해주세요. 본문 이미지는 상세 설명에서 삽입할 수 있어요.</PhotoHint>
+              <PhotoHint>{t("대표 사진 1장을 등록해주세요. 본문 이미지는 상세 설명에서 삽입할 수 있어요.")}</PhotoHint>
             </PhotoBox>
           </FormGroup>
           <FormGroup>
-            <Label>상세 설명</Label>
+            <Label>{t("상세 설명")}</Label>
             <DetailBox>
-              <DetailText>{formData.description || "코스에 대한 상세내용을 작성해보세요"}</DetailText>
-              <DetailButton type="button" onClick={handleDescriptionEdit}>작성하기</DetailButton>
+              <DetailText>{formData.description || t("코스에 대한 상세내용을 작성해보세요")}</DetailText>
+              <DetailButton type="button" onClick={handleDescriptionEdit}>{t("작성하기")}</DetailButton>
             </DetailBox>
           </FormGroup>
           <FormGroup>
-            <Label>만남 장소</Label>
+            <Label>{t("코스 부가설명")}</Label>
+            <TextArea
+              name="courseAdditionalDescription"
+              placeholder={t("가이드 탭에 보여줄 설명을 입력해주세요")}
+              value={formData.courseAdditionalDescription}
+              onChange={handleInputChange}
+            />
+          </FormGroup>
+          <FormGroup>
+            <Label>{t("만남 장소")}</Label>
             <DetailBox>
               <AddressTextInput
                 value={formData.meetingAddress}
                 onChange={(event) => setFormData((prev) => ({ ...prev, meetingAddress: event.target.value, meetingPlace: undefined }))}
-                placeholder="주소나 장소명을 직접 입력하세요"
+                placeholder={t("주소나 장소명을 직접 입력하세요")}
               />
-              <DetailText>{formData.meetingAddress || "발견자와 만날 장소를 설정하세요"}</DetailText>
-              <DetailButton type="button" onClick={() => setShowMeetingPicker(true)}>만남 장소</DetailButton>
+              <DetailText>{formData.meetingAddress || t("발견자와 만날 장소를 설정하세요")}</DetailText>
+              <DetailButton type="button" onClick={() => setShowMeetingPicker(true)}>{t("만남 장소")}</DetailButton>
             </DetailBox>
           </FormGroup>
         </FormSection>
@@ -823,6 +847,26 @@ const Input = styled.input`
     background-color: #fafafa;
   }
 `;
+const TextArea = styled.textarea`
+  width: 100%;
+  min-height: 112px;
+  padding: 14px;
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+  font-size: 13px;
+  font-family: "Noto Sans KR", sans-serif;
+  box-sizing: border-box;
+  color: #111;
+  line-height: 20px;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.2s;
+  &::placeholder { color: #acacac; }
+  &:focus {
+    border-color: #c5f598;
+    background-color: #fafafa;
+  }
+`;
 const CategoryChipGroup = styled.div`
   width: 100%;
   box-sizing: border-box;
@@ -834,16 +878,25 @@ const CategoryChipRow = styled.div`
   width: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
 `;
 const CategoryChip = styled.button`
   height: 34px;
-  width: ${({ $length }) => {
-    if ($length >= 5) return "112px";
-    if ($length >= 4) return "96px";
+  width: ${({ $language, $labelLength }) => {
+    if ($language === "ja") {
+      if ($labelLength >= 6) return "88px";
+      if ($labelLength >= 5) return "76px";
+      if ($labelLength >= 4) return "68px";
+      if ($labelLength >= 3) return "58px";
+      return "46px";
+    }
+    if ($labelLength >= 5) return "112px";
+    if ($labelLength >= 4) return "96px";
     return "58px";
   }};
-  padding: 0 12px;
+  padding: 0 ${({ $language }) => ($language === "ja" ? "8px" : "12px")};
   border: ${({ $selected }) => ($selected ? "1px solid #c5f598" : "1px solid #dadada")};
   border-radius: 60px;
   background: ${({ $selected }) => ($selected ? "#c5f598" : "#fff")};
@@ -853,6 +906,7 @@ const CategoryChip = styled.button`
   font-weight: ${({ $selected }) => ($selected ? 700 : 500)};
   cursor: pointer;
   white-space: nowrap;
+  flex-shrink: 0;
 `;
 const DateInput = styled(Input)`
   cursor: pointer;

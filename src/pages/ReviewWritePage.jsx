@@ -19,6 +19,7 @@ import PlusIcon from "../assets/bookStatusIcons/plusIcon.svg";
 import XSmallIcon from "../assets/bookStatusIcons/xSmall.svg";
 import { createReview, getPostDetail } from "../api/tomorang";
 import { getPostDescription, getPostImages } from "../utils/postDisplay";
+import { useI18n } from "../i18n/I18nProvider";
 
 const REVIEW_QUESTIONS = [
   {
@@ -87,6 +88,7 @@ async function compressImageFile(file) {
 export default function ReviewWritePage() {
   const { reservationId } = useParams();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const { reservations, completeAndSaveReview, isLoading } = useReservations();
   const [post, setPost] = useState(null);
 
@@ -148,7 +150,7 @@ export default function ReviewWritePage() {
       setReviewImageFiles((prev) => [...prev, ...compressedFiles].slice(0, MAX_REVIEW_IMAGES));
     } catch (error) {
       console.error("리뷰 이미지 압축 실패", error);
-      setErrorMessage("이미지를 처리하지 못했어요. 다른 사진으로 다시 시도해주세요.");
+      setErrorMessage(t("이미지를 처리하지 못했어요. 다른 사진으로 다시 시도해주세요."));
     }
   };
 
@@ -207,7 +209,7 @@ export default function ReviewWritePage() {
       navigate(`/reservation-status/${reservationId}`, { replace: true });
     } catch (err) {
       console.error("리뷰 등록 실패", err);
-      setErrorMessage(err.message || "리뷰 등록에 실패했습니다.");
+      setErrorMessage(err.message || t("리뷰 등록에 실패했습니다."));
     } finally {
       setIsSubmitting(false);
     }
@@ -215,7 +217,7 @@ export default function ReviewWritePage() {
 
   return (
     <Wrapper>
-      <Header coment="리뷰 작성" />
+      <Header coment={t("리뷰 작성")} />
 
       <Content>
         {/* ── 게시물 썸네일 카드 ── */}
@@ -313,9 +315,9 @@ export default function ReviewWritePage() {
 
         {/* ── 텍스트 후기 ── */}
         <Section>
-          <QuestionLabel>가이드와 코스에 대한 솔직한 후기를 남겨주세요</QuestionLabel>
+          <QuestionLabel>{t("가이드와 코스에 대한 솔직한 후기를 남겨주세요")}</QuestionLabel>
           <ReviewTextArea
-            placeholder="세일러문 굿즈 위주로 보고 싶..."
+            placeholder={t("세일러문 굿즈 위주로 보고 싶...")}
             value={reviewText}
             onChange={(e) => setReviewText(e.target.value)}
             maxLength={500}
@@ -325,7 +327,7 @@ export default function ReviewWritePage() {
         {/* ── 등록 버튼 ── */}
         {errorMessage && <ErrorText>{errorMessage}</ErrorText>}
         <SubmitBtn $disabled={!canSubmit || isSubmitting} onClick={handleSubmit}>
-          {isSubmitting ? "등록 중..." : "후기 등록하기"}
+          {isSubmitting ? t("등록 중...") : t("후기 등록하기")}
         </SubmitBtn>
       </Content>
     </Wrapper>
