@@ -106,13 +106,13 @@ export default function GuideMyPage() {
     };
   }, [currentGuideId, profile?.guideId, profile?.id]);
 
-  const showExhibitionNotice = () => {
-    setNoticeMessage("현재 로그아웃/역할전환은 전시중에 지원하지 않습니다.");
+  const showRoleSwitchNotice = () => {
+    setNoticeMessage("현재 역할전환은 전시중에 지원하지 않습니다.");
   };
 
   const handleSwitchToDiscoverer = async () => {
     if (isBusy) return;
-    showExhibitionNotice();
+    showRoleSwitchNotice();
 
     // 전시 이후 실제 역할 전환이 필요하면 아래 코드를 다시 사용합니다.
     // setIsBusy(true);
@@ -130,17 +130,15 @@ export default function GuideMyPage() {
 
   const handleLogout = async () => {
     if (isBusy) return;
-    showExhibitionNotice();
 
-    // 전시 이후 실제 로그아웃이 필요하면 아래 코드를 다시 사용합니다.
-    // setIsBusy(true);
-    // try {
-    //   await logoutMember().catch(() => null);
-    //   clearAuthStorage();
-    //   navigate("/", { replace: true });
-    // } finally {
-    //   setIsBusy(false);
-    // }
+    setIsBusy(true);
+    try {
+      await logoutMember().catch(() => null);
+      clearAuthStorage();
+      navigate("/", { replace: true });
+    } finally {
+      setIsBusy(false);
+    }
   };
 
   const activityItems = [

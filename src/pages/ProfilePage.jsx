@@ -45,33 +45,30 @@ export default function ProfilePage() {
     { label: t("숨긴 안내자"), onClick: () => navigate("/hidden") },
   ];
 
-  const showExhibitionNotice = () => {
-    setNoticeMessage("현재 로그아웃/역할전환은 전시중에 지원하지 않습니다.");
+  const showRoleSwitchNotice = () => {
+    setNoticeMessage("현재 역할전환은 전시중에 지원하지 않습니다.");
   };
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
 
-    showExhibitionNotice();
-
-    // 전시 이후 실제 로그아웃이 필요하면 아래 코드를 다시 사용합니다.
-    // setIsLoggingOut(true);
-    // try {
-    //   await logoutMember();
-    // } catch (error) {
-    //   console.error("로그아웃 요청 실패", error);
-    // } finally {
-    //   clearAuthStorage();
-    //   setIsLoggingOut(false);
-    //   navigate("/", { replace: true });
-    // }
+    setIsLoggingOut(true);
+    try {
+      await logoutMember();
+    } catch (error) {
+      console.error("로그아웃 요청 실패", error);
+    } finally {
+      clearAuthStorage();
+      setIsLoggingOut(false);
+      navigate("/", { replace: true });
+    }
   };
 
   const roleItems = [
     {
       label: t("가이드로 전환"),
       onClick: () => {
-        showExhibitionNotice();
+        showRoleSwitchNotice();
         // 전시 이후 역할 전환이 필요하면 아래 코드를 다시 사용합니다.
         // navigate("/guidesignup", { state: { mode: "switch" } });
       },

@@ -1,19 +1,22 @@
-import React, {useState,useEffect} from "react";
+import React, { useState } from "react";
 import logo from "../assets/logo.svg";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { useI18n } from "../i18n/I18nProvider";
+import ExhibitionNotice from "../components/ExhibitionNotice";
 
 function StartPage(){
     const navigate = useNavigate();
     const { t } = useI18n();
+    const [noticeMessage, setNoticeMessage] = useState("");
 
     return(
         <Container>
             <Logo src={logo} alt={t("로고")}></Logo>
             <Catchphrase>{t("나의 첫 번째 로컬 친구, 토모랑")}</Catchphrase>
             <LoginButton onClick={() => navigate("/login")}>{t("로그인")}</LoginButton>
-            <SignupButton onClick={() => navigate("/role")}>{t("회원가입")}</SignupButton>
+            <SignupButton onClick={() => setNoticeMessage("현재 회원가입은 전시중에 지원하지 않습니다.")}>{t("회원가입")}</SignupButton>
+            <ExhibitionNotice message={noticeMessage} onClose={() => setNoticeMessage("")} />
         </Container>
     )
 }
