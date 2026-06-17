@@ -246,8 +246,10 @@ export default function GuideProfilePage() {
     guide.oneWord ??
     guide.bio ??
     "\uB4F1\uB85D\uB41C \uAC00\uC774\uB4DC \uC124\uBA85\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.";
-  const joinedAt = guide.joinedAt || "-";
-  const nationality = guide.nationality || "-";
+  // 추가 정보는 현재 프로필 화면에서 숨김 처리합니다.
+  // 필요 시 아래 값을 다시 표시하면 됩니다.
+  // const joinedAt = guide.joinedAt || "-";
+  // const nationality = guide.nationality || "-";
   const headerTitle =
     state?.courseTitle ??
     state?.title ??
@@ -298,13 +300,15 @@ export default function GuideProfilePage() {
               <SectionContent>{description}</SectionContent>
             </InfoSection>
 
+            {/*
             <InfoSection>
-              <SectionTitle>{"\uCD94\uAC00 \uC815\uBCF4"}</SectionTitle>
+              <SectionTitle>{"추가 정보"}</SectionTitle>
               <AddInfoList>
-                <AddInfoItem>{"\uAC00\uC785\uC77C"}: {joinedAt}</AddInfoItem>
-                <AddInfoItem>{"\uAD6D\uC801"}: {nationality}</AddInfoItem>
+                <AddInfoItem>{"가입일"}: {joinedAt}</AddInfoItem>
+                <AddInfoItem>{"국적"}: {nationality}</AddInfoItem>
               </AddInfoList>
             </InfoSection>
+            */}
           </InfoWrapper>
         )}
       </ContentArea>

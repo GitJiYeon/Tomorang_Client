@@ -21,7 +21,6 @@ import { getPostOwnerId } from "../utils/postOwner";
 import { getPostRatingAverage } from "../utils/postStats";
 import { useI18n } from "../i18n/I18nProvider";
 import { sortReviewsByRecent } from "../utils/reviews";
-import { filterEmergingRegionsByPosts } from "../utils/emergingRegions";
 import { resolvePublicAsset } from "../utils/publicAsset";
 
 const SCROLL_ROW = {
@@ -148,10 +147,6 @@ export default function MainPage() {
 
   const trendingPosts = serverPosts;
   const salePosts = serverPosts.filter((post) => Number(post.discountRate ?? post.discount_rate ?? 0) > 0);
-  const emergingRegions = useMemo(
-    () => filterEmergingRegionsByPosts(regionData, serverPosts),
-    [serverPosts]
-  );
   const popularGuides = useMemo(
     () =>
       serverGuides
@@ -228,7 +223,7 @@ export default function MainPage() {
 
       <Section title="떠오르는 여행지" path="/emergingDestination">
         <div style={SCROLL_ROW}>
-          {emergingRegions.map((region) => (
+          {regionData.map((region) => (
             <RegionCard
               key={region.regionId}
               region={region}
