@@ -33,7 +33,8 @@ export default function GuideBottomNav({ activeIndex = 0 }) {
               key={item.path}
               type="button"
               $active={isActive}
-              onClick={() => {
+              onClick={(event) => {
+                event.currentTarget.blur();
                 resetViewportScroll();
                 navigate(item.path);
               }}
@@ -124,8 +125,8 @@ const NavIcon = styled.img`
 `;
 
 const NavLabel = styled.span`
-  color: inherit;
-  -webkit-text-fill-color: currentColor;
+  color: #111 !important;
+  -webkit-text-fill-color: #111 !important;
   font-family: Pretendard, sans-serif;
   font-size: 14px;
   font-weight: 500;

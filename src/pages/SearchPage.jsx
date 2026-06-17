@@ -8,11 +8,11 @@ import SearchIcon from "../assets/searchIcon2.svg";
 import BackArrow from "../assets/backarrow.svg";
 
 const TRENDING = [
-  { rank: 1, keyword: "맛집투어" },
-  { rank: 2, keyword: "도쿄" },
-  { rank: 3, keyword: "가성비" },
-  { rank: 4, keyword: "야경" },
-  { rank: 5, keyword: "온천" },
+  { rank: 1, keyword: "맛집투어", category: "맛집" },
+  { rank: 2, keyword: "애니메이션", category: "애니메이션" },
+  { rank: 3, keyword: "액티비티", category: "액티비티" },
+  { rank: 4, keyword: "풍경", category: "풍경" },
+  { rank: 5, keyword: "쇼핑", category: "쇼핑" },
 ];
 
 const HISTORY_KEY = "searchHistory";
@@ -49,6 +49,11 @@ export default function SearchPage() {
     addHistory(kw.trim());
     setHistory(getHistory());
     navigate("/search-result", { state: { keyword: kw.trim() } });
+  };
+
+  const handleCategorySearch = (category) => {
+    if (!category?.trim()) return;
+    navigate("/search-result", { state: { category: category.trim() } });
   };
 
   const handleClear = () => {
@@ -96,10 +101,10 @@ export default function SearchPage() {
         <SectionTitle>지금 가장 인기있는</SectionTitle>
         <TrendingWrapper>
           <TrendingList>
-            {visibleTrending.map(({ rank, keyword }, index) => (
+            {visibleTrending.map(({ rank, keyword, category }, index) => (
               <TrendingItem
                 key={rank}
-                onClick={() => handleSearch(keyword)}
+                onClick={() => handleCategorySearch(category)}
                 $faded={!expanded && index === 2}
               >
                 <Rank>{rank}</Rank>

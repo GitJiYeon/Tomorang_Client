@@ -35,7 +35,8 @@ export default function BottomNav({ activeIndex = 0, onNavChange }) {
               key={index}
               type="button"
               $active={isActive}
-              onClick={() => {
+              onClick={(event) => {
+                event.currentTarget.blur();
                 onNavChange?.(index);
                 resetViewportScroll();
                 navigate(item.path);

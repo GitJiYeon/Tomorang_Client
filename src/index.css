@@ -99,7 +99,30 @@ body {
 
 button {
   font: inherit;
+  color: inherit;
   -webkit-tap-highlight-color: transparent;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#root button,
+#root a,
+#root button *,
+#root a * {
+  -webkit-text-fill-color: currentColor;
+}
+
+#root button:focus,
+#root button:focus-visible,
+#root button:active,
+#root a:focus,
+#root a:focus-visible,
+#root a:active {
+  outline: none;
 }
 
 #root input,

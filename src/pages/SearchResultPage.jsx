@@ -52,30 +52,56 @@ export default function SearchResultPage() {
   };
 
   const sorted = useMemo(() => {
-    const getPostCategoryText = (post) => {
+    const normalizeCategory = (value) => String(value ?? "").trim().toLowerCase();
+
+    const splitCategoryValues = (value) =>
+      String(value ?? "")
+        .split(/[,\n]/)
+        .map((item) => normalizeCategory(item))
+        .filter(Boolean);
+
+    const getPostCategoryValues = (post) => {
       const values = [
         post.category,
         post.categoryName,
         post.category_name,
         post.tag?.ko,
-        post.title,
+        post.tag?.ja,
+        post.tag?.name,
+        post.tag?.value,
+        post.tag?.tagName,
+        post.tag?.tag_name,
       ];
 
       if (Array.isArray(post.categories)) values.push(...post.categories);
       if (Array.isArray(post.tags)) {
-        values.push(...post.tags.map((tag) => tag?.name ?? tag?.value ?? tag));
+        post.tags.forEach((tag) => {
+          if (typeof tag === "string") {
+            values.push(tag);
+            return;
+          }
+
+          values.push(
+            tag?.name,
+            tag?.value,
+            tag?.tagName,
+            tag?.tag_name,
+            tag?.ko,
+            tag?.ja,
+            tag?.label
+          );
+        });
       }
 
       return values
         .filter(Boolean)
-        .flatMap((value) => String(value).split(","))
-        .map((value) => value.trim())
-        .join(" ");
+        .flatMap(splitCategoryValues);
     };
 
+    const targetCategory = normalizeCategory(filter.category);
     const tagFiltered = filter.category
       ? posts.filter((post) =>
-          getPostCategoryText(post).includes(filter.category)
+          getPostCategoryValues(post).some((category) => category === targetCategory)
         )
       : posts;
 
