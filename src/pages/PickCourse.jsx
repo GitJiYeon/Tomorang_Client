@@ -175,10 +175,12 @@ export default function PickCourse() {
     }
   };
 
+  /*
   const guideActions = [
     { label: editingId ? t("수정 중") : t("수정"), icon: "edit", onClick: handleEdit },
     { label: deletingId ? t("삭제 중") : t("삭제"), icon: "delete", onClick: handleDelete },
   ];
+  */
 
   return (
     <>
@@ -186,10 +188,11 @@ export default function PickCourse() {
       <ListWrapper>
         {visiblePosts.length > 0 ? (
           visiblePosts.map((post, index) => (
+            // 전시용으로 내 코스 수정/삭제 버튼은 숨김 처리.
+            // 기능 복구 시 actions={isGuideMode ? guideActions : undefined} 를 다시 연결.
             <PostCardList
               key={getPostId(post) ?? `${post.title ?? "post"}-${index}`}
               post={post}
-              actions={isGuideMode ? guideActions : undefined}
               onWishlistChange={(postId, liked) => {
                 if (liked || isGuideMode) return;
                 setPosts((items) => items.filter((item) => !sameId(getPostId(item), postId)));

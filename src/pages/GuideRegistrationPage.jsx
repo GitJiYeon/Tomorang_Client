@@ -8,6 +8,8 @@ import Header from "../components/Header";
 import ReserveButton from "../components/ReserveButton";
 import MapBubble2 from "../assets/mapBubble2.svg";
 import ImageIcon from "../assets/imageIcon.svg";
+import DateIcon from "../assets/reservation/DateIcon.svg";
+import Clocklogo from "../assets/reservation/Clocklogo.svg";
 import { createPost, getPosts } from "../api/tomorang";
 import { hasValidAuthToken } from "../api/client";
 import { cacheLocalPost } from "../utils/localPostCache";
@@ -26,6 +28,8 @@ const REGISTRATION_CATEGORY_ROWS = [
 ];
 
 const AVAILABLE_TIME_OPTIONS = Array.from({ length: 24 }, (_, hour) => `${hour}:00`);
+const DEFAULT_MEETING_CENTER = [35.3191, 139.5467];
+const MEETING_PICKER_ZOOM = 17;
 
 const initialFormData = {
   location: "",
@@ -158,11 +162,16 @@ function MapClickHandler({ onPick }) {
   return null;
 }
 
-function MapCenterSync({ point }) {
+function MapCenterSync({ point, center, zoom = MEETING_PICKER_ZOOM }) {
   const map = useMap();
   useEffect(() => {
-    if (point) map.setView([point.lat, point.lng], 15);
-  }, [map, point]);
+    if (point) {
+      map.setView([point.lat, point.lng], zoom);
+      return;
+    }
+
+    if (center) map.setView(center, zoom);
+  }, [center, map, point, zoom]);
   return null;
 }
 
@@ -173,7 +182,31 @@ function MeetingPlacePicker({ onBack, onSelect }) {
   const [addressInput, setAddressInput] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
-  const initialCenter = [35.3191, 139.5467];
+  const [mapCenter, setMapCenter] = useState(DEFAULT_MEETING_CENTER);
+  const [mapZoom, setMapZoom] = useState(MEETING_PICKER_ZOOM);
+
+  useEffect(() => {
+    if (!navigator.geolocation) return undefined;
+
+    let alive = true;
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        if (!alive) return;
+        setMapCenter([position.coords.latitude, position.coords.longitude]);
+        setMapZoom(MEETING_PICKER_ZOOM);
+      },
+      () => {},
+      {
+        enableHighAccuracy: true,
+        timeout: 7000,
+        maximumAge: 60000,
+      }
+    );
+
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const handlePick = async (latlng) => {
     const fallbackAddress =
@@ -284,9 +317,9 @@ function MeetingPlacePicker({ onBack, onSelect }) {
         </AddressButton>
       </AddressSearchPanel>
       <MeetingMapWrap>
-        <MapContainer center={initialCenter} zoom={11} style={{ width: "100%", height: "100%", zIndex: 0 }} zoomControl={false}>
+        <MapContainer center={mapCenter} zoom={mapZoom} style={{ width: "100%", height: "100%", zIndex: 0 }} zoomControl={false}>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="" />
-          <MapCenterSync point={pickedPoint} />
+          <MapCenterSync point={pickedPoint} center={mapCenter} zoom={mapZoom} />
           <MapClickHandler onPick={handlePick} />
           {pickedPoint && (
             <Marker
@@ -565,7 +598,15 @@ export default function GuideRegistrationPage() {
           </FormGroup>
           <FormGroup>
             <Label>{t("예약 가능 날짜")}</Label>
-            <DateInput type="date" onChange={handleDateToggle} />
+            <PickerField>
+              <PickerText>{t("날짜를 선택하세요")}</PickerText>
+              <PickerIcon src={DateIcon} alt="" />
+              <DateInput
+                type="date"
+                onChange={handleDateToggle}
+                aria-label={t("예약 가능 날짜")}
+              />
+            </PickerField>
             <DateChipRow>
               {(formData.scheduleDates ?? []).map((date) => (
                 <DateChip key={date} type="button" onClick={() => handleDateRemove(date)}>
@@ -587,14 +628,18 @@ export default function GuideRegistrationPage() {
           </DoubleFormGroup>
           <FormGroup>
             <Label>{t("가능 시간대")}</Label>
-            <SelectInput value="" onChange={handleTimeSelect}>
+            <PickerField>
+              <PickerText>{t("시간을 선택하세요")}</PickerText>
+              <PickerIcon src={Clocklogo} alt="" />
+              <SelectInput defaultValue="" onChange={handleTimeSelect} aria-label={t("가능 시간대")}>
               <option value="">{t("시간을 선택하세요")}</option>
               {AVAILABLE_TIME_OPTIONS.map((time) => (
                 <option key={time} value={time}>
                   {time}
                 </option>
               ))}
-            </SelectInput>
+              </SelectInput>
+            </PickerField>
             <DateChipRow>
               {splitCommaList(formData.startTime).map((time) => (
                 <DateChip key={time} type="button" onClick={() => handleTimeRemove(time)}>
@@ -970,31 +1015,63 @@ const CategoryChip = styled.button`
   white-space: nowrap;
   flex-shrink: 0;
 `;
-const DateInput = styled(Input)`
-  cursor: pointer;
-  display: block;
-  appearance: none;
-  -webkit-appearance: none;
-`;
-const SelectInput = styled.select`
+const PickerField = styled.div`
+  position: relative;
   width: 100%;
-  max-width: 100%;
-  min-width: 0;
   height: 56px;
   padding: 0 14px;
   border: 1px solid #e8e8e8;
   border-radius: 10px;
   background: #fff;
-  color: #111;
-  font-family: "Noto Sans KR", sans-serif;
-  font-size: 13px;
   box-sizing: border-box;
-  outline: none;
-  cursor: pointer;
-  &:focus {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  overflow: hidden;
+
+  &:focus-within {
     border-color: #c5f598;
     background-color: #fafafa;
   }
+`;
+
+const PickerText = styled.span`
+  min-width: 0;
+  color: #111;
+  font-family: "Noto Sans KR", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+`;
+
+const PickerIcon = styled.img`
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  pointer-events: none;
+`;
+
+const NativePickerControl = `
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;
+  font-size: 16px;
+`;
+
+const DateInput = styled.input`
+  ${NativePickerControl}
+`;
+const SelectInput = styled.select`
+  ${NativePickerControl}
 `;
 const DateChipRow = styled.div`
   width: 100%;

@@ -362,7 +362,6 @@ const Tabs = styled.div`
   align-items: center;
   gap: 8px;
   padding: 10px 20px;
-  border-bottom: 1px solid #f3f4f3;
   background: #fff;
   box-sizing: border-box;
   flex-shrink: 0;
