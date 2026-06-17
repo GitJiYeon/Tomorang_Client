@@ -16,7 +16,7 @@ import WarningBanner from "../components/WarningBanner";
 import Header from "../components/Header";
 import { bookReservation, getPostDetail } from "../api/tomorang";
 import { getPostImages } from "../utils/postDisplay";
-import { cacheLocalPost, mergeLocalPostCache } from "../utils/localPostCache";
+import { mergeLocalPostCache } from "../utils/localPostCache";
 import { STATUS } from "../utils/reservationFlow";
 import { useReservations } from "../components/context/ReservationContext";
 
@@ -47,37 +47,13 @@ const isReservableSlot = (slot) => {
   return ["OPEN", "AVAILABLE"].includes(status);
 };
 
-const getAvailableSchedules = (post) =>
-  (post?.availableSchedules ?? [])
-    .map((schedule) => ({
-      ...schedule,
-      timeSlots: (schedule.timeSlots ?? []).filter(isReservableSlot),
-    }))
-    .filter((schedule) => schedule.timeSlots.length > 0);
+const getAvailableSchedules = (post) => post?.availableSchedules ?? [];
 
 const isSameSlot = (slot, targetSlot) => {
   const slotId = getSlotId(slot);
   const targetId = getSlotId(targetSlot);
   if (slotId && targetId) return String(slotId) === String(targetId);
   return String(getSlotTime(slot) ?? "") === String(getSlotTime(targetSlot) ?? "");
-};
-
-const removeReservedSlot = (post, reservedDate, reservedSlot) => {
-  const availableSchedules = (post?.availableSchedules ?? [])
-    .map((schedule) => {
-      if (schedule.date !== reservedDate) return schedule;
-      return {
-        ...schedule,
-        timeSlots: (schedule.timeSlots ?? []).filter((slot) => !isSameSlot(slot, reservedSlot)),
-      };
-    })
-    .filter((schedule) => (schedule.timeSlots ?? []).length > 0);
-
-  return {
-    ...post,
-    availableSchedules,
-    schedules: availableSchedules,
-  };
 };
 
 export default function ReservationPage() {
@@ -225,12 +201,9 @@ export default function ReservationPage() {
         status: result.status ?? STATUS.PENDING,
       };
       upsertReservation(reservation);
-      const nextPost = removeReservedSlot(post, selectedDate, selectedSlot);
-      setServerPost(nextPost);
-      cacheLocalPost(nextPost);
-      sessionStorage.setItem("currentCoursePost", JSON.stringify(nextPost));
-      sessionStorage.setItem(`reservationStatus:${reservationId}`, JSON.stringify({ reservation, post: nextPost }));
-      navigate(`/reservation-status/${reservationId}`, { state: { reservation, post: nextPost } });
+      sessionStorage.setItem("currentCoursePost", JSON.stringify(post));
+      sessionStorage.setItem(`reservationStatus:${reservationId}`, JSON.stringify({ reservation, post }));
+      navigate(`/reservation-status/${reservationId}`, { state: { reservation, post } });
     } catch (error) {
       setErrorMessage(error.message || "예약에 실패했습니다.");
     } finally {
