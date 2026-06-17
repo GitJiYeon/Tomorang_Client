@@ -215,17 +215,21 @@ const slideDown = keyframes`
 `;
 
 const PageContainer = styled.div`
-  width: var(--app-page-width);
-  height: var(--app-page-height);
+  width: min(var(--app-page-width), 100vw);
+  height: 100vh;
+  height: 100svh;
+  height: var(--app-viewport-height, 100dvh);
+  max-height: var(--app-viewport-height, 100dvh);
   background-color: #C5F598;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  position: absolute;
+  position: relative;
   overflow: hidden;
 `;
 
 const TopSection = styled.div`
+  flex: 0 0 160px;
   height: 160px;
 `;
 
@@ -244,12 +248,15 @@ const BackButton = styled.button`
 `;
 
 const WhiteCard = styled.div`
+  width: 100%;
+  min-height: 0;
   flex: 1;
   background-color: #ffffff;
   border-top-left-radius: 40px;
   border-top-right-radius: 40px;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 
   transform: translateY(${({ $isClosing, $isVisible }) =>
     $isClosing ? "100%" : $isVisible ? "0" : "100%"});
@@ -260,12 +267,12 @@ const WhiteCard = styled.div`
 
 const FormContainer = styled.div`
   width: var(--app-content-width);
-  height: 210px;
-  padding: 0 21px;
-  margin-top: 24px;
+  min-height: 210px;
+  margin: 24px auto 0;
   display: flex;
   flex-direction: column;
   gap: 24px;
+  box-sizing: border-box;
 `;
 
 const InputGroup = styled.div`
@@ -283,7 +290,7 @@ const InputGroup = styled.div`
   }
 
   input {
-    width: var(--app-content-width);
+    width: 100%;
     height: 56px;
     border: 1px solid #DADADA;
     border-radius: 12px;
@@ -330,7 +337,7 @@ const CustomCheckbox = styled.div`
 `;
 
 const ErrorText = styled.p`
-  width: calc(var(--app-page-width) - 60px);
+  width: min(calc(var(--app-page-width) - 60px), calc(100vw - 60px));
   margin: 8px auto 0;
   color: #d93025;
   font-family: Pretendard, sans-serif;
@@ -339,7 +346,7 @@ const ErrorText = styled.p`
 `;
 
 const LoginButton = styled.button`
-  width: calc(var(--app-page-width) - 60px);
+  width: min(calc(var(--app-page-width) - 60px), calc(100vw - 60px));
   height: 54px;
   background-color: ${({ disabled }) => (disabled ? "#4E4E4E" : "#121212")};
   color: #ffffff;
@@ -368,8 +375,8 @@ const Catchphrase = styled.p`
 
 const Logowrap = styled.div`
   background-color: #C5F598;
-  width: var(--app-page-width);
-  height: var(--app-page-height);
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;

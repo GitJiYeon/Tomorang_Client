@@ -101,6 +101,12 @@ button {
   font: inherit;
 }
 
+#root input,
+#root textarea,
+#root select {
+  font-size: 16px;
+}
+
 #root {
   overflow: hidden;
 }
