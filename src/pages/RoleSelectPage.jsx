@@ -8,9 +8,11 @@ import NextButton from '../components/NextButton1';
 import BackArrow from "../assets/backarrow.svg";
 import GuideCharacter from '../assets/guidecharacter.svg';
 import TravelerCharacter from '../assets/travelercharacter.svg';
+import { useI18n } from '../i18n/I18nProvider';
 
 function RoleSelectPage() {
   const navigate = useNavigate();
+  const { t } = useI18n();
   // 'traveler' 또는 'guide' 상태 저장
   const [selectedRole, setSelectedRole] = useState(null);
 
@@ -29,15 +31,15 @@ function RoleSelectPage() {
     <PageContainer>
       {/* 상단 뒤로가기 버튼 */}
       <ButtonWrap>
-        <BackButton src={BackArrow} alt="뒤로가기" onClick={handleBack} />
+        <BackButton src={BackArrow} alt={t("뒤로가기")} onClick={handleBack} />
         <Space></Space>
       </ButtonWrap>
 
       {/* 메인 텍스트 영역 */}
       <Middle>
-        <StartComent coment={'처음 만났네요,<br/>반가워요'} />
+        <StartComent coment={t('처음 만났네요,<br/>반가워요')} />
       </Middle>
-      <SubTitle>오늘부터 어떤 여행을 시작할까요?</SubTitle>
+      <SubTitle>{t("오늘부터 어떤 여행을 시작할까요?")}</SubTitle>
 
       {/* 카드 선택 영역 */}
       <CardList>
@@ -45,10 +47,10 @@ function RoleSelectPage() {
           $isSelected={selectedRole === 'traveler'} 
           onClick={() => setSelectedRole('traveler')}
         >
-          <Character src={TravelerCharacter} alt="발견자" />
+          <Character src={TravelerCharacter} alt={t("발견자")} />
           <TextGroup>
-            <RoleTitle>발견자</RoleTitle>
-            <RoleDesc $isSelected={selectedRole === 'traveler'}>숨은 여행지를 찾아요</RoleDesc>
+            <RoleTitle>{t("발견자")}</RoleTitle>
+            <RoleDesc $isSelected={selectedRole === 'traveler'}>{t("숨은 여행지를 찾아요")}</RoleDesc>
           </TextGroup>
         </SelectCard>
 
@@ -56,10 +58,10 @@ function RoleSelectPage() {
           $isSelected={selectedRole === 'guide'} 
           onClick={() => setSelectedRole('guide')}
         >
-          <Character src={GuideCharacter} alt="안내자" />
+          <Character src={GuideCharacter} alt={t("안내자")} />
           <TextGroup>
-            <RoleTitle>안내자</RoleTitle>
-            <RoleDesc $isSelected={selectedRole === 'guide'}>나만 아는 여행지를 나눠요</RoleDesc>
+            <RoleTitle>{t("안내자")}</RoleTitle>
+            <RoleDesc $isSelected={selectedRole === 'guide'}>{t("나만 아는 여행지를 나눠요")}</RoleDesc>
           </TextGroup>
         </SelectCard>
       </CardList>

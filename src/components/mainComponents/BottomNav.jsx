@@ -4,17 +4,19 @@ import BookIcon from "../../assets/navIcons/book.svg";
 import MessageIcon from "../../assets/navIcons/message.svg";
 import MyPageIcon from "../../assets/navIcons/mypage.svg";
 import { useNavigate } from "react-router-dom";
+import { useI18n } from "../../i18n/I18nProvider";
 
 const NAV_ITEMS = [
-  { path: "/main", iconSrc: HomeIcon, label: "홈" },
-  { path: "/map", iconSrc: MapIcon, label: "탐색" },
-  { path: "/book", iconSrc: BookIcon, label: "예약" },
-  { path: "/chats", iconSrc: MessageIcon, label: "메시지" },
-  { path: "/profile", iconSrc: MyPageIcon, label: "마이페이지" },
+  { path: "/main", iconSrc: HomeIcon, labelKey: "홈" },
+  { path: "/map", iconSrc: MapIcon, labelKey: "탐색" },
+  { path: "/book", iconSrc: BookIcon, labelKey: "예약" },
+  { path: "/chats", iconSrc: MessageIcon, labelKey: "메시지" },
+  { path: "/profile", iconSrc: MyPageIcon, labelKey: "마이페이지" },
 ];
 
 export default function BottomNav({ activeIndex = 0, onNavChange }) {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const resetViewportScroll = () => {
     document
       .querySelector(".app-viewport")
@@ -79,7 +81,7 @@ export default function BottomNav({ activeIndex = 0, onNavChange }) {
             >
               <img
                 src={item.iconSrc}
-                alt={item.label}
+                alt={t(item.labelKey)}
                 style={{
                   width: 24,
                   height: 24,

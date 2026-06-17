@@ -1,6 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import DefaultProfileIcon from "../assets/defaultProfile.svg";
+import { useI18n } from "../i18n/I18nProvider";
 
 const LEVEL_MAP = {
   beginner: 1,
@@ -32,9 +33,11 @@ function LevelDots({ level }) {
 }
 
 export default function ProfileCard({ profile, onEditPress }) {
+  const { t } = useI18n();
+
   if (!profile) return null;
-  const nickname = profile.nickname ?? profile.nickName ?? profile.id ?? "사용자";
-  const bio = profile.oneWord ?? profile.bio ?? "소개가 아직 없습니다.";
+  const nickname = profile.nickname ?? profile.nickName ?? profile.id ?? t("사용자");
+  const bio = profile.oneWord ?? profile.bio ?? t("소개가 아직 없습니다.");
   const profileImage = profile.profileImage ?? profile.image;
   const interests = Array.isArray(profile.interests)
     ? profile.interests
@@ -60,7 +63,7 @@ export default function ProfileCard({ profile, onEditPress }) {
             <Name>{nickname}</Name>
             <Bio>{bio}</Bio>
             <EditButton onClick={onEditPress}>
-              <EditButtonText>정보 수정하기</EditButtonText>
+              <EditButtonText>{t("정보 수정하기")}</EditButtonText>
             </EditButton>
           </InfoGroup>
           <Avatar src={profileImage || DefaultProfileIcon} alt="profile"/>

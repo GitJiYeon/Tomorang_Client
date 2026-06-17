@@ -5,6 +5,7 @@ import Header from "../components/Header";
 import DefaultProfile from "../assets/defaultProfile.svg";
 import { getHiddenUsers, unhideUser } from "../api/tomorang";
 import { unhideGuide } from "../utils/hiddenGuides";
+import { useI18n } from "../i18n/I18nProvider";
 
 const getProfile = () => {
   try {
@@ -21,11 +22,12 @@ const roleType = (role) => {
 
 export default function HiddenUserPage() {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const profile = useMemo(getProfile, []);
   const isGuideViewer = String(profile?.role ?? "").toUpperCase() === "GUIDE";
   const targetRole = isGuideViewer ? "traveler" : "guide";
-  const title = isGuideViewer ? "숨긴 발견자" : "숨긴 안내자";
-  const emptyText = isGuideViewer ? "숨긴 발견자가 없어요." : "숨긴 안내자가 없어요.";
+  const title = isGuideViewer ? t("숨긴 발견자") : t("숨긴 안내자");
+  const emptyText = isGuideViewer ? t("숨긴 발견자가 없어요.") : t("숨긴 안내자가 없어요.");
 
   const [hiddenUsers, setHiddenUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -45,7 +47,7 @@ export default function HiddenUserPage() {
         console.error("숨긴 사용자 조회 실패", error);
         if (!alive) return;
         setHiddenUsers([]);
-        setErrorMessage(error.message || "숨긴 사용자를 불러오지 못했어요.");
+        setErrorMessage(error.message || t("숨긴 사용자를 불러오지 못했어요."));
       })
       .finally(() => {
         if (alive) setLoading(false);
@@ -71,7 +73,7 @@ export default function HiddenUserPage() {
       setHiddenUsers((users) => users.filter((user) => String(user.id) !== String(userId)));
     } catch (error) {
       console.error("숨김 해제 실패", error);
-      alert(error.message || "숨김 해제에 실패했어요.");
+      alert(error.message || t("숨김 해제에 실패했어요."));
     } finally {
       setUnhidingId("");
     }
@@ -87,13 +89,22 @@ export default function HiddenUserPage() {
       <Header coment={title} />
       <ListWrapper>
         {loading ? (
-          <EmptyText>불러오는 중이에요.</EmptyText>
+          <EmptyText>{t("불러오는 중이에요.")}</EmptyText>
         ) : errorMessage ? (
           <EmptyText>{errorMessage}</EmptyText>
         ) : visibleUsers.length > 0 ? (
           visibleUsers.map((user) => {
             const clickable = roleType(user.role) === "guide";
             const isUnhiding = unhidingId === String(user.id);
+            const answerTime =
+              user.answertime ??
+              user.answerTime ??
+              user.avgAnswerTime ??
+              user.averageAnswerTime ??
+              user.average_answer_time ??
+              user.responseTime ??
+              user.response_time ??
+              "평균 응답 정보 없음";
 
             return (
               <HiddenCard
@@ -110,8 +121,8 @@ export default function HiddenUserPage() {
               >
                 <InfoGroup>
                   <Name>{user.nickname || user.id}</Name>
-                  <Bio>{user.bio || "소개가 없어요."}</Bio>
-                  <AnswerTime>{user.answertime || "평균 응답 정보 없음"}</AnswerTime>
+                  <Bio>{user.bio || t("소개가 없어요.")}</Bio>
+                  <AnswerTime>{t(answerTime)}</AnswerTime>
                 </InfoGroup>
 
                 <ProfileActions>
@@ -130,7 +141,7 @@ export default function HiddenUserPage() {
                       handleUnhide(user.id);
                     }}
                   >
-                    {isUnhiding ? "해제 중" : "숨김 해제"}
+                    {isUnhiding ? t("해제 중") : t("숨김 해제")}
                   </UnhideButton>
                 </ProfileActions>
               </HiddenCard>

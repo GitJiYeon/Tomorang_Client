@@ -1,20 +1,22 @@
 import React from "react";
 import styled from "styled-components";
+import { useI18n } from "../i18n/I18nProvider";
 
 export default function GuideDescriptionCard({ guide }) {
+  const { t } = useI18n();
   const description =
-    guide.description ??
+    guide.courseAdditionalDescription ??
+    guide.course_additional_description ??
     guide.guideDescription ??
     guide.guide_description ??
-    guide.bio ??
-    guide.oneWord ??
-    guide.introduction;
+    guide.guide?.courseAdditionalDescription ??
+    guide.guide?.course_additional_description;
 
   if (!description) return null;
 
   return (
     <Card>
-      <DescTitle>가이드 설명</DescTitle>
+      <DescTitle>{t("가이드 설명")}</DescTitle>
       <DescText>{description}</DescText>
     </Card>
   );

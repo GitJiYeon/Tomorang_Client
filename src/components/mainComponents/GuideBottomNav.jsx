@@ -4,16 +4,18 @@ import HomeIcon from "../../assets/navIcons/home.svg";
 import BookIcon from "../../assets/navIcons/book.svg";
 import MessageIcon from "../../assets/navIcons/message.svg";
 import MyPageIcon from "../../assets/navIcons/mypage.svg";
+import { useI18n } from "../../i18n/I18nProvider";
 
 const NAV_ITEMS = [
-  { path: "/guide", iconSrc: HomeIcon, label: "홈" },
-  { path: "/guide-reservations", iconSrc: BookIcon, label: "예약" },
-  { path: "/guide-chat", iconSrc: MessageIcon, label: "채팅" },
-  { path: "/guide-mypage", iconSrc: MyPageIcon, label: "마이" },
+  { path: "/guide", iconSrc: HomeIcon, labelKey: "홈" },
+  { path: "/guide-reservations", iconSrc: BookIcon, labelKey: "예약" },
+  { path: "/guide-chat", iconSrc: MessageIcon, labelKey: "채팅" },
+  { path: "/guide-mypage", iconSrc: MyPageIcon, labelKey: "마이" },
 ];
 
 export default function GuideBottomNav({ activeIndex = 0 }) {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const resetViewportScroll = () => {
     document
       .querySelector(".app-viewport")
@@ -36,8 +38,8 @@ export default function GuideBottomNav({ activeIndex = 0 }) {
                 navigate(item.path);
               }}
             >
-              <NavIcon src={item.iconSrc} alt={item.label} $active={isActive} />
-              {isActive && <NavLabel>{item.label}</NavLabel>}
+              <NavIcon src={item.iconSrc} alt={t(item.labelKey)} $active={isActive} />
+              {isActive && <NavLabel>{t(item.labelKey)}</NavLabel>}
             </NavButton>
           );
         })}

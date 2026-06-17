@@ -6,6 +6,7 @@ import styled, { keyframes } from "styled-components";
 import CheckIcon from "../../assets/bookStatusIcons/checkIcon.svg";
 import XIcon from "../../assets/bookStatusIcons/xIcon.svg";
 import StarOutlineIcon from "../../assets/bookStatusIcons/starOutlineIcon.svg";
+import { useI18n } from "../../i18n/I18nProvider";
 
 const STATUS_CONFIG = {
   PENDING: {
@@ -45,6 +46,7 @@ const STATUS_CONFIG = {
 const STEPS = ["안내자 확인", "예약 확정", "투어 완료"];
 
 export default function StatusHeader({ status, isGuideView = false }) {
+  const { t } = useI18n();
   const baseConfig = STATUS_CONFIG[status] || STATUS_CONFIG.PENDING;
   const config =
     status === "PENDING" && isGuideView
@@ -71,8 +73,8 @@ export default function StatusHeader({ status, isGuideView = false }) {
         )}
       </IconCircle>
 
-      <Title>{config.title}</Title>
-      <Desc>{config.desc}</Desc>
+      <Title>{t(config.title)}</Title>
+      <Desc>{t(config.desc)}</Desc>
 
       <StepBarWrapper>
         {STEPS.map((label, idx) => {
@@ -91,7 +93,7 @@ export default function StatusHeader({ status, isGuideView = false }) {
                 )}
                 {!isDone && <InnerDot />}
               </StepCircle>
-              <StepLabel $done={isDone}>{label}</StepLabel>
+              <StepLabel $done={isDone}>{t(label)}</StepLabel>
               {!isLast && (
                 <StepLine $done={!config.isRejected && idx < config.step} />
               )}

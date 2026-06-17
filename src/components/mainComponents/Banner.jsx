@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
 import { resolvePublicAsset } from "../../utils/publicAsset";
+import { useI18n } from "../../i18n/I18nProvider";
 
 const ArrowIcon = resolvePublicAsset("/assets/bannerImages/linkArrow.svg");
 
@@ -11,6 +12,7 @@ export default function Banner({ bannerData }) {
   const [idx, setIdx] = useState(0);
   const [cardStep, setCardStep] = useState(400);
   const firstCardRef = useRef(null);
+  const { t } = useI18n();
 
   const next = () => setIdx((prev) => (prev + 1) % bannerData.length);
 
@@ -54,15 +56,15 @@ export default function Banner({ bannerData }) {
                 />
 
                 {banner.category?.trim() && (
-                  <CategoryTag $lightText={lightText}>{banner.category}</CategoryTag>
+                  <CategoryTag $lightText={lightText}>{t(banner.category)}</CategoryTag>
                 )}
 
                 {(banner.title?.trim() || banner.description?.trim()) && (
                   <BottomContent>
-                    {banner.title?.trim() && <CityName $lightText={lightText}>{banner.title}</CityName>}
+                    {banner.title?.trim() && <CityName $lightText={lightText}>{t(banner.title)}</CityName>}
                     {banner.title?.trim() && banner.description?.trim() && <Divider $lightText={lightText} />}
                     {banner.description?.trim() && (
-                      <Description $lightText={lightText}>{banner.description}</Description>
+                      <Description $lightText={lightText}>{t(banner.description)}</Description>
                     )}
                   </BottomContent>
                 )}
@@ -130,7 +132,9 @@ const CategoryTag = styled.span`
   position: absolute;
   top: 16px;
   left: 17px;
-  width: 45px;
+  width: fit-content;
+  min-width: 45px;
+  max-width: calc(100% - 34px);
   height: 30px;
   border-radius: 60px;
   border: 1px solid ${({ $lightText }) => ($lightText ? "#fff" : "#111")};
@@ -142,6 +146,8 @@ const CategoryTag = styled.span`
   align-items: center;
   justify-content: center;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   box-sizing: border-box;
 `;
 

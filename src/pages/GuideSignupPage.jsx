@@ -4,10 +4,17 @@ import styled from "styled-components";
 import ProgressBar from "../components/ProgressBar";
 import NextButton from "../components/NextButton1";
 import LogoIcon from "../assets/logoIcon.svg";
+import { useI18n } from "../i18n/I18nProvider";
+
+const NATIONALITY_OPTIONS = [
+  { value: "한국", label: "한국", language: "ko" },
+  { value: "일본", label: "일본", language: "ja" },
+];
 
 export default function GuideSignupPage() {
   const navigate = useNavigate();
   const { state } = useLocation();
+  const { t, setLanguage } = useI18n();
   const isSwitchMode = state?.mode === "switch";
   const savedProfile = JSON.parse(localStorage.getItem("profile") ?? "{}");
   const currentUserId = localStorage.getItem("userId") || savedProfile.id || "";
@@ -19,12 +26,22 @@ export default function GuideSignupPage() {
     email: "",
     domain: "gmail.com",
     nationality: "",
+    defaultLanguage: "",
     ageChecked: false,
   });
 
   const handleChange = (field) => (event) => {
     const value = field === "ageChecked" ? event.target.checked : event.target.value;
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleNationalitySelect = (option) => {
+    setFormData((prev) => ({
+      ...prev,
+      nationality: option.value,
+      defaultLanguage: option.language,
+    }));
+    setLanguage(option.language);
   };
 
   const isValid =
@@ -76,7 +93,18 @@ export default function GuideSignupPage() {
         </Field>
         <Field>
           <Label>국적</Label>
-          <Input placeholder="국적을 입력하세요" value={formData.nationality} onChange={handleChange("nationality")} />
+          <NationalityRow>
+            {NATIONALITY_OPTIONS.map((option) => (
+              <NationalityButton
+                key={option.value}
+                type="button"
+                $selected={formData.nationality === option.value}
+                onClick={() => handleNationalitySelect(option)}
+              >
+                {t(option.label)}
+              </NationalityButton>
+            ))}
+          </NationalityRow>
         </Field>
 
         <Divider />
@@ -179,6 +207,24 @@ const DomainSelect = styled.select`
   background: #fff;
   font-size: 13px;
   outline: none;
+`;
+
+const NationalityRow = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+`;
+
+const NationalityButton = styled.button`
+  height: 52px;
+  border: 1px solid ${({ $selected }) => ($selected ? "#c5f598" : "#dadada")};
+  border-radius: 10px;
+  background: ${({ $selected }) => ($selected ? "#c5f598" : "#fff")};
+  color: #111;
+  font-family: Pretendard, sans-serif;
+  font-size: 13px;
+  font-weight: ${({ $selected }) => ($selected ? 700 : 500)};
+  cursor: pointer;
 `;
 
 const Divider = styled.div`

@@ -4,6 +4,7 @@ import CloseIcon from "../assets/CloseIcon.svg";
 import ArrowIcon from "../assets/graynextarrow.svg";
 import { createReport, hideUser } from "../api/tomorang";
 import { hideGuide } from "../utils/hiddenGuides";
+import { useI18n } from "../i18n/I18nProvider";
 
 const fadeIn = keyframes`
   from { opacity: 0; }
@@ -54,6 +55,7 @@ export default function ReportSystem({
   hiddenGuide,
   onReported,
 }) {
+  const { t } = useI18n();
   const reportTargetType = String(targetType || "POST").toUpperCase();
   const reportTargetId = targetId ?? postId;
   const isUserReport = reportTargetType === "USER";
@@ -156,20 +158,20 @@ export default function ReportSystem({
           <ModalSheet $isClosing={isClosing} onClick={(e) => e.stopPropagation()}>
             <ModalHeader>
               <TitleArea>
-                <h2>신고 사유 선택</h2>
+                <h2>{t("신고 사유 선택")}</h2>
               </TitleArea>
               <CloseBtn type="button" onClick={closeWithAnimation}>
-                <img src={CloseIcon} alt="닫기" />
+                <img src={CloseIcon} alt={t("닫기")} />
               </CloseBtn>
             </ModalHeader>
 
             <Description>
               {isUserReport
-                ? "이 사용자를 신고하고 숨기는 사유를 선택해주세요."
-                : "이 게시물을 신고하는 사유를 선택해주세요."}
+                ? t("이 사용자를 신고하고 숨기는 사유를 선택해주세요.")
+                : t("이 게시물을 신고하는 사유를 선택해주세요.")}
             </Description>
 
-            {errorMessage && <ErrorText>{errorMessage}</ErrorText>}
+            {errorMessage && <ErrorText>{t(errorMessage)}</ErrorText>}
 
             <ReasonList>
               {REPORT_REASONS.map((reason) => {
@@ -181,7 +183,7 @@ export default function ReportSystem({
                     disabled={!!submittingReason}
                     onClick={() => handleReport(reason)}
                   >
-                    <span>{isSubmitting ? "접수 중..." : reason.label}</span>
+                    <span>{isSubmitting ? t("접수 중...") : t(reason.label)}</span>
                     <span className="arrow">
                       <img src={ArrowIcon} alt="" />
                     </span>
@@ -195,7 +197,7 @@ export default function ReportSystem({
 
       {showToast && (
         <Toast>
-          <p>{toastMessage}</p>
+          <p>{t(toastMessage)}</p>
         </Toast>
       )}
     </>

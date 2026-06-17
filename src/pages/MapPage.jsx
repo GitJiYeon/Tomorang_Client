@@ -24,6 +24,7 @@ import {
   subscribeWishlistChanges,
   syncLikedPostsFromWishlists,
 } from "../utils/wishlist";
+import { useI18n } from "../i18n/I18nProvider";
 
 const markerIcon = L.icon({
   iconUrl: MarkerIconSrc,
@@ -104,6 +105,7 @@ function MarkerLabel({ post }) {
 
 export default function MapPage() {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [activeNav, setActiveNav] = useState(1);
   const [posts, setPosts] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
@@ -125,7 +127,7 @@ export default function MapPage() {
         if (postsWithLocation[0]) setMapCenter((current) => (current === DEFAULT_CENTER ? getLatLng(postsWithLocation[0]) : current));
       })
       .catch((error) => {
-        if (alive) setErrorMessage(error.message || "코스 목록을 불러오지 못했습니다.");
+        if (alive) setErrorMessage(error.message || t("코스 목록을 불러오지 못했습니다."));
       });
 
     getMyWishlists().then(syncLikedPostsFromWishlists).catch(() => {});
@@ -167,7 +169,7 @@ export default function MapPage() {
       setPostLiked(postId, nextLiked);
       setLikedVersion((version) => version + 1);
     } catch (error) {
-      alert(error.message || "찜 변경에 실패했습니다.");
+      alert(error.message || t("찜 변경에 실패했습니다."));
     }
   };
 
@@ -290,7 +292,7 @@ export default function MapPage() {
             <SheetHandle
               role="button"
               tabIndex={0}
-              aria-label={isSheetExpanded ? "코스 목록 접기" : "코스 목록 펼치기"}
+              aria-label={isSheetExpanded ? t("코스 목록 접기") : t("코스 목록 펼치기")}
               onPointerDown={handleSheetPointerDown}
               onPointerMove={handleSheetPointerMove}
               onPointerUp={handleSheetPointerEnd}
@@ -304,13 +306,13 @@ export default function MapPage() {
             >
               <HandleBar />
             </SheetHandle>
-            <SheetTitle>{userLocation ? "현재 위치 근처 코스" : "주위에 있는 코스"}</SheetTitle>
+            <SheetTitle>{userLocation ? t("현재 위치 근처 코스") : t("주위에 있는 코스")}</SheetTitle>
             <FilterBar onFilterChange={setFilter} defaultCategory="" />
           </SheetFixed>
           <CardList>
             {errorMessage && <Empty>{errorMessage}</Empty>}
             {!errorMessage && filteredPosts.length === 0 ? (
-              <Empty>표시할 코스가 없습니다.</Empty>
+              <Empty>{t("표시할 코스가 없습니다.")}</Empty>
             ) : (
               filteredPosts.map((post) => {
                 const raw = Number(String(post.price ?? 0).replace(/,/g, "")) || 0;

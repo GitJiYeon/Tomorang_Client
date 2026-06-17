@@ -10,10 +10,12 @@ import { getPostDescription, getPostImages } from "../utils/postDisplay";
 import { formatRating, getPostRatingAverage, getPostWishlistCount } from "../utils/postStats";
 import { isOwnPost } from "../utils/postOwner";
 import { isPostLiked, setPostLiked, subscribeWishlistChanges } from "../utils/wishlist";
+import { useI18n } from "../i18n/I18nProvider";
 
 const PostCardList = ({ post, onWishlistChange, actions }) => {
   const { title, price } = post;
   const navigate = useNavigate();
+  const { t } = useI18n();
   const postId = post.postId ?? post.post_id ?? post.id;
   const images = getPostImages(post);
   const description = getPostDescription(post);
@@ -63,7 +65,7 @@ const PostCardList = ({ post, onWishlistChange, actions }) => {
         {images[0] ? (
           <Thumbnail src={images[0]} alt={title} />
         ) : (
-          <ThumbnailPlaceholder>이미지 없음</ThumbnailPlaceholder>
+          <ThumbnailPlaceholder>{t("이미지 없음")}</ThumbnailPlaceholder>
         )}
         {Array.isArray(actions) && actions.length > 0 && (
           <ActionGroup>
@@ -104,7 +106,7 @@ const PostCardList = ({ post, onWishlistChange, actions }) => {
               {displayWishlistCount}
             </LikeBadge>
           </BadgeGroup>
-          <Price>{Number(String(price ?? 0).replace(/,/g, "")).toLocaleString()}원</Price>
+          <Price>{Number(String(price ?? 0).replace(/,/g, "")).toLocaleString()}{t("원")}</Price>
         </Footer>
       </ContentSection>
     </CardContainer>

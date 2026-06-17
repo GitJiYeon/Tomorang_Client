@@ -1,10 +1,13 @@
 import React from "react";
 import styled from "styled-components";
+import { useI18n } from "../i18n/I18nProvider";
 
 const STATUS_OPTIONS = ["대기중", "확정됨", "완료됨", "취소/거절"];
 
 export default function StatusFilter({ selectedStatus, onStatusChange, options }) {
   const list = options ?? STATUS_OPTIONS; // ← 이 한 줄만 추가
+  const { t } = useI18n();
+
   return (
     <FilterWrapper>
       {list.map((status) => (
@@ -13,7 +16,7 @@ export default function StatusFilter({ selectedStatus, onStatusChange, options }
           $isSelected={status === selectedStatus}
           onClick={() => onStatusChange(status)}
         >
-          {status}
+          {t(status)}
         </StatusChip>
       ))}
     </FilterWrapper>

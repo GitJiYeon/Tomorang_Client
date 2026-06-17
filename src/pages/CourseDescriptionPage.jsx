@@ -13,14 +13,39 @@ import ReviewSummary from "../components/ReviewSummary";
 import ReviewCard from "../components/ReviewCard1";
 import GuideTab from "../components/GuideTab";
 import GuideDescriptionCard from "../components/GuideDescriptionCard";
-import { getPopularGuides, getPostDetail, getPostReviews, getPosts } from "../api/tomorang";
+import { getPopularGuides, getPostDetail, getPostReviews, getPosts, translateText } from "../api/tomorang";
 import { getPostOwnerId, isOwnPost } from "../utils/postOwner";
 import { getPostRatingAverage, getPostWishlistCount, getReviewRatingAverage } from "../utils/postStats";
+import { useI18n } from "../i18n/I18nProvider";
+import { sortReviewsByRecent } from "../utils/reviews";
 
 const TAB = {
   COURSE: "course",
   REVIEW: "review",
   GUIDE: "guide",
+};
+
+const extractTranslation = (data) =>
+  typeof data === "string"
+    ? data
+    : data?.translatedText ?? data?.translation ?? data?.text ?? data?.result ?? "";
+
+const detectContentLanguage = (text) => {
+  const value = String(text ?? "");
+  if (/[ぁ-ゟ゠-ヿ]/.test(value)) return "JA";
+  if (/[가-힣]/.test(value)) return "KO";
+  return "KO";
+};
+
+const getTargetLangForApp = (language) => (language === "ja" ? "JA" : "KO");
+
+const getBlockText = (block) => block?.value ?? block?.content ?? block?.text ?? "";
+
+const translateValue = async (value, targetLang) => {
+  const text = String(value ?? "");
+  if (!text.trim()) return text;
+  const translated = await translateText(text, targetLang, detectContentLanguage(text)).then(extractTranslation);
+  return translated || text;
 };
 
 function getPostId(post) {
@@ -44,11 +69,15 @@ function normalizeGuide(guide, ownerId, posts = []) {
   const guideIntro = firstText(source.oneWord, source.one_word, source.introduction);
   const normalizedBio = firstText(guideIntro, source.bio, source.about, source.summary);
   const normalizedDescription = firstText(
+    source.courseAdditionalDescription,
+    source.course_additional_description,
     source.guideDescription,
     source.guide_description,
-    guideIntro,
     source.description,
-    source.bio
+    source.guide?.courseAdditionalDescription,
+    source.guide?.course_additional_description,
+    source.guide?.guideDescription,
+    source.guide?.guide_description
   );
   source.bio = normalizedBio ?? source.bio;
   source.description = normalizedDescription ?? source.description;
@@ -73,13 +102,21 @@ function normalizeGuide(guide, ownerId, posts = []) {
       source.memberNickName ??
       source.member_nick_name ??
       ownerId,
+    answertime:
+      source.answertime ??
+      source.answerTime ??
+      source.avgAnswerTime ??
+      source.averageAnswerTime ??
+      source.average_answer_time ??
+      source.responseTime ??
+      source.response_time,
     bio: source.bio ?? source.oneWord ?? source.introduction ?? "소개가 아직 없습니다.",
     description:
+      source.courseAdditionalDescription ??
+      source.course_additional_description ??
       source.description ??
       source.guideDescription ??
       source.guide_description ??
-      source.bio ??
-      source.oneWord ??
       "등록된 코스를 안내하는 가이드입니다.",
     rating: source.rating ?? source.avgRating ?? rating,
     likeCount: source.likeCount ?? source.totalLikes ?? likeCount,
@@ -113,14 +150,31 @@ function makeGuideFromPost(post, posts = []) {
         post?.member_nick_name ??
         post?.nickname,
       bio: post?.guideBio ?? post?.guide_bio ?? post?.guide?.bio ?? post?.guide?.oneWord,
+      answertime:
+        post?.guideAnswerTime ??
+        post?.guide_answer_time ??
+        post?.guide?.answertime ??
+        post?.guide?.answerTime ??
+        post?.guide?.avgAnswerTime ??
+        post?.guide?.averageAnswerTime ??
+        post?.guide?.average_answer_time ??
+        post?.guide?.responseTime ??
+        post?.guide?.response_time,
+      courseAdditionalDescription:
+        post?.courseAdditionalDescription ??
+        post?.course_additional_description ??
+        post?.guide?.courseAdditionalDescription ??
+        post?.guide?.course_additional_description,
       description:
+        post?.courseAdditionalDescription ??
+        post?.course_additional_description ??
         post?.guideDescription ??
         post?.guide_description ??
         post?.guide?.description ??
+        post?.guide?.courseAdditionalDescription ??
+        post?.guide?.course_additional_description ??
         post?.guide?.guideDescription ??
-        post?.guide?.guide_description ??
-        post?.guide?.bio ??
-        post?.guide?.oneWord,
+        post?.guide?.guide_description,
     },
     ownerId,
     posts
@@ -130,6 +184,7 @@ function makeGuideFromPost(post, posts = []) {
 export default function CourseDescriptionPage() {
   const { state } = useLocation();
   const navigate = useNavigate();
+  const { language, t } = useI18n();
   const initialPost = useMemo(
     () => state?.post ?? JSON.parse(sessionStorage.getItem("currentCoursePost") || "null"),
     [state]
@@ -138,15 +193,24 @@ export default function CourseDescriptionPage() {
   const [activeTab, setActiveTab] = useState(state?.initialTab ?? TAB.COURSE);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isReviewExpanded, setIsReviewExpanded] = useState(false);
-  const [postReviews, setPostReviews] = useState(state?.initialReviews ?? []);
+  const [postReviews, setPostReviews] = useState(() => sortReviewsByRecent(state?.initialReviews ?? []));
   const [relatedPosts, setRelatedPosts] = useState([]);
   const [guideInfo, setGuideInfo] = useState(null);
+  const [postTranslation, setPostTranslation] = useState(null);
+  const [showOriginalText, setShowOriginalText] = useState(true);
+  const [isPostTranslating, setIsPostTranslating] = useState(false);
   const postId = getPostId(post);
   const ownerId = getPostOwnerId(post);
 
   useEffect(() => {
     setPost(initialPost);
   }, [initialPost]);
+
+  useEffect(() => {
+    setPostTranslation(null);
+    setShowOriginalText(true);
+    setIsPostTranslating(false);
+  }, [language, postId]);
 
   useEffect(() => {
     if (!postId) return;
@@ -182,7 +246,7 @@ export default function CourseDescriptionPage() {
     let alive = true;
     getPostReviews(postId)
       .then((reviews) => {
-        if (alive) setPostReviews(reviews.length > 0 ? reviews : state?.initialReviews ?? []);
+        if (alive) setPostReviews(sortReviewsByRecent(reviews.length > 0 ? reviews : state?.initialReviews ?? []));
       })
       .catch((error) => console.error("리뷰 목록 조회 실패", error));
 
@@ -212,6 +276,16 @@ export default function CourseDescriptionPage() {
 
     let alive = true;
     const fallbackGuide = makeGuideFromPost(post, [post, ...relatedPosts].filter(Boolean));
+    const postGuideDescription = firstText(
+      post?.courseAdditionalDescription,
+      post?.course_additional_description,
+      post?.guideDescription,
+      post?.guide_description,
+      post?.guide?.courseAdditionalDescription,
+      post?.guide?.course_additional_description,
+      post?.guide?.guideDescription,
+      post?.guide?.guide_description
+    );
     setGuideInfo(fallbackGuide);
 
     getPopularGuides()
@@ -226,6 +300,11 @@ export default function CourseDescriptionPage() {
               ...prev,
               ...matchedGuide,
               profileImage: matchedGuide.profileImage ?? matchedGuide.image ?? prev?.profileImage ?? fallbackGuide?.profileImage,
+              courseAdditionalDescription:
+                postGuideDescription ??
+                prev?.courseAdditionalDescription ??
+                fallbackGuide?.courseAdditionalDescription ??
+                matchedGuide.courseAdditionalDescription,
             },
             ownerId,
             [post, ...relatedPosts].filter(Boolean)
@@ -245,6 +324,50 @@ export default function CourseDescriptionPage() {
       ? getReviewRatingAverage(postReviews)
       : getPostRatingAverage(post);
   const displayPost = post ? { ...post, rating: reviewAverage } : post;
+  const translatedContentBlocks = postTranslation?.contentBlocks;
+  const displayPostText =
+    post && !showOriginalText && postTranslation
+      ? {
+          ...displayPost,
+          title: postTranslation.title ?? post.title,
+          subtitle: postTranslation.subtitle ?? post.subtitle,
+          contentBlocks: translatedContentBlocks ?? post.contentBlocks,
+        }
+      : displayPost;
+
+  const handlePostTranslateToggle = async () => {
+    if (!post || isPostTranslating) return;
+
+    if (postTranslation) {
+      setShowOriginalText((prev) => !prev);
+      return;
+    }
+
+    const targetLang = getTargetLangForApp(language);
+    setIsPostTranslating(true);
+    try {
+      const blocks = post.contentBlocks ?? [];
+      const [title, subtitle, contentBlocks] = await Promise.all([
+        translateValue(post.title, targetLang),
+        translateValue(post.subtitle, targetLang),
+        Promise.all(
+          blocks.map(async (block) => {
+            const type = String(block?.type ?? "text").toLowerCase();
+            if (type === "image") return block;
+            const translated = await translateValue(getBlockText(block), targetLang);
+            return { ...block, value: translated, content: translated, text: translated };
+          })
+        ),
+      ]);
+
+      setPostTranslation({ title, subtitle, contentBlocks });
+      setShowOriginalText(false);
+    } catch {
+      alert(t("번역에 실패했습니다."));
+    } finally {
+      setIsPostTranslating(false);
+    }
+  };
 
   const scrollRow = {
     display: "flex",
@@ -255,12 +378,19 @@ export default function CourseDescriptionPage() {
     paddingBottom: 2,
   };
 
-  if (!post) return <Error>게시물 정보를 불러올 수 없습니다.</Error>;
+  if (!post) return <Error>{t("게시물 정보를 불러올 수 없습니다.")}</Error>;
 
   return (
     <PageWrapper>
-      <Header coment={displayPost.title} />
-      <CourseDescription post={displayPost} />
+      <Header coment={displayPostText.title} />
+      <CourseDescription
+        post={displayPost}
+        displayTitle={displayPostText.title}
+        displaySubtitle={displayPostText.subtitle}
+        showOriginalText={showOriginalText}
+        isTranslatingText={isPostTranslating}
+        onTranslateToggle={handlePostTranslateToggle}
+      />
 
       <TabSection>
         <CourseTabMenu activeTab={activeTab} onTabChange={setActiveTab} />
@@ -274,9 +404,9 @@ export default function CourseDescriptionPage() {
                 <DetailTitle>{post.title}</DetailTitle>
                 <TitleDivider />
                 {post.contentBlocks?.length ? (
-                  <ContentBlocks blocks={post.contentBlocks} />
+                  <ContentBlocks blocks={displayPostText.contentBlocks} />
                 ) : (
-                  <PlaceholderText>등록된 상품정보가 없습니다.</PlaceholderText>
+                  <PlaceholderText>{t("등록된 상품정보가 없습니다.")}</PlaceholderText>
                 )}
               </DetailSection>
 
@@ -284,7 +414,7 @@ export default function CourseDescriptionPage() {
                 <FadeOverlay>
                   <OpenButtonWrapper>
                     <OpenButton $isExpanded={false} onClick={() => setIsExpanded(true)}>
-                      상품정보 펼쳐보기
+                      {t("상품정보 펼쳐보기")}
                     </OpenButton>
                   </OpenButtonWrapper>
                 </FadeOverlay>
@@ -294,7 +424,7 @@ export default function CourseDescriptionPage() {
             {isExpanded && (
               <OpenButtonWrapper>
                 <OpenButton $isExpanded onClick={() => setIsExpanded(false)}>
-                  상품정보 접기
+                  {t("상품정보 접기")}
                 </OpenButton>
               </OpenButtonWrapper>
             )}
@@ -317,14 +447,14 @@ export default function CourseDescriptionPage() {
                     <ReviewCard review={review} />
                   </React.Fragment>
                 ))}
-                {postReviews.length === 0 && <PlaceholderText>아직 리뷰가 없습니다.</PlaceholderText>}
+                {postReviews.length === 0 && <PlaceholderText>{t("아직 리뷰가 없습니다.")}</PlaceholderText>}
               </ReviewSection>
 
               {!isReviewExpanded && (
                 <ReviewFadeOverlay>
                   <OpenButtonWrapper>
                     <OpenButton $isExpanded={false} onClick={() => setIsReviewExpanded(true)}>
-                      리뷰 더보기
+                      {t("리뷰 더보기")}
                     </OpenButton>
                   </OpenButtonWrapper>
                 </ReviewFadeOverlay>
@@ -334,7 +464,7 @@ export default function CourseDescriptionPage() {
             {isReviewExpanded && (
               <OpenButtonWrapper>
                 <OpenButton $isExpanded onClick={() => setIsReviewExpanded(false)}>
-                  리뷰 접기
+                  {t("리뷰 접기")}
                 </OpenButton>
               </OpenButtonWrapper>
             )}
@@ -348,13 +478,13 @@ export default function CourseDescriptionPage() {
               <GuideDescriptionCard guide={guideForTab} />
             </GuideBg>
           ) : (
-            <PlaceholderText>가이드 정보를 찾을 수 없습니다.</PlaceholderText>
+            <PlaceholderText>{t("가이드 정보를 찾을 수 없습니다.")}</PlaceholderText>
           )
         )}
       </ContentArea>
 
       {activeTab !== TAB.GUIDE && relatedPosts.length > 0 && (
-        <Section title="이 가이드의 다른코스">
+        <Section title={t("이 가이드의 다른코스")}>
           <div style={scrollRow}>
             {relatedPosts.map((item, index) => (
               <PostCard key={getPostId(item) ?? `${item.title}-${index}`} post={item} />

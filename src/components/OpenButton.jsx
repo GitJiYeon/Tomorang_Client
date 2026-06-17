@@ -1,11 +1,14 @@
 import styled from "styled-components";
 import OpenArrow from "../assets/openarrow.svg";
+import { useI18n } from "../i18n/I18nProvider";
 
 function OpenButton({ children, onClick, $isExpanded }) {
+  const { t } = useI18n();
+
   return (
     <Button onClick={onClick}>
       {children}
-      <OpenArrowImg src={OpenArrow} alt="open" $isExpanded={$isExpanded} />
+      <OpenArrowImg src={OpenArrow} alt={t("열기")} $isExpanded={$isExpanded} />
     </Button>
   );
 }

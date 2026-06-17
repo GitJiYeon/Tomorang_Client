@@ -18,6 +18,7 @@ import "leaflet/dist/leaflet.css";
 import MapPinIcon from "../../assets/mapMarker.svg";
 import MapIcon from "../../assets/bookStatusIcons/mapIcon.svg";
 import CopyIcon from "../../assets/bookStatusIcons/copyIcon.svg";
+import { useI18n } from "../../i18n/I18nProvider";
 
 const pinIcon = L.icon({
   iconUrl: MapPinIcon,
@@ -27,8 +28,9 @@ const pinIcon = L.icon({
 });
 
 export default function MeetingPointCard({ locked, address, meetingPoint, lat, lng }) {
-  const displayAddress = address || meetingPoint || "만남 장소 주소가 곧 공개됩니다";
-  const displayMeetingPoint = meetingPoint || address || "만남 장소";
+  const { t } = useI18n();
+  const displayAddress = address || meetingPoint || t("만남 장소 주소가 곧 공개됩니다");
+  const displayMeetingPoint = meetingPoint || address || t("만남 장소");
 
   const handleCopy = () => {
     const copyText = address || meetingPoint;
@@ -37,11 +39,11 @@ export default function MeetingPointCard({ locked, address, meetingPoint, lat, l
 
   return (
     <Section>
-      <SectionTitle>만남 장소</SectionTitle>
+      <SectionTitle>{t("만남 장소")}</SectionTitle>
       {locked ? (
         <LockedBox>
           <img src={MapIcon} alt="map" width={24} height={24} />
-          <LockedText>만남 장소는 예약 확정 후 공개됩니다</LockedText>
+          <LockedText>{t("만남 장소는 예약 확정 후 공개됩니다")}</LockedText>
         </LockedBox>
       ) : (
         <>

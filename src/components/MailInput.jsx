@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import styled from "styled-components";
+import { useI18n } from "../i18n/I18nProvider";
 
 function MailInput({ label, onChange }) {
   const [local, setLocal] = useState("");
   const [domain, setDomain] = useState("");
+  const { t } = useI18n();
 
   const handleLocal = (e) => {
     const newLocal = e.target.value;
@@ -19,11 +21,11 @@ function MailInput({ label, onChange }) {
 
   return (
     <Wrapper>
-      <StyledLabel>{label}</StyledLabel>
+      <StyledLabel>{t(label)}</StyledLabel>
       <InputRow>
         <HalfInput
           type="text"
-          placeholder="이메일을 입력하세요"
+          placeholder={t("이메일을 입력하세요")}
           value={local}
           onChange={handleLocal}
         />

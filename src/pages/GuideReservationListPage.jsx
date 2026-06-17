@@ -11,6 +11,7 @@ import ReservationCard from "../components/reservation/ReservationCard";
 import { useReservations } from "../components/context/ReservationContext";
 import { getPostDetail, getPostReviews, getPosts } from "../api/tomorang";
 import { applyReviewCompletion, getReservationStatusLabel } from "../utils/reservationFlow";
+import { useI18n } from "../i18n/I18nProvider";
 
 const STATUS_OPTIONS = ["대기중", "확정됨", "완료됨", "취소/거절"];
 
@@ -21,6 +22,7 @@ const getReservationId = (reservation) =>
   reservation.reservationId ?? reservation.reservation_id ?? reservation.id;
 
 export default function GuideReservationListPage() {
+  const { t } = useI18n();
   const [selectedStatus, setSelectedStatus] = useState("대기중");
   const [guidePostIds, setGuidePostIds] = useState(new Set());
   const [postMap, setPostMap] = useState({});
@@ -125,7 +127,7 @@ export default function GuideReservationListPage() {
 
   return (
     <PageWrapper>
-      <Header coment="예약" path="/guide" />
+      <Header coment={t("예약")} path="/guide" />
       <StatusFilter
         options={STATUS_OPTIONS}
         selectedStatus={selectedStatus}
@@ -133,7 +135,7 @@ export default function GuideReservationListPage() {
       />
 
       <CardList>
-        {isLoading && <PlaceholderText>예약 목록을 불러오는 중입니다.</PlaceholderText>}
+        {isLoading && <PlaceholderText>{t("예약 목록을 불러오는 중입니다.")}</PlaceholderText>}
         {!isLoading && errorMessage && <PlaceholderText>{errorMessage}</PlaceholderText>}
         {!isLoading && !errorMessage && guideReservations.length > 0 ? (
           guideReservations.map((reservation) => {
@@ -160,7 +162,7 @@ export default function GuideReservationListPage() {
             );
           })
         ) : (
-          !isLoading && !errorMessage && <PlaceholderText>예약 내역이 없습니다.</PlaceholderText>
+          !isLoading && !errorMessage && <PlaceholderText>{t("예약 내역이 없습니다.")}</PlaceholderText>
         )}
       </CardList>
 

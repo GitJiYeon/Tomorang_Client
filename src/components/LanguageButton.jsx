@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { useI18n } from "../i18n/I18nProvider";
 
 const LEVELS = [
   { key: "beginner",     label: "초보", dots: 1 },
@@ -6,8 +7,11 @@ const LEVELS = [
   { key: "advanced",     label: "능숙", dots: 3 },
 ];
 
-function LanguageButton({ icon, title, subtitle, languageCode, selectedLevel, isOpen, onToggle, onSelect }) {
-  const handleToggle = () => onToggle(languageCode);
+function LanguageButton({ icon, title, subtitle, languageCode, selectedLevel, onSelect }) {
+  const [open, setOpen] = useState(false);
+  const { t } = useI18n();
+
+  const handleToggle = () => setOpen((prev) => !prev)
 
   const handleSelect = (levelKey) => {
     const next = selectedLevel === levelKey ? null : levelKey;
@@ -35,7 +39,7 @@ function LanguageButton({ icon, title, subtitle, languageCode, selectedLevel, is
               $selected={selectedLevel === key}
               onClick={() => handleSelect(key)}
             >
-              <StepText>{label}</StepText>
+              <StepText>{t(label)}</StepText>
               <DotsRow>
                 {[0, 1, 2].map((i) => (
                   <Dot key={i} $active={i < dots} />

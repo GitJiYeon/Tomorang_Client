@@ -6,9 +6,11 @@ import FilterBar from "../components/FilterBar";
 import PostCardList from "../components/PostCardList";
 import { getPosts } from "../api/tomorang";
 import { getPostRatingAverage, getPostWishlistCount } from "../utils/postStats";
+import { useI18n } from "../i18n/I18nProvider";
 
 export default function DestinationListPage() {
   const { state } = useLocation();
+  const { t } = useI18n();
   const lang = "ko";
   const [posts, setPosts] = useState([]);
   const [filter, setFilter] = useState({
@@ -75,7 +77,7 @@ export default function DestinationListPage() {
                 <Tag key={tag}>#{tag}</Tag>
               ))}
             </TagRow>
-            <Question>탐나는 여행을 골라보세요</Question>
+            <Question>{t("탐나는 여행을 골라보세요")}</Question>
           </ImageText>
         </ImageSection>
       )}
@@ -88,7 +90,7 @@ export default function DestinationListPage() {
             <PostCardList key={post.postId ?? post.post_id ?? post.id} post={post} />
           ))
         ) : (
-          <EmptyText>표시할 코스가 없습니다.</EmptyText>
+          <EmptyText>{t("표시할 코스가 없습니다.")}</EmptyText>
         )}
       </ListSection>
     </PageWrapper>

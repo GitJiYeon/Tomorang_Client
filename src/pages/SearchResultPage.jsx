@@ -157,6 +157,8 @@ const BackBtn = styled.button`
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: none;
 `;
 
 const SearchBar = styled.div`
@@ -178,6 +180,8 @@ const SearchIconBtn = styled.button`
   display: flex;
   align-items: center;
   flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: none;
 `;
 
 const SearchInput = styled.input`
@@ -199,6 +203,8 @@ const ClearBtn = styled.button`
   display: flex;
   align-items: center;
   flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: none;
 `;
 
 const ResultList = styled.div`

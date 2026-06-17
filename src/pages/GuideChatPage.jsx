@@ -9,6 +9,7 @@ import NextButton from "../assets/graynextlogo.svg";
 import DefaultProfileIcon from "../assets/defaultProfile.svg";
 import { getChatRooms, getMyReservations, getPostDetail, getPostReviews } from "../api/tomorang";
 import { applyReviewCompletion, getEffectiveReservationStatus, STATUS } from "../utils/reservationFlow";
+import { useI18n } from "../i18n/I18nProvider";
 
 const CHAT_OPTIONS = ["연락중", "완료됨"];
 const isPostId = (value) => /^\d+$/.test(String(value ?? ""));
@@ -92,6 +93,7 @@ const formatTime = (value) => {
 };
 
 export default function GuideChatPage() {
+  const { t } = useI18n();
   const [selectedStatus, setSelectedStatus] = useState("연락중");
   const [rooms, setRooms] = useState([]);
   const [reservations, setReservations] = useState([]);
@@ -221,7 +223,7 @@ export default function GuideChatPage() {
 
   return (
     <PageWrapper>
-      <Header coment="채팅" />
+      <Header coment={t("채팅")} />
       <Tabs>
         {CHAT_OPTIONS.map((status) => (
           <TabButton
@@ -230,7 +232,7 @@ export default function GuideChatPage() {
             $active={selectedStatus === status}
             onClick={() => setSelectedStatus(status)}
           >
-            {status}
+            {t(status)}
           </TabButton>
         ))}
       </Tabs>
@@ -251,8 +253,8 @@ export default function GuideChatPage() {
             const isCompletedRoom = roomStatus === "완료됨";
             const otherUserId = room.otherUserId ?? room.otherUser ?? room.userId ?? room.participantId;
             const post = room.post ?? postMap[String(postId)] ?? {
-              title: room.postTitle ?? room.title ?? "채팅",
-              subtitle: room.postSubtitle ?? room.subtitle ?? room.lastMessage ?? "아직 메시지가 없습니다.",
+              title: room.postTitle ?? room.title ?? t("채팅"),
+              subtitle: room.postSubtitle ?? room.subtitle ?? room.lastMessage ?? t("아직 메시지가 없습니다."),
               images: [room.thumbnailUrl ?? room.imageUrl ?? DefaultProfileIcon],
             };
             const chatRouteId = postId ?? roomId;
@@ -317,7 +319,7 @@ export default function GuideChatPage() {
             );
           })
         ) : (
-          !errorMessage && <PlaceholderText>채팅 내역이 없습니다.</PlaceholderText>
+          !errorMessage && <PlaceholderText>{t("채팅 내역이 없습니다.")}</PlaceholderText>
         )}
       </CardList>
       <GuideBottomNav activeIndex={2} />
@@ -360,7 +362,10 @@ const Tabs = styled.div`
   align-items: center;
   gap: 8px;
   padding: 10px 20px;
-  background-color: #fff;
+  border-bottom: 1px solid #f3f4f3;
+  background: #fff;
+  box-sizing: border-box;
+  flex-shrink: 0;
   overflow-x: auto;
   scrollbar-width: none;
 
@@ -376,9 +381,13 @@ const TabButton = styled.button`
   justify-content: center;
   align-items: center;
   border-radius: 60px;
-  font-family: "Pretendard", sans-serif;
+  border: 1px solid ${({ $active }) => ($active ? "#c5f598" : "#dadada")};
+  background: ${({ $active }) => ($active ? "#c5f598" : "#fff")};
+  color: ${({ $active }) => ($active ? "#111" : "#4e4e4e")};
+  font-family: Pretendard, sans-serif;
   font-size: 15px;
   font-weight: 500;
+  gap: 6px;
   cursor: pointer;
   transition: none;
 

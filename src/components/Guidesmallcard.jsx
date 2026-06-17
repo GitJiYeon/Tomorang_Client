@@ -4,13 +4,23 @@ import styled from "styled-components";
 import DefaultProfile from "../assets/defaultProfile.svg";
 
 export default function GuideSmallCard({ guide, onClick }) {
+  const answerTime =
+    guide.answertime ??
+    guide.answerTime ??
+    guide.avgAnswerTime ??
+    guide.averageAnswerTime ??
+    guide.average_answer_time ??
+    guide.responseTime ??
+    guide.response_time ??
+    "평균 12분 내로 응답";
+
   return (
     <Card onClick={onClick}>
       <Inner>
         <InfoGroup>
           <Name>{guide.nickname}</Name>
           <Bio>{guide.bio}</Bio>
-          <AnswerTime>{guide.answertime}</AnswerTime>
+          <AnswerTime>{answerTime}</AnswerTime>
         </InfoGroup>
         <Avatar
           src={guide.profileImage || DefaultProfile}

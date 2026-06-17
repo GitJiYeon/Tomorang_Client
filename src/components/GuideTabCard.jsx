@@ -65,7 +65,15 @@ export default function GuideTabCard({ guide, showLanguages = false }) {
 
   const nickname = guide.nickname ?? guide.nickName ?? guide.id ?? "\uAC00\uC774\uB4DC";
   const bio = guide.bio ?? guide.oneWord ?? "\uC18C\uAC1C\uAC00 \uC544\uC9C1 \uC5C6\uC2B5\uB2C8\uB2E4.";
-  const answerTime = guide.answertime ?? guide.answerTime ?? "\uD3C9\uADE0 12\uBD84 \uB0B4\uB85C \uC751\uB2F5";
+  const answerTime =
+    guide.answertime ??
+    guide.answerTime ??
+    guide.avgAnswerTime ??
+    guide.averageAnswerTime ??
+    guide.average_answer_time ??
+    guide.responseTime ??
+    guide.response_time ??
+    "\uD3C9\uADE0 12\uBD84 \uB0B4\uB85C \uC751\uB2F5";
   const profileImage = guide.profileImage ?? guide.image ?? DefaultProfileIcon;
   const interests = normalizeInterests(guide);
   const languages = normalizeLanguages(guide);

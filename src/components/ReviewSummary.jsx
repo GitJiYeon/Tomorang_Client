@@ -2,8 +2,10 @@ import React from "react";
 import styled from "styled-components";
 import Greenstar from "../assets/greenstar.svg";
 import Graystar from "../assets/graystar.svg";
+import { useI18n } from "../i18n/I18nProvider";
 
 function ReviewSummary({ rating = 4.2, reviewCount = 15 }) {
+  const { t } = useI18n();
   const renderStars = () => {
     const activeStars = Math.floor(rating); 
     
@@ -11,7 +13,7 @@ function ReviewSummary({ rating = 4.2, reviewCount = 15 }) {
       <StarImg 
         key={num} 
         src={num <= activeStars ? Greenstar : Graystar} 
-        alt={num <= activeStars ? "active star" : "inactive star"} 
+        alt={num <= activeStars ? t("채워진 별") : t("빈 별")} 
       />
     ));
   };
@@ -27,7 +29,7 @@ function ReviewSummary({ rating = 4.2, reviewCount = 15 }) {
 
       <InfoSection>
         <StarsWrapper>{renderStars()}</StarsWrapper>
-        <CountText>{reviewCount}명의 발견자의 후기</CountText>
+        <CountText>{reviewCount}{t("명의 발견자의 후기")}</CountText>
       </InfoSection>
     </SummaryContainer>
   );

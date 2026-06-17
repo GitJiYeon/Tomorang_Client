@@ -7,8 +7,10 @@ import logo from "../assets/logo.svg";
 import { clearAuthStorage } from "../api/client";
 import { normalizeRole } from "../utils/authRole";
 import { syncLikedPostsFromWishlists } from "../utils/wishlist";
+import { useI18n } from "../i18n/I18nProvider";
 
 function LoginPage() {
+  const { t } = useI18n();
   const [saveInfo, setSaveInfo] = useState(false);
   const [id, setId] = useState(() => localStorage.getItem("savedLoginId") || "");
   const [pw, setPw] = useState("");
@@ -39,7 +41,7 @@ function LoginPage() {
     if (!isVisible || isLoading) return;
 
     if (!id.trim() || !pw) {
-      setErrorMessage("아이디와 비밀번호를 입력해주세요.");
+      setErrorMessage(t("아이디와 비밀번호를 입력해주세요."));
       return;
     }
 
@@ -65,12 +67,12 @@ function LoginPage() {
 
       if (!response.ok) {
         const message = typeof data === "string" ? data : data.message || data.error;
-        throw new Error(message || "로그인에 실패했습니다.");
+        throw new Error(message || t("로그인에 실패했습니다."));
       }
 
       const token = data.token;
       if (!token) {
-        throw new Error("로그인 토큰을 받지 못했습니다.");
+        throw new Error(t("로그인 토큰을 받지 못했습니다."));
       }
 
       const tokenType = data.type || "Bearer";
@@ -129,7 +131,7 @@ function LoginPage() {
 
       navigate(normalizedRole === "GUIDE" ? "/guide" : "/main", { replace: true });
     } catch (error) {
-      setErrorMessage(error.message || "서버와 연결할 수 없습니다.");
+      setErrorMessage(error.message || t("서버와 연결할 수 없습니다."));
     } finally {
       setIsLoading(false);
     }
@@ -139,25 +141,25 @@ function LoginPage() {
     <PageContainer>
       <TopSection>
         <BackButton onClick={handleBack}>
-          <img src={BackArrow} alt="뒤로가기" />
+          <img src={BackArrow} alt={t("뒤로가기")} />
         </BackButton>
         <Logowrap>
-          <Logo src={logo} alt="로고" />
-          <Catchphrase>나의 첫 번째 로컬 친구, 토모랑</Catchphrase>
+          <Logo src={logo} alt={t("로고")} />
+          <Catchphrase>{t("나의 첫 번째 로컬 친구, 토모랑")}</Catchphrase>
         </Logowrap>
       </TopSection>
 
       <WhiteCard $isClosing={isClosing} $isVisible={isVisible}>
         <div style={{ marginTop: "40px" }}>
-          <StartComent coment={"어서오세요<br/>다시 찾아오셨군요"} />
+          <StartComent coment={t("어서오세요<br/>다시 찾아오셨군요")} />
         </div>
 
         <FormContainer>
           <InputGroup>
-            <label>아이디</label>
+            <label>{t("아이디")}</label>
             <input
               type="text"
-              placeholder="아이디를 입력하세요"
+              placeholder={t("아이디를 입력하세요")}
               value={id}
               onChange={(event) => setId(event.target.value)}
               autoComplete="username"
@@ -165,10 +167,10 @@ function LoginPage() {
           </InputGroup>
 
           <InputGroup>
-            <label>비밀번호</label>
+            <label>{t("비밀번호")}</label>
             <input
               type="password"
-              placeholder="비밀번호를 입력하세요"
+              placeholder={t("비밀번호를 입력하세요")}
               value={pw}
               onChange={(event) => setPw(event.target.value)}
               onKeyDown={(event) => {
@@ -188,13 +190,13 @@ function LoginPage() {
                 </svg>
               )}
             </CustomCheckbox>
-            <span>로그인 정보 저장하기</span>
+            <span>{t("로그인 정보 저장하기")}</span>
           </CheckboxContainer>
         </FormContainer>
 
         {errorMessage && <ErrorText>{errorMessage}</ErrorText>}
         <LoginButton onClick={handleLogin} disabled={isLoading}>
-          {isLoading ? "로그인 중..." : "로그인"}
+          {isLoading ? t("로그인 중...") : t("로그인")}
         </LoginButton>
       </WhiteCard>
     </PageContainer>
