@@ -10,9 +10,10 @@ import MapBubble2 from "../assets/mapBubble2.svg";
 import ImageIcon from "../assets/imageIcon.svg";
 import DateIcon from "../assets/reservation/DateIcon.svg";
 import Clocklogo from "../assets/reservation/Clocklogo.svg";
-import { createPost, getPosts } from "../api/tomorang";
+import { createPost, getMypage, getPosts } from "../api/tomorang";
 import { hasValidAuthToken } from "../api/client";
 import { cacheLocalPost } from "../utils/localPostCache";
+import { normalizeRole } from "../utils/authRole";
 import {
   clearGuideRegistrationDraftFiles,
   getContentImageDrafts,
@@ -30,6 +31,49 @@ const REGISTRATION_CATEGORY_ROWS = [
 const AVAILABLE_TIME_OPTIONS = Array.from({ length: 24 }, (_, hour) => `${hour}:00`);
 const DEFAULT_MEETING_CENTER = [35.3191, 139.5467];
 const MEETING_PICKER_ZOOM = 17;
+
+const decodeJwtPayload = (token) => {
+  try {
+    const payload = token?.split(".")?.[1];
+    if (!payload) return null;
+    return JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+  } catch {
+    return null;
+  }
+};
+
+const readSavedProfile = () => {
+  try {
+    return JSON.parse(localStorage.getItem("profile") || "{}");
+  } catch {
+    return {};
+  }
+};
+
+async function refreshGuidePermission() {
+  const tokenPayload = decodeJwtPayload(localStorage.getItem("accessToken"));
+  let mypage = null;
+
+  try {
+    mypage = await getMypage();
+  } catch {
+    // 등록 API가 최종 권한을 판단하므로, 마이페이지 조회 실패 시 토큰 역할만 확인합니다.
+  }
+
+  const role = normalizeRole(mypage, tokenPayload);
+  if (mypage && typeof mypage === "object") {
+    const savedProfile = readSavedProfile();
+    const nextProfile = {
+      ...savedProfile,
+      ...mypage,
+      role: role || mypage.role || savedProfile.role,
+    };
+    localStorage.setItem("profile", JSON.stringify(nextProfile));
+  }
+  if (role) localStorage.setItem("role", role);
+
+  return role === "GUIDE";
+}
 
 const initialFormData = {
   location: "",
@@ -466,6 +510,12 @@ export default function GuideRegistrationPage() {
     setIsSubmitting(true);
     setErrorMessage("");
     try {
+      const hasGuidePermission = await refreshGuidePermission();
+      if (!hasGuidePermission) {
+        setErrorMessage(t("안내자 권한이 있는 계정으로 다시 로그인해주세요."));
+        return;
+      }
+
       const dates = Array.isArray(formData.scheduleDates) ? formData.scheduleDates : [];
       const times = splitCommaList(formData.startTime);
       if (dates.length === 0) {
@@ -540,7 +590,11 @@ export default function GuideRegistrationPage() {
       clearGuideRegistrationDraftFiles();
       navigate("/guide", { replace: true });
     } catch (error) {
-      setErrorMessage(error.message || t("코스 등록에 실패했습니다."));
+      const message =
+        error.status === 403
+          ? t("안내자 권한이 있는 계정으로 다시 로그인해주세요.")
+          : error.message || t("코스 등록에 실패했습니다.");
+      setErrorMessage(message);
     } finally {
       setIsSubmitting(false);
     }
