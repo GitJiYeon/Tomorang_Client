@@ -7,7 +7,7 @@ import DownArrowIcon from "../assets/downarrow.svg";
 const SORT_OPTIONS = ["추천순", "인기순", "가격순"];
 export const FILTER_TAGS = ["체험", "힐링", "풍경", "액티비티", "애니메이션", "쇼핑", "맛집", "탐방", "사진"];
 
-export default function FilterBar({ onFilterChange, defaultCategory = "애니메이션" }) {
+export default function FilterBar({ onFilterChange, defaultCategory = "" }) {
   const [sortOpen, setSortOpen] = useState(false);
   const [selectedSort, setSelectedSort] = useState("추천순");
   const [selectedTag, setSelectedTag] = useState(defaultCategory);
@@ -15,6 +15,10 @@ export default function FilterBar({ onFilterChange, defaultCategory = "애니메
 
   useEffect(() => {
     setSelectedTag(defaultCategory);
+    onFilterChange?.({
+      sort: selectedSort,
+      category: defaultCategory,
+    });
   }, [defaultCategory]);
 
   const handleTagSelect = (tag) => {
