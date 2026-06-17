@@ -7,11 +7,12 @@ const LEVELS = [
   { key: "advanced",     label: "능숙", dots: 3 },
 ];
 
-function LanguageButton({ icon, title, subtitle, languageCode, selectedLevel, onSelect }) {
-  const [open, setOpen] = useState(false);
+function LanguageButton({ icon, title, subtitle, languageCode, selectedLevel, isOpen = false, onToggle, onSelect }) {
   const { t } = useI18n();
 
-  const handleToggle = () => setOpen((prev) => !prev)
+  const handleToggle = () => {
+    onToggle?.(languageCode);
+  };
 
   const handleSelect = (levelKey) => {
     const next = selectedLevel === levelKey ? null : levelKey;
