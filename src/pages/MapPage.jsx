@@ -17,6 +17,7 @@ import { addWishlist, getMyWishlists, getPosts, removeWishlist } from "../api/to
 import { getPostDescription, getPostImages } from "../utils/postDisplay";
 import { formatRating, getPostRatingAverage, getPostWishlistCount } from "../utils/postStats";
 import { isOwnPost } from "../utils/postOwner";
+import { isPostClosedForReservation } from "../utils/reservationSlots";
 import { HIGH_RES_TILE_OPTIONS, HIGH_RES_TILE_URL } from "../utils/mapTiles";
 import {
   getPostId,
@@ -325,6 +326,7 @@ export default function MapPage() {
                 const raw = Number(String(post.price ?? 0).replace(/,/g, "")) || 0;
                 const price = getPrice(post);
                 const image = getPostImages(post)[0];
+                const isClosed = isPostClosedForReservation(post);
                 return (
                   <HCard key={getPostId(post)} onClick={() => openPostDetail(post)}>
                     <HCardImage
@@ -342,7 +344,11 @@ export default function MapPage() {
                         <HCardOriginalPrice>{raw.toLocaleString()}원</HCardOriginalPrice>
                       )}
                       <HCardPriceRow>
-                        {post.discountRate > 0 && <HCardSale>SALE</HCardSale>}
+                        {isClosed ? (
+                          <HCardSale $closed>{t("마감")}</HCardSale>
+                        ) : (
+                          post.discountRate > 0 && <HCardSale>SALE</HCardSale>
+                        )}
                         <HCardPrice>{price.toLocaleString()}원</HCardPrice>
                       </HCardPriceRow>
                     </HCardInfo>
@@ -588,7 +594,7 @@ const HCardPriceRow = styled.div`
 const HCardSale = styled.span`
   font-weight: 700;
   font-size: 14px;
-  color: #b1dd89;
+  color: ${({ $closed }) => ($closed ? "#ACACAC" : "#b1dd89")};
 `;
 
 const HCardPrice = styled.span`

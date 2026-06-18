@@ -9,6 +9,7 @@ import { addWishlist, removeWishlist } from "../../api/tomorang";
 import { getPostDescription, getPostImages } from "../../utils/postDisplay";
 import { formatRating, getPostRatingAverage, getPostWishlistCount } from "../../utils/postStats";
 import { isOwnPost } from "../../utils/postOwner";
+import { isPostClosedForReservation } from "../../utils/reservationSlots";
 import { isPostLiked, setPostLiked, subscribeWishlistChanges } from "../../utils/wishlist";
 import { useI18n } from "../../i18n/I18nProvider";
 
@@ -31,6 +32,7 @@ export default function PostCard({
   const ratingAverage = getPostRatingAverage(post);
   const wishlistCount = getPostWishlistCount(post);
   const displayWishlistCount = Math.max(0, wishlistCount + localWishlistDelta);
+  const isClosed = isPostClosedForReservation(post);
 
   useEffect(() => {
     const nextLiked = isPostLiked(postId);
@@ -86,7 +88,11 @@ export default function PostCard({
         ) : (
           <ImagePlaceholder>{t("이미지 없음")}</ImagePlaceholder>
         )}
-        {isSale && <SaleBadge>SALE</SaleBadge>}
+        {isClosed ? (
+          <StatusBadge $closed>{t("마감")}</StatusBadge>
+        ) : (
+          isSale && <StatusBadge>SALE</StatusBadge>
+        )}
         {canWishlist && (
           <HeartBtn onClick={handleLike}>
             <img src={liked ? FilledHeartIcon : HeartIcon} alt="heart" style={{ width: 12, height: 11 }} />
@@ -155,7 +161,7 @@ const ImagePlaceholder = styled.div`
   font-size: 12px;
 `;
 
-const SaleBadge = styled.div`
+const StatusBadge = styled.div`
   position: absolute;
   top: 8px;
   left: 8px;
@@ -163,7 +169,7 @@ const SaleBadge = styled.div`
   border-radius: 70px;
   padding: 6px 10px;
   box-sizing: border-box;
-  background: #C5F598;
+  background: ${({ $closed }) => ($closed ? "#DADADA" : "#C5F598")};
   font-family: Pretendard, sans-serif;
   font-weight: 700;
   font-size: 11px;

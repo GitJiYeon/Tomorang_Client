@@ -9,6 +9,7 @@ import { addWishlist, removeWishlist } from "../api/tomorang";
 import { getPostDescription, getPostImages } from "../utils/postDisplay";
 import { formatRating, getPostRatingAverage, getPostWishlistCount } from "../utils/postStats";
 import { isOwnPost } from "../utils/postOwner";
+import { isPostClosedForReservation } from "../utils/reservationSlots";
 import { isPostLiked, setPostLiked, subscribeWishlistChanges } from "../utils/wishlist";
 import { useI18n } from "../i18n/I18nProvider";
 
@@ -26,6 +27,7 @@ const PostCardList = ({ post, onWishlistChange, actions }) => {
   const [initialLiked, setInitialLiked] = useState(() => isPostLiked(postId));
   const [localWishlistDelta, setLocalWishlistDelta] = useState(0);
   const displayWishlistCount = Math.max(0, wishlistCount + localWishlistDelta);
+  const isClosed = isPostClosedForReservation(post);
 
   useEffect(() => {
     const nextLiked = isPostLiked(postId);
@@ -67,6 +69,7 @@ const PostCardList = ({ post, onWishlistChange, actions }) => {
         ) : (
           <ThumbnailPlaceholder>{t("이미지 없음")}</ThumbnailPlaceholder>
         )}
+        {isClosed && <ClosedBadge>{t("마감")}</ClosedBadge>}
         {Array.isArray(actions) && actions.length > 0 && (
           <ActionGroup>
             {actions.map((action) => (
@@ -184,6 +187,24 @@ const HeartBadge = styled.div`
 const HeartIcon = styled.img`
   width: 12px;
   height: 11px;
+`;
+
+const ClosedBadge = styled.div`
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  height: 26px;
+  border-radius: 70px;
+  padding: 6px 10px;
+  box-sizing: border-box;
+  background: #DADADA;
+  color: #111;
+  font-family: Pretendard, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  z-index: 5;
 `;
 
 const ActionGroup = styled.div`

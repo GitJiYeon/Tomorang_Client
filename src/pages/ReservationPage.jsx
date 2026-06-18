@@ -18,36 +18,15 @@ import { bookReservation, getPostDetail } from "../api/tomorang";
 import { getPostImages } from "../utils/postDisplay";
 import { mergeLocalPostCache } from "../utils/localPostCache";
 import { STATUS } from "../utils/reservationFlow";
+import { getPostScheduleList, isReservableSlot } from "../utils/reservationSlots";
 import { useReservations } from "../components/context/ReservationContext";
 
 const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
-const toNumber = (value) => {
-  const number = Number(value);
-  return Number.isFinite(number) ? number : 0;
-};
-
 const getSlotId = (slot) => slot?.id ?? slot?.slotId ?? slot?.slot_id;
 const getSlotTime = (slot) => slot?.time ?? slot?.slotTime ?? slot?.slot_time ?? slot?.startTime ?? slot?.start_time;
 
-const isReservableSlot = (slot) => {
-  const status = String(slot?.status ?? slot?.slotStatus ?? slot?.slot_status ?? "").toUpperCase();
-  const bookedCount = toNumber(
-    slot?.bookedCount ??
-      slot?.booked_count ??
-      slot?.reservationCount ??
-      slot?.reservation_count ??
-      slot?.currentCount ??
-      slot?.current_count
-  );
-
-  if (slot?.available === false || slot?.isAvailable === false || slot?.is_available === false) return false;
-  if (bookedCount > 0) return false;
-  if (!status) return true;
-  return ["OPEN", "AVAILABLE"].includes(status);
-};
-
-const getAvailableSchedules = (post) => post?.availableSchedules ?? [];
+const getAvailableSchedules = getPostScheduleList;
 
 const isSameSlot = (slot, targetSlot) => {
   const slotId = getSlotId(slot);

@@ -12,6 +12,7 @@ import { addWishlist, removeWishlist } from "../api/tomorang";
 import { getHiddenGuideFromPost } from "../utils/hiddenGuides";
 import { formatRating, getPostRatingAverage } from "../utils/postStats";
 import { isOwnPost } from "../utils/postOwner";
+import { isPostClosedForReservation } from "../utils/reservationSlots";
 import { getPostId, isPostLiked, setPostLiked, subscribeWishlistChanges } from "../utils/wishlist";
 import { useI18n } from "../i18n/I18nProvider";
 
@@ -63,6 +64,7 @@ export default function CourseDescription({
   const discountedPrice = discountRate > 0
     ? Math.round(originalPriceNum * (1 - discountRate / 100))
     : originalPriceNum;
+  const isClosed = isPostClosedForReservation(post);
   const subImages = images.slice(1);
   const visibleSubImages = subImages.slice(0, 4);
   const isMoreThanFour = subImages.length > 4;
@@ -134,7 +136,11 @@ export default function CourseDescription({
               <OriginalPrice>{originalPriceNum.toLocaleString()}{t("원")}</OriginalPrice>
             )}
             <CurrentPriceArea>
-              {discountRate > 0 && <SaleLabel>SALE</SaleLabel>}
+              {isClosed ? (
+                <SaleLabel $closed>{t("마감")}</SaleLabel>
+              ) : (
+                discountRate > 0 && <SaleLabel>SALE</SaleLabel>
+              )}
               <CurrentPrice>{discountedPrice.toLocaleString()}{t("원")}</CurrentPrice>
             </CurrentPriceArea>
           </PriceGroup>
@@ -339,7 +345,7 @@ const CurrentPriceArea = styled.div`
 `;
 
 const SaleLabel = styled.span`
-  color: #B1DD89;
+  color: ${({ $closed }) => ($closed ? "#ACACAC" : "#B1DD89")};
   font-size: 18px;
   font-weight: 800;
 `;
