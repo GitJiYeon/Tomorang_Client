@@ -11,11 +11,7 @@ export const getPostScheduleList = (post) => {
   return [];
 };
 
-export const hasPostScheduleData = (post) =>
-  Array.isArray(post?.availableSchedules) ||
-  Array.isArray(post?.available_schedules) ||
-  Array.isArray(post?.schedules) ||
-  Array.isArray(post?.schedule);
+export const hasPostScheduleData = (post) => getPostScheduleList(post).length > 0;
 
 const getScheduleSlots = (schedule) => {
   if (Array.isArray(schedule?.timeSlots)) return schedule.timeSlots;
