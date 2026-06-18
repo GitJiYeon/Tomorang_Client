@@ -40,4 +40,8 @@ export const hasReservableSlots = (post) =>
     getScheduleSlots(schedule).some((slot) => isReservableSlot(slot))
   );
 
-export const isPostClosedForReservation = (post) => !hasReservableSlots(post);
+export const isPostClosedForReservation = (post) => {
+  const schedules = getPostScheduleList(post);
+  if (schedules.length === 0) return false;
+  return !hasReservableSlots(post);
+};
