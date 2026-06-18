@@ -9,9 +9,9 @@ import { addWishlist, removeWishlist } from "../../api/tomorang";
 import { getPostDescription, getPostImages } from "../../utils/postDisplay";
 import { formatRating, getPostRatingAverage, getPostWishlistCount } from "../../utils/postStats";
 import { isOwnPost } from "../../utils/postOwner";
-import { isPostClosedForReservation } from "../../utils/reservationSlots";
 import { isPostLiked, setPostLiked, subscribeWishlistChanges } from "../../utils/wishlist";
 import { useI18n } from "../../i18n/I18nProvider";
+import usePostClosedStatus from "../../hooks/usePostClosedStatus";
 
 export default function PostCard({
   post,
@@ -32,7 +32,7 @@ export default function PostCard({
   const ratingAverage = getPostRatingAverage(post);
   const wishlistCount = getPostWishlistCount(post);
   const displayWishlistCount = Math.max(0, wishlistCount + localWishlistDelta);
-  const isClosed = isPostClosedForReservation(post);
+  const isClosed = usePostClosedStatus(post);
 
   useEffect(() => {
     const nextLiked = isPostLiked(postId);

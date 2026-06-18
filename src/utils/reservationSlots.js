@@ -11,6 +11,12 @@ export const getPostScheduleList = (post) => {
   return [];
 };
 
+export const hasPostScheduleData = (post) =>
+  Array.isArray(post?.availableSchedules) ||
+  Array.isArray(post?.available_schedules) ||
+  Array.isArray(post?.schedules) ||
+  Array.isArray(post?.schedule);
+
 const getScheduleSlots = (schedule) => {
   if (Array.isArray(schedule?.timeSlots)) return schedule.timeSlots;
   if (Array.isArray(schedule?.time_slots)) return schedule.time_slots;
@@ -40,8 +46,31 @@ export const hasReservableSlots = (post) =>
     getScheduleSlots(schedule).some((slot) => isReservableSlot(slot))
   );
 
-export const isPostClosedForReservation = (post) => {
-  const schedules = getPostScheduleList(post);
-  if (schedules.length === 0) return false;
+export const getPostClosedStatus = (post) => {
+  const explicitStatus = String(
+    post?.reservationStatus ??
+      post?.reservation_status ??
+      post?.bookingStatus ??
+      post?.booking_status ??
+      post?.postStatus ??
+      post?.post_status ??
+      post?.status ??
+      ""
+  ).toUpperCase();
+  const explicitClosed =
+    post?.closed ??
+    post?.isClosed ??
+    post?.is_closed ??
+    post?.soldOut ??
+    post?.sold_out ??
+    post?.fullyBooked ??
+    post?.fully_booked;
+
+  if (typeof explicitClosed === "boolean") return explicitClosed;
+  if (["CLOSED", "FULL", "SOLD_OUT", "UNAVAILABLE"].includes(explicitStatus)) return true;
+  if (["OPEN", "AVAILABLE"].includes(explicitStatus) && !hasPostScheduleData(post)) return false;
+  if (!hasPostScheduleData(post)) return null;
   return !hasReservableSlots(post);
 };
+
+export const isPostClosedForReservation = (post) => getPostClosedStatus(post) === true;
